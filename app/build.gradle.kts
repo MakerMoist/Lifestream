@@ -18,12 +18,30 @@ android {
         versionName = "1.0.0"
     }
 
+    // The release key comes from CI secrets via environment variables and is never committed.
+    val releaseKeystore = System.getenv("LIFESTREAM_KEYSTORE")?.let { file(it) }?.takeIf { it.exists() }
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = System.getenv("LIFESTREAM_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("LIFESTREAM_KEY_ALIAS")
+                keyPassword = System.getenv("LIFESTREAM_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            isDebuggable = false
             // The extractor relies on reflection (Rhino JS engine), so keep shrinking off.
             isMinifyEnabled = false
-            // Signed with the debug key so the release APK installs without extra setup.
-            signingConfig = signingConfigs.getByName("debug")
+            // Local builds without the key fall back to the debug key so they still install.
+            signingConfig = if (releaseKeystore != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 

@@ -21,6 +21,7 @@ object StreamResolver {
 
     @Throws(IOException::class)
     fun resolve(videoId: String): String {
+        if (!SafeInput.isVideoId(videoId)) throw IOException("Invalid track id")
         val now = System.currentTimeMillis()
         cache[videoId]?.let { if (it.expiresAtMs - now > 5 * 60_000) return it.url }
 
@@ -42,7 +43,11 @@ object StreamResolver {
             ?: throw IOException("No playable audio stream for $videoId")
 
         val url = best.content
-        val expiresAt = Uri.parse(url).getQueryParameter("expire")?.toLongOrNull()?.times(1000)
+        val parsed = Uri.parse(url)
+        if (!SafeInput.isHttps(parsed) || !SafeInput.isGoogleVideoHost(parsed.host)) {
+            throw IOException("Unexpected stream host for $videoId")
+        }
+        val expiresAt = parsed.getQueryParameter("expire")?.toLongOrNull()?.times(1000)
             ?: (now + 3 * 60 * 60_000)
         cache[videoId] = Entry(url, expiresAt)
         return url

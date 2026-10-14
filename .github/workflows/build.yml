@@ -6,37 +6,96 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Least privilege by default: building only needs to read the repo.
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    outputs:
+      signed: ${{ steps.signing.outputs.signed }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
+      # Also validates gradle-wrapper.jar against Gradle's published checksums.
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Build debug APK
+      # The release key lives only in repository secrets (never in the repo). Without it — e.g. on
+      # pull requests — the release APK is signed with a throwaway debug key and not published.
+      - name: Prepare signing key
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.LIFESTREAM_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "LIFESTREAM_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::LIFESTREAM_KEYSTORE_BASE64 secret not set; APK will be signed with a temporary key."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build release APK (not debuggable)
+        env:
+          LIFESTREAM_KEYSTORE_PASSWORD: ${{ secrets.LIFESTREAM_KEYSTORE_PASSWORD }}
+          LIFESTREAM_KEY_ALIAS: ${{ secrets.LIFESTREAM_KEY_ALIAS }}
+          LIFESTREAM_KEY_PASSWORD: ${{ secrets.LIFESTREAM_KEY_PASSWORD }}
         run: |
           chmod +x ./gradlew
-          ./gradlew --no-daemon assembleDebug
+          ./gradlew --no-daemon assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk Lifestream.apk
+          sha256sum Lifestream.apk | tee Lifestream.apk.sha256
+
+      - name: Remove signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Lifestream-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: Lifestream-apk
+          path: |
+            Lifestream.apk
+            Lifestream.apk.sha256
 
-      - name: Publish to "latest" release
-        if: github.event_name != 'pull_request'
-        uses: softprops/action-gh-release@v2
+
+  # Publishing is a separate job: only it can write to the repo, and only for pushes to main.
+  publish:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
         with:
-          tag_name: latest
-          name: Lifestream (latest build)
-          prerelease: true
-          files: app/build/outputs/apk/debug/app-debug.apk
+          name: Lifestream-apk
+
+      - name: Publish to the "latest" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SIGNED: ${{ needs.build.outputs.signed }}
+        run: |
+          gh release view latest -R "$REPO" >/dev/null 2>&1 || \
+            gh release create latest -R "$REPO" --prerelease --title "Lifestream (latest build)" \
+              --notes "Latest Lifestream build. Install Lifestream.apk; Lifestream.apk.sha256 is its checksum."
+          gh release upload latest Lifestream.apk Lifestream.apk.sha256 -R "$REPO" --clobber
+          # The old debug build is no longer published.
+          gh release delete-asset latest app-debug.apk -R "$REPO" -y 2>/dev/null || true
+          if [ "$SIGNED" != "true" ]; then
+            echo "::warning::Published APK is signed with a temporary key. Add the signing secrets so updates install over each other."
+          fi

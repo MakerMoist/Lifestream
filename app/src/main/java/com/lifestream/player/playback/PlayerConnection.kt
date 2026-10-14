@@ -87,17 +87,21 @@ object PlayerConnection {
     // ---- Commands ----
 
     fun playTracks(tracks: List<Track>, startIndex: Int = 0, shuffle: Boolean = false) {
-        if (tracks.isEmpty()) return
+        // Drop anything without a valid video id (e.g. a corrupted saved favourite).
+        val chosen = tracks.getOrNull(startIndex)
+        val valid = tracks.filter { SafeInput.isVideoId(it.id) }
+        if (valid.isEmpty()) return
         withController { c ->
             c.shuffleModeEnabled = shuffle
-            val start = if (shuffle) tracks.indices.random() else startIndex.coerceIn(tracks.indices)
-            c.setMediaItems(tracks.map { it.toMediaItem() }, start, 0L)
+            val start = if (shuffle) valid.indices.random() else valid.indexOf(chosen).coerceAtLeast(0)
+            c.setMediaItems(valid.map { it.toMediaItem() }, start, 0L)
             c.prepare()
             c.play()
         }
     }
 
     fun playNext(track: Track) = withController { c ->
+        if (!SafeInput.isVideoId(track.id)) return@withController
         if (c.mediaItemCount == 0) {
             playTracks(listOf(track))
         } else {
@@ -106,6 +110,7 @@ object PlayerConnection {
     }
 
     fun addToQueue(track: Track) = withController { c ->
+        if (!SafeInput.isVideoId(track.id)) return@withController
         if (c.mediaItemCount == 0) playTracks(listOf(track)) else c.addMediaItem(track.toMediaItem())
     }
 

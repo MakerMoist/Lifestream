@@ -57,11 +57,14 @@ class YouTubeStreamDataSource(private val client: OkHttpClient) : BaseDataSource
         this.dataSpec = dataSpec
         val uri = dataSpec.uri
 
-        // Anything that isn't a YouTube media server goes through a plain HTTP source.
-        if (uri.host?.endsWith("googlevideo.com") != true) {
+        // Only ever fetch over HTTPS.
+        if (!SafeInput.isHttps(uri)) throw IOException("Refusing non-HTTPS stream URL")
+
+        // Anything that isn't a YouTube media server goes through a plain HTTPS source.
+        if (!SafeInput.isGoogleVideoHost(uri.host)) {
             val plain = DefaultHttpDataSource.Factory()
                 .setUserAgent(Http.DESKTOP_USER_AGENT)
-                .setAllowCrossProtocolRedirects(true)
+                .setAllowCrossProtocolRedirects(false)
                 .createDataSource()
             delegate = plain
             return plain.open(dataSpec)
@@ -217,16 +220,21 @@ class YouTubeStreamDataSource(private val client: OkHttpClient) : BaseDataSource
 object StreamDataSources {
     const val SCHEME = "lifestream"
 
-    fun trackUri(videoId: String): Uri = Uri.parse("$SCHEME://track/$videoId")
+    fun trackUri(videoId: String): Uri {
+        require(SafeInput.isVideoId(videoId)) { "Invalid track id" }
+        return Uri.parse("$SCHEME://track/$videoId")
+    }
 
     fun factory(): DataSource.Factory {
         val upstream = DataSource.Factory { YouTubeStreamDataSource(Http.client) }
         return ResolvingDataSource.Factory(upstream) { spec ->
             if (spec.uri.scheme == SCHEME) {
-                val id = spec.uri.lastPathSegment ?: throw IOException("Bad track uri ${spec.uri}")
-                spec.withUri(Uri.parse(StreamResolver.resolve(id)))
+                val id = spec.uri.lastPathSegment
+                if (!SafeInput.isVideoId(id)) throw IOException("Invalid track id")
+                spec.withUri(Uri.parse(StreamResolver.resolve(id!!)))
             } else {
-                spec
+                // Only our own lifestream:// items are ever played.
+                throw IOException("Unsupported media URI scheme: ${spec.uri.scheme}")
             }
         }
     }

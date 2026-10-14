@@ -17,6 +17,8 @@ object Http {
             .connectTimeout(20, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
+            // Never let a redirect downgrade an HTTPS request to plain HTTP.
+            .followSslRedirects(false)
             .build()
     }
 }

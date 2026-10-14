@@ -25,7 +25,9 @@ A standalone Android music player for Final Fantasy soundtracks. Audio is stream
 
 ## Getting the APK
 
-**Option A — GitHub (no tools needed):** push this folder to a GitHub repository. The included workflow (`.github/workflows/build.yml`) builds `app-debug.apk` on every push and attaches it to a release called `latest`. Download it on your phone and install it (allow "install unknown apps" when asked).
+**Option A — GitHub (no tools needed):** push this folder to a GitHub repository. The included workflow (`.github/workflows/build.yml`) builds a non-debuggable release `Lifestream.apk` (plus its SHA-256 checksum) on every push to `main` and attaches it to a release called `latest`. Download it on your phone and install it (allow "install unknown apps" when asked).
+
+To sign releases with your own key (so each update installs over the last), add the repository secrets `LIFESTREAM_KEYSTORE_BASE64`, `LIFESTREAM_KEYSTORE_PASSWORD`, `LIFESTREAM_KEY_ALIAS` and `LIFESTREAM_KEY_PASSWORD`. The key is only ever read from secrets; key files are git-ignored.
 
 **Option B — Android Studio:** open this folder, let Gradle sync, then Run, or use Build › Build APK(s).
 
@@ -36,6 +38,14 @@ Requires Android 8.0 (API 26) or newer.
 ## If playback stops working
 
 YouTube changes its internals from time to time. When that happens, bump the NewPipeExtractor version in `app/build.gradle.kts` to the newest release from its [releases page](https://github.com/TeamNewPipe/NewPipeExtractor/releases) and rebuild.
+
+## Security
+
+- The playback service only accepts connections from Lifestream itself and trusted system controllers (System UI media controls, Bluetooth/car via the platform); other apps are rejected.
+- Track ids are validated as YouTube video ids before they're used in any URL; queued items can only point at Lifestream's own `lifestream://` tracks, and artwork must be a plain HTTPS URL.
+- Audio is fetched over HTTPS only, from `*.googlevideo.com` only, and redirects can't downgrade to HTTP. Cleartext traffic is disabled app-wide and only system CAs are trusted.
+- Favorites, history and the soundtrack index stay on the device (no cloud backup or device-to-device transfer).
+- CI runs with read-only tokens; only the publish job (pushes to `main`) can write, using the `gh` CLI rather than third-party actions. Workflow inputs are passed as data and validated.
 
 ## Card art
 

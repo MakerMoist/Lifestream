@@ -15,7 +15,7 @@ fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
         MediaMetadata.Builder()
             .setTitle(title)
             .setArtist(artist)
-            .setArtworkUri(thumbnail?.let { Uri.parse(it) })
+            .setArtworkUri(SafeInput.safeArtwork(thumbnail?.let { Uri.parse(it) }))
             .setIsPlayable(true)
             .setIsBrowsable(false)
             .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
@@ -32,6 +32,19 @@ fun MediaItem.toTrack(): Track = Track(
     thumbnail = mediaMetadata.artworkUri?.toString(),
 )
 
-/** Items sent from the UI lose their URI on the way into the session; rebuild it from the id. */
-fun MediaItem.withPlayableUri(): MediaItem =
-    buildUpon().setUri(StreamDataSources.trackUri(mediaId)).build()
+/**
+ * Items sent from a controller lose their URI on the way into the session; rebuild it from the
+ * id. Returns null for anything that isn't a valid YouTube video id, and strips any artwork that
+ * isn't a plain HTTPS URL (so a controller can't point the notification at a local file).
+ */
+fun MediaItem.withPlayableUri(): MediaItem? {
+    if (!SafeInput.isVideoId(mediaId)) return null
+    val metadata = mediaMetadata.buildUpon()
+        .setArtworkUri(SafeInput.safeArtwork(mediaMetadata.artworkUri))
+        .setArtworkData(null, null)
+        .build()
+    return buildUpon()
+        .setUri(StreamDataSources.trackUri(mediaId))
+        .setMediaMetadata(metadata)
+        .build()
+}

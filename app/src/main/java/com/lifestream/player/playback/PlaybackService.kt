@@ -83,13 +83,31 @@ class PlaybackService : MediaSessionService() {
         super.onDestroy()
     }
 
-    private class SessionCallback : MediaSession.Callback {
+    private inner class SessionCallback : MediaSession.Callback {
+        /**
+         * The service has to be exported for system media controls, so check who's connecting:
+         * Lifestream itself (UI + notification) and trusted system controllers (System UI media
+         * controls, Bluetooth / car via the platform, anything holding MEDIA_CONTENT_CONTROL).
+         * Other apps are turned away.
+         */
+        override fun onConnect(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+        ): MediaSession.ConnectionResult {
+            val ours = controller.packageName == packageName
+            return if (ours || controller.isTrusted) {
+                MediaSession.ConnectionResult.AcceptedResultBuilder(session).build()
+            } else {
+                MediaSession.ConnectionResult.reject()
+            }
+        }
+
         override fun onAddMediaItems(
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>,
         ): ListenableFuture<MutableList<MediaItem>> =
-            Futures.immediateFuture(mediaItems.map { it.withPlayableUri() }.toMutableList())
+            Futures.immediateFuture(mediaItems.mapNotNull { it.withPlayableUri() }.toMutableList())
     }
 
     /**
