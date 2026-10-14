@@ -4,7 +4,8 @@ A standalone Android music player for Final Fantasy soundtracks. Audio is stream
 
 ## Features
 
-- **Soundtrack catalog** — 25 games and collections in three sections: the VII Remake series (Remake, INTERmission, Rebirth), the main series I–XVI including X-2, and spin-offs (Tactics, Crisis Core and Reunion, Distant Worlds, Piano Collections), each with a Tracks tab and an Albums tab.
+- **Soundtrack catalog** — 25 games and collections in three sections: the main series I–XVI including X-2, the VII Remake series (Remake, INTERmission, Rebirth), and spin-offs (Tactics, Crisis Core and Reunion, Distant Worlds, Piano Collections), each with a Tracks tab and an Albums tab.
+- **Multi-select**: press and hold a soundtrack, tap more (or "Select all" for a section), then Play or Shuffle them as one queue.
 - **Search** with an optional "Final Fantasy only" filter, songs and albums tabs, and quick-pick suggestions.
 - **Own player** built on Media3 ExoPlayer: background playback, media notification, lock-screen and headset controls, audio focus, pause on headphone unplug.
 - **Now Playing** screen with seek bar, shuffle, repeat (all / one), favorite, and an editable queue.
