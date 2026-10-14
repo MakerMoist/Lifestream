@@ -28,6 +28,8 @@ jobs:
 
       - name: Run probe
         continue-on-error: true
+        env:
+          PROBE_OUT: ${{ runner.temp }}/report.md
         run: |
           chmod +x ./gradlew
           set -o pipefail
@@ -41,7 +43,7 @@ jobs:
       - name: Publish report
         if: always()
         run: |
-          if [ -f tools/probe/report.md ]; then cp tools/probe/report.md "$RUNNER_TEMP/report.md"; else echo "(no report)" > "$RUNNER_TEMP/report.md"; fi
+          [ -f "$RUNNER_TEMP/report.md" ] || echo "(no report)" > "$RUNNER_TEMP/report.md"
           tail -n 400 "$RUNNER_TEMP/probe.log" > "$RUNNER_TEMP/probe-log.txt" || true
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"

@@ -78,8 +78,9 @@ fun main(args: Array<String>) {
         summary.append("| ${game.id} | ${official.size} | $officialTracks | ${best?.let { "${it.title} (${it.trackCount})" } ?: "—"} |\n")
     }
 
-    File("report.md").writeText(summary.toString() + "\n" + out.toString())
-    println("wrote report.md")
+    val target = File(System.getenv("PROBE_OUT") ?: "report.md").absoluteFile
+    target.writeText(summary.toString() + "\n" + out.toString())
+    println("wrote $target")
 }
 
 private fun search(query: String, filter: String, pages: Int): List<InfoItem> {
