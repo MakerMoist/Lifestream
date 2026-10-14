@@ -62,7 +62,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -89,6 +88,7 @@ import com.lifestream.player.playback.PlayerConnection
 import com.lifestream.player.ui.components.Artwork
 import com.lifestream.player.ui.components.TrackActions
 import com.lifestream.player.ui.components.SectionLabel
+import com.lifestream.player.ui.components.VillainQuotes
 import com.lifestream.player.ui.components.villainQuotes
 import com.lifestream.player.ui.theme.LsColors
 
@@ -117,8 +117,8 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                         .statusBarsPadding()
                         .padding(top = 20.dp, bottom = 4.dp),
                 ) {
-                    // A random villain line each visit; tap it for another.
-                    var quoteIndex by rememberSaveable { mutableIntStateOf(villainQuotes.indices.random()) }
+                    // A new villain line every time Home is shown; tap it for another.
+                    var quoteIndex by remember { mutableIntStateOf(VillainQuotes.next()) }
                     val quote = villainQuotes[quoteIndex]
                     Column(
                         Modifier
@@ -127,7 +127,7 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
                             ) {
-                                quoteIndex = (villainQuotes.indices - quoteIndex).random()
+                                quoteIndex = VillainQuotes.next()
                             },
                     ) {
                         Text(
