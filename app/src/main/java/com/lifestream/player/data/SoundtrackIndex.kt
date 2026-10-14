@@ -62,6 +62,13 @@ object SoundtrackIndex {
 
     fun tracksFor(gameId: String): List<Track>? = _tracks.value[gameId]?.takeIf { it.isNotEmpty() }
 
+    /** The soundtrack a song belongs to: from the song itself, or by finding it in the index. */
+    fun gameOf(track: Track): Game? {
+        track.gameId?.let { id -> Catalog.game(id)?.let { return it } }
+        val id = _tracks.value.entries.firstOrNull { (_, list) -> list.any { it.id == track.id } }?.key
+        return id?.let { Catalog.game(it) }
+    }
+
     /** Loads any game that is missing or stale. Safe to call often. */
     fun ensureBuilt() {
         scope.launch {
@@ -183,7 +190,7 @@ object SoundtrackIndex {
             for (id in games.keys()) {
                 val g = games.getJSONObject(id)
                 val arr = g.getJSONArray("tracks")
-                map[id] = (0 until arr.length()).map { Track.fromJson(arr.getJSONObject(it)) }
+                map[id] = (0 until arr.length()).map { Track.fromJson(arr.getJSONObject(it)).copy(gameId = id) }
                 stamps[id] = g.optLong("built")
             }
             builtAt.clear()

@@ -10,6 +10,8 @@ data class Track(
     val artist: String,
     val durationSec: Long,
     val thumbnail: String?,
+    /** Catalog id of the soundtrack this song came from (for "Open title"). */
+    val gameId: String? = null,
 ) {
     fun toJson(): JSONObject = JSONObject()
         .put("id", id)
@@ -17,6 +19,10 @@ data class Track(
         .put("artist", artist)
         .put("duration", durationSec)
         .put("thumb", thumbnail ?: "")
+        .put("game", gameId ?: "")
+
+    /** A link anyone can open, for sharing. */
+    val youTubeUrl: String get() = "https://www.youtube.com/watch?v=$id"
 
     companion object {
         fun fromJson(o: JSONObject) = Track(
@@ -25,6 +31,7 @@ data class Track(
             artist = o.optString("artist"),
             durationSec = o.optLong("duration", -1),
             thumbnail = o.optString("thumb").ifBlank { null },
+            gameId = o.optString("game").ifBlank { null },
         )
     }
 }

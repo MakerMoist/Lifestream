@@ -2,6 +2,8 @@ package com.lifestream.player.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,8 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.MusicNote
@@ -44,7 +44,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
-import com.lifestream.player.data.Library
 import com.lifestream.player.data.Track
 import com.lifestream.player.data.formatDuration
 import com.lifestream.player.playback.PlayerConnection
@@ -84,6 +83,7 @@ fun Artwork(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TrackRow(
     track: Track,
@@ -91,17 +91,16 @@ fun TrackRow(
     modifier: Modifier = Modifier,
     leading: String? = null,
     subtitle: String? = null,
+    /** Set when the row is shown inside a playlist, so the menu can offer "Remove". */
+    playlistId: String? = null,
 ) {
     val playerState by PlayerConnection.state.collectAsStateWithLifecycle()
-    val favorites by Library.favorites.collectAsStateWithLifecycle()
     val isCurrent = playerState.current?.id == track.id
-    val isFavorite = favorites.any { it.id == track.id }
-    var menuOpen by remember { mutableStateOf(false) }
 
     Row(
         modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .combinedClickable(onClick = onClick, onLongClick = { TrackActions.show(track, playlistId) })
             .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -147,27 +146,8 @@ fun TrackRow(
             )
         }
         Box {
-            IconButton(onClick = { menuOpen = true }) {
-                Icon(Icons.Rounded.MoreVert, "More options", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                DropdownMenuItem(
-                    text = { Text("Play next") },
-                    leadingIcon = { Icon(Icons.Rounded.QueuePlayNext, null) },
-                    onClick = { PlayerConnection.playNext(track); menuOpen = false },
-                )
-                DropdownMenuItem(
-                    text = { Text("Add to queue") },
-                    leadingIcon = { Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, null) },
-                    onClick = { PlayerConnection.addToQueue(track); menuOpen = false },
-                )
-                DropdownMenuItem(
-                    text = { Text(if (isFavorite) "Remove from favorites" else "Add to favorites") },
-                    leadingIcon = {
-                        Icon(if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, null)
-                    },
-                    onClick = { Library.toggleFavorite(track); menuOpen = false },
-                )
+            IconButton(onClick = { TrackActions.show(track, playlistId) }) {
+                Icon(Icons.Rounded.MoreVert, "Song options", tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

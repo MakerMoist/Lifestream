@@ -53,13 +53,14 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -87,7 +88,8 @@ import com.lifestream.player.ui.theme.LsColors
 @Composable
 fun HomeScreen(onOpenGame: (Game) -> Unit) {
     val recents by Library.recents.collectAsStateWithLifecycle()
-    val favorites by Library.favorites.collectAsStateWithLifecycle()
+    val playlists by Library.playlists.collectAsStateWithLifecycle()
+    val playlistSongs = remember(playlists) { playlists.flatMap { it.tracks }.distinctBy { it.id } }
     val vm: HomeViewModel = viewModel()
     val selecting = vm.selected.isNotEmpty()
 
@@ -129,11 +131,11 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                             Spacer(Modifier.width(8.dp))
                             Text("Surprise me")
                         }
-                        if (favorites.isNotEmpty()) {
-                            FilledTonalButton(onClick = { PlayerConnection.playTracks(favorites, shuffle = true) }) {
-                                Icon(Icons.Rounded.Favorite, null, Modifier.size(18.dp))
+                        if (playlistSongs.isNotEmpty()) {
+                            FilledTonalButton(onClick = { PlayerConnection.playTracks(playlistSongs, shuffle = true) }) {
+                                Icon(Icons.AutoMirrored.Rounded.QueueMusic, null, Modifier.size(18.dp))
                                 Spacer(Modifier.width(8.dp))
-                                Text("Shuffle favorites")
+                                Text("Shuffle playlists")
                             }
                         }
                     }

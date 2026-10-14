@@ -13,9 +13,9 @@ A standalone Android music player for Final Fantasy soundtracks. Audio is stream
 - **One version per song**: remasters, piano/orchestral takes and duplicates collapse to a single entry (the original soundtrack's version wins).
 - **Strict search**: searches only the songs in Lifestream's own soundtracks (an on-device index built in the background) and the catalog's game names — e.g. "Prelude", "FF7", "Rebirth". Nothing comes from open YouTube search.
 - **Own player** built on Media3 ExoPlayer: background playback, media notification, lock-screen and headset controls, audio focus, pause on headphone unplug.
-- **Now Playing** screen: swipe the album art left or right to skip or go back, plus seek bar, shuffle, repeat (all / one), favorite, and an editable queue.
-- **Queue tools** on every track: play next, add to queue, add to favorites.
-- **Library**: favorites and listening history, saved on the device.
+- **Now Playing** screen: swipe the album art left or right to skip or go back; seek bar, shuffle, repeat (all / one), Up Next beside the title, and ⋮ for the song's options.
+- **Song options**: press and hold any song (or tap ⋮) for Play next, Add to queue, Add to playlist, Open its soundtrack, and Share (sends the YouTube link).
+- **Playlists**: up to 5 renamable playlists mixing songs from any soundtrack, plus listening history — all saved on the device. (Old favorites became a "Favorites" playlist.)
 - **Settings → App updates**: checks this repo's `latest` release, downloads the new APK, verifies its SHA-256 and signing key, and hands it to Android's installer.
 - **Recovery**: expired or rejected stream URLs are re-resolved and retried automatically.
 
@@ -46,7 +46,7 @@ YouTube changes its internals from time to time. When that happens, bump the New
 - The playback service only accepts connections from Lifestream itself and trusted system controllers (System UI media controls, Bluetooth/car via the platform); other apps are rejected.
 - Track ids are validated as YouTube video ids before they're used in any URL; queued items can only point at Lifestream's own `lifestream://` tracks, and artwork must be a plain HTTPS URL.
 - Audio is fetched over HTTPS only, from `*.googlevideo.com` only, and redirects can't downgrade to HTTP. Cleartext traffic is disabled app-wide and only system CAs are trusted.
-- Favorites, history and the soundtrack index stay on the device (no cloud backup or device-to-device transfer).
+- Playlists, history and the soundtrack index stay on the device (no cloud backup or device-to-device transfer).
 - CI runs with read-only tokens; only the publish job (pushes to `main`) can write, using the `gh` CLI rather than third-party actions. Workflow inputs are passed as data and validated.
 
 ## Card art

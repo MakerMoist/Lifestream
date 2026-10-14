@@ -7,6 +7,7 @@ import androidx.media3.common.MediaMetadata
 import com.lifestream.player.data.Track
 
 private const val EXTRA_DURATION = "ls_duration"
+private const val EXTRA_GAME = "ls_game"
 
 fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
     .setMediaId(id)
@@ -19,7 +20,10 @@ fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
             .setIsPlayable(true)
             .setIsBrowsable(false)
             .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-            .setExtras(Bundle().apply { putLong(EXTRA_DURATION, durationSec) })
+            .setExtras(Bundle().apply {
+                putLong(EXTRA_DURATION, durationSec)
+                gameId?.let { putString(EXTRA_GAME, it) }
+            })
             .build()
     )
     .build()
@@ -30,6 +34,7 @@ fun MediaItem.toTrack(): Track = Track(
     artist = mediaMetadata.artist?.toString() ?: "",
     durationSec = mediaMetadata.extras?.getLong(EXTRA_DURATION, -1L) ?: -1L,
     thumbnail = mediaMetadata.artworkUri?.toString(),
+    gameId = mediaMetadata.extras?.getString(EXTRA_GAME),
 )
 
 /**

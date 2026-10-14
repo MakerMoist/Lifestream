@@ -55,6 +55,8 @@ import com.lifestream.player.ui.components.MiniPlayer
 import com.lifestream.player.ui.screens.GameScreen
 import com.lifestream.player.ui.screens.HomeScreen
 import com.lifestream.player.ui.screens.LibraryScreen
+import com.lifestream.player.ui.screens.PlaylistScreen
+import com.lifestream.player.ui.components.TrackActionsHost
 import com.lifestream.player.ui.screens.NowPlayingScreen
 import com.lifestream.player.ui.screens.SearchScreen
 import com.lifestream.player.ui.screens.SettingsScreen
@@ -128,7 +130,13 @@ private fun LifestreamRoot() {
                 composable("search") {
                     SearchScreen(onOpenGame = { nav.navigate("game/${it.id}") })
                 }
-                composable("library") { LibraryScreen() }
+                composable("library") {
+                    LibraryScreen(onOpenPlaylist = { nav.navigate("playlist/${it.id}") })
+                }
+                composable("playlist/{id}") { entry ->
+                    val id = entry.arguments?.getString("id") ?: return@composable
+                    PlaylistScreen(playlistId = id, onBack = { nav.popBackStack() })
+                }
                 composable("settings") { SettingsScreen() }
                 composable("game/{id}") { entry ->
                     val game = entry.arguments?.getString("id")?.let { Catalog.game(it) }
@@ -146,6 +154,12 @@ private fun LifestreamRoot() {
         ) {
             NowPlayingScreen(onClose = { showPlayer = false })
         }
+
+        // The song options menu (long-press / ⋮ on any song, and ⋮ on Now Playing).
+        TrackActionsHost(onOpenGame = { game ->
+            showPlayer = false
+            nav.navigate("game/${game.id}")
+        })
     }
 }
 

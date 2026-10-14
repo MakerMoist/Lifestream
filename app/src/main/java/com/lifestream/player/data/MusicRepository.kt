@@ -165,7 +165,7 @@ object MusicRepository {
                 extrasDone = true
                 out += findExtras(game)
             }
-            return Paged(out, if (index < max || !extrasDone) More else null)
+            return Paged(out.map { it.copy(gameId = game.id) }, if (index < max || !extrasDone) More else null)
         }
     }
 

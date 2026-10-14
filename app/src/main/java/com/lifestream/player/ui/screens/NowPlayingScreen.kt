@@ -38,10 +38,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Repeat
@@ -86,13 +85,13 @@ import com.lifestream.player.data.formatDuration
 import com.lifestream.player.playback.PlayerConnection
 import com.lifestream.player.playback.PlayerUiState
 import com.lifestream.player.ui.components.Artwork
+import com.lifestream.player.ui.components.TrackActions
 import com.lifestream.player.ui.theme.LsColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NowPlayingScreen(onClose: () -> Unit) {
     val state by PlayerConnection.state.collectAsStateWithLifecycle()
-    val favorites by Library.favorites.collectAsStateWithLifecycle()
     val track = state.current
     var showQueue by remember { mutableStateOf(false) }
 
@@ -153,8 +152,8 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             )
                         }
                     }
-                    IconButton(onClick = { showQueue = true }) {
-                        Icon(Icons.AutoMirrored.Rounded.QueueMusic, "Queue")
+                    IconButton(onClick = { track?.let { TrackActions.show(it) } }, enabled = track != null) {
+                        Icon(Icons.Rounded.MoreVert, "Song options")
                     }
                 }
 
@@ -180,15 +179,9 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    if (track != null) {
-                        val fav = favorites.any { it.id == track.id }
-                        IconButton(onClick = { Library.toggleFavorite(track) }) {
-                            Icon(
-                                if (fav) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                                if (fav) "Remove from favorites" else "Add to favorites",
-                                tint = if (fav) LsColors.Gold else Color.White,
-                            )
-                        }
+                    // Up next sits beside the title.
+                    IconButton(onClick = { showQueue = true }) {
+                        Icon(Icons.AutoMirrored.Rounded.QueueMusic, "Up next")
                     }
                 }
 
