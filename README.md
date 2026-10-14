@@ -18,7 +18,7 @@ A standalone Android music player for Final Fantasy soundtracks. Audio is stream
 - **Playlists**: up to 5 renamable playlists mixing songs from any soundtrack, plus listening history — all saved on the device. (Old favorites became a "Favorites" playlist.)
 - **Saved songs**: recently played songs are kept on the phone (Off / 250 MB / 500 MB / 1 GB / 2 GB, default 1 GB; oldest-played removed first), so replays don't stream again and fully played songs work offline. Settings → Saved songs shows the space used and has a Clear cache button.
 - **Search keyboard**: tapping the Search tab opens the keyboard in the search box straight away (switchable in Settings → Search).
-- **Settings → Theme**: 11 colour themes — the original Lifestream look plus ten inspired by Final Fantasy VI, VII, VIII, IX, X, XII, XIII, XIV, XV and XVI (Narshe, Midgar, Balamb, Alexandria, Zanarkand, Ivalice, Cocoon, Eorzea, Lucis, Valisthea). The choice is remembered and applies instantly.
+- **Settings → Themes** (its own page): 11 colour themes — the original Lifestream look plus ten inspired by Final Fantasy VI, VII, VIII, IX, X, XII, XIII, XIV, XV and XVI (Narshe, Midgar, Balamb, Alexandria, Zanarkand, Ivalice, Cocoon, Eorzea, Lucis, Valisthea). The choice is remembered and applies instantly.
 - **Settings → App updates**: checks this repo's `latest` release, downloads the new APK, verifies its SHA-256 and signing key, and hands it to Android's installer.
 - **Recovery**: expired or rejected stream URLs are re-resolved and retried automatically.
 

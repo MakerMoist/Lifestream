@@ -61,6 +61,7 @@ import com.lifestream.player.ui.screens.NowPlayingScreen
 import com.lifestream.player.ui.screens.SearchScreen
 import com.lifestream.player.ui.screens.SearchFocus
 import com.lifestream.player.ui.screens.SettingsScreen
+import com.lifestream.player.ui.screens.ThemesScreen
 import com.lifestream.player.ui.theme.LifestreamTheme
 import com.lifestream.player.ui.theme.LsColors
 
@@ -137,7 +138,8 @@ private fun LifestreamRoot() {
                     val id = entry.arguments?.getString("id") ?: return@composable
                     PlaylistScreen(playlistId = id, onBack = { nav.popBackStack() })
                 }
-                composable("settings") { SettingsScreen() }
+                composable("settings") { SettingsScreen(onOpenThemes = { nav.navigate("settings/themes") }) }
+                composable("settings/themes") { ThemesScreen(onBack = { nav.popBackStack() }) }
                 composable("game/{id}") { entry ->
                     val game = entry.arguments?.getString("id")?.let { Catalog.game(it) }
                     if (game != null) {
