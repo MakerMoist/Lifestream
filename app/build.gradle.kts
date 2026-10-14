@@ -24,9 +24,10 @@ android {
         if (releaseKeystore != null) {
             create("release") {
                 storeFile = releaseKeystore
-                storePassword = System.getenv("LIFESTREAM_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("LIFESTREAM_KEY_ALIAS")
-                keyPassword = System.getenv("LIFESTREAM_KEY_PASSWORD")
+                // Trim stray whitespace picked up when the secrets were pasted.
+                storePassword = System.getenv("LIFESTREAM_KEYSTORE_PASSWORD")?.trim()
+                keyAlias = System.getenv("LIFESTREAM_KEY_ALIAS")?.trim()
+                keyPassword = System.getenv("LIFESTREAM_KEY_PASSWORD")?.trim()
             }
         }
     }
