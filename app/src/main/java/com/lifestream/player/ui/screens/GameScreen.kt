@@ -76,7 +76,9 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
     val matches by produceState(emptyList<Track>(), vm.filter, tracks) {
         val query = vm.filter
         value = if (query.isBlank()) emptyList()
-        else withContext(Dispatchers.Default) { tracks.filter { Matching.queryTokens(query).isEmpty() || Matching.songScore(it, query) != null } }
+        else withContext(Dispatchers.Default) { tracks.filter {
+            (Matching.queryTokens(query).isEmpty() && !Matching.hasJapanese(query)) || Matching.songScore(it, query) != null
+        } }
     }
     // A search covers the whole soundtrack, so keep loading pages while one is active.
     LaunchedEffect(filtering, tracks.size, vm.tracks.loading) {

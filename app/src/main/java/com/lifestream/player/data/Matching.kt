@@ -142,17 +142,29 @@ object Matching {
             ?: ok.minByOrNull { normalize(it.title).length }
     }
 
-    /** True if [query] matches [title] (see [searchScore]). Used by each game's search box. */
     /**
      * How well [query] matches a song by any of its names: the English title, the original
-     * Japanese title, or (for English letters) how the Japanese title sounds. Null if none.
+     * Japanese title (typed in Japanese), or, for English letters, how the Japanese title sounds
+     * ("midgardsormr" → ミドガルズオルム). Null if none.
      */
     fun songScore(track: Track, query: String, extraTokens: List<String> = emptyList()): Int? {
         searchScore(query, track.title, extraTokens)?.let { return it }
-        val alt = track.altTitle ?: track.title.takeIf { Romaji.hasKana(it) } ?: return null
+        val alt = track.altTitle ?: track.title.takeIf { hasJapanese(it) } ?: return null
+        // Typed in Japanese: match the Japanese name directly.
+        if (hasJapanese(query)) return if (compactJapanese(alt).contains(compactJapanese(query))) 6 else null
         searchScore(query, alt, extraTokens)?.let { return it }
         return if (Romaji.soundsLike(query, alt)) 1 else null
     }
+
+    private val japaneseChars = Regex("[\\u3040-\\u30FF\\u3400-\\u4DBF\\u4E00-\\u9FFF\\uFF66-\\uFF9F]")
+
+    fun hasJapanese(text: String) = japaneseChars.containsMatchIn(text)
+
+    /** Japanese text with width variants unified and spacing/punctuation removed. */
+    private fun compactJapanese(text: String): String =
+        Normalizer.normalize(text, Normalizer.Form.NFKC).lowercase(Locale.ROOT).filter { it.isLetterOrDigit() }
+
+    /** True if [query] matches [title] (see [searchScore]). Used by each game's search box. */
 
     fun titleMatches(title: String, query: String): Boolean =
         queryTokens(query).isEmpty() || searchScore(query, title) != null
@@ -196,7 +208,6 @@ object Matching {
             .any { editDistance(q, it, allowed) <= allowed }
     }
 
-    /** True if some slice of [text] is within a typo or two of [needle] (spacing already removed). */
     /** True if [needle] is within [allowed] edits of [text] or of some stretch of it. */
     fun withinEdits(needle: String, text: String, allowed: Int): Boolean {
         if (editDistance(needle, text, allowed) <= allowed) return true
@@ -209,6 +220,7 @@ object Matching {
         return false
     }
 
+    /** True if some slice of [text] is within a typo or two of [needle] (spacing already removed). */
     private fun fuzzyContains(text: String, needle: String): Boolean {
         val allowed = if (needle.length >= 10) 2 else 1
         for (len in (needle.length - allowed)..(needle.length + allowed)) {

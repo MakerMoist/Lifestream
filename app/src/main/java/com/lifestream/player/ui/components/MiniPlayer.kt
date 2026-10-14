@@ -122,8 +122,9 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Mo
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                IconButton(onClick = { PlayerConnection.previous() }) {
-                    Icon(Icons.Rounded.SkipPrevious, "Previous")
+                // A small previous button beside play.
+                IconButton(onClick = { PlayerConnection.previous() }, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Rounded.SkipPrevious, "Previous", Modifier.size(20.dp))
                 }
                 Box(contentAlignment = Alignment.Center) {
                     if (state.isBuffering) {

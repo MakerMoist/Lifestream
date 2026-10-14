@@ -82,10 +82,15 @@ object ArtistCredits {
         return name
     }
 
-    /** Applies [forSong] to a stored or freshly loaded track. */
+    /**
+     * Applies [forSong] to a stored or freshly loaded track, moves it to its soundtrack's current
+     * id (merged soundtracks), and gives it the soundtrack's official cover where one is set.
+     */
     fun fix(track: Track): Track {
         val gameId = Catalog.currentId(track.gameId)
         val artist = forSong(gameId, track.artist)
-        return if (artist == track.artist && gameId == track.gameId) track else track.copy(artist = artist, gameId = gameId)
+        val cover = gameId?.let { Catalog.game(it)?.coverArt } ?: track.thumbnail
+        if (artist == track.artist && gameId == track.gameId && cover == track.thumbnail) return track
+        return track.copy(artist = artist, gameId = gameId, thumbnail = cover)
     }
 }

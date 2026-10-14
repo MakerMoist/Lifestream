@@ -114,6 +114,11 @@ data class Game(
     val albumQueries: List<String> = emptyList(),
     /** How many official albums the game's list plays through. */
     val maxAlbums: Int = 8,
+    /**
+     * Official album cover used for every song, for games whose songs come from a fan upload
+     * (whose video thumbnails aren't the album art).
+     */
+    val coverArt: String? = null,
 )
 
 /**
