@@ -118,6 +118,15 @@ object Matching {
     fun titleTokens(game: Game): List<String> =
         normalize("${game.title} ${game.numeral}").split(' ').filter { it.isNotEmpty() }
 
+    private val bareFollowers = setOf("ORIGINAL", "OST", "SOUNDTRACK", "PIXEL", "PS", "OSV")
+
+    /** "FINAL FANTASY Original Soundtrack" / "FINAL FANTASY (PS Version)…" — not "FINAL FANTASY Legend". */
+    private fun bareTitleIsSoundtrack(normalized: String): Boolean {
+        val tokens = normalized.split(' ')
+        val i = tokens.windowed(2).indexOfFirst { it[0] == "FINAL" && it[1] == "FANTASY" }
+        return i >= 0 && tokens.getOrNull(i + 2) in bareFollowers
+    }
+
     fun isJunk(title: String): Boolean {
         val t = normalize(title)
         return junk.any { hasWord(t, it) }
@@ -132,7 +141,7 @@ object Matching {
         if (spec.anyOf.isNotEmpty() && spec.anyOf.none { hasWord(t, it) }) return false
         if (spec.numerals.isEmpty()) return true
         val found = numerals(t)
-        if (found.isEmpty()) return spec.allowBare
+        if (found.isEmpty()) return spec.allowBare && bareTitleIsSoundtrack(t)
         return found.any { it in spec.numerals }
     }
 
@@ -152,8 +161,10 @@ object Matching {
 
     private val versionWords = Regex(
         "\\b(final fantasy|ost|soundtrack|version|ver|remaster|remastered|piano|orchestra|orchestral|" +
-            "arrange|arranged|arrangement|instrumental|extended|cover|live|acoustic|remix|edit|mix)\\b"
+            "arrange|arranged|arrangement|instrumental|extended|cover|live|acoustic|remix|edit|mix|ff[ivx0-9]*)\\b"
     )
+
+    private val numberingOnly = Regex("^(disc|cd|track|no|#|\\s|\\d|[.\\-])+$")
 
     /**
      * A key that is the same for every version of a song, so lists keep just one:
@@ -165,7 +176,8 @@ object Matching {
         t = Regex("[(\\[【〔{「].*?[)\\]】〕}」]").replace(t, " ")
         t = Regex("[~〜].*?[~〜]").replace(t, " ")
         val segments = t.split(Regex("\\s+[-–—|/]\\s+|\\s*[:：]\\s+")).map { it.trim() }.filter { it.isNotEmpty() }
-        t = segments.firstOrNull { !versionWords.containsMatchIn(it) } ?: segments.firstOrNull() ?: t
+        t = segments.firstOrNull { !versionWords.containsMatchIn(it) && !numberingOnly.matches(it) }
+            ?: segments.firstOrNull() ?: t
         t = Regex("^(disc\\s*\\d+\\s*)?(track\\s*)?\\d{1,3}(?=[.\\s_-])[.\\s_-]+").replace(t, "")
         t = Regex("[^\\p{L}\\p{N}]+").replace(t, " ").trim()
         return t.ifEmpty { title.lowercase(Locale.ROOT).trim() }
@@ -181,10 +193,14 @@ object Matching {
         "ARRANGEMENT", "ARRANGEMENTS", "VOCAL", "VOCALS", "ACOUSTIC", "GUITAR", "JAZZ", "BRASS", "STRINGS",
         "CONCERT", "LIVE", "PLUS", "SELECTION", "SELECTIONS", "COLLECTION", "COLLECTIONS", "BEST", "SPECIAL",
         "DISTANT WORLDS", "TRIBUTE", "COVER", "COVERS", "REMIX", "REMIXES", "REMIXED", "MUSIC BOX", "SINGLE",
-        "BATTLE TRAX", "BLACK MAGES", "PRELUDE",
+        "BATTLE TRAX", "BLACK MAGES", "PRELUDE", "PREVIEW", "KINGSGLAIVE", "BROTHERHOOD", "GIFTS FROM VANA",
+        "LIGHTNING RETURNS", "ADVENT CHILDREN", "SPIRITS WITHIN",
     )
 
     private val remasterWords = listOf("REMASTER", "REMASTERED", "HD", "PIXEL", "REMASTERS")
+
+    /** Later re-releases of a game's music; the original release should play first. */
+    private val laterVersionWords = listOf("PS VERSION", "DS VERSION", "DS EDITION", "ZODIAC AGE", "DLC", "VOLUME 2", "VOL 2")
 
     /**
      * True only for a game's official original soundtrack: titled as an OST (or the older
@@ -208,7 +224,57 @@ object Matching {
         if (hasWord(t, "ORIGINAL SOUNDTRACK") || hasWord(t, "ORIGINAL SOUND VERSION")) s += 2
         if (isOfficialArtist(album.artist)) s += 3
         if (remasterWords.any { hasWord(t, it) }) s -= 3
+        if (laterVersionWords.any { hasWord(t, it) }) s -= 1
         if (album.trackCount >= 20) s += 1
         return s
+    }
+
+    // ---- Second source: complete soundtrack playlists, for games with no official album ----
+
+    private val notACompleteSoundtrack = listOf(
+        "GAMEPLAY", "WALKTHROUGH", "LONGPLAY", "LETS PLAY", "LET S PLAY", "UNRELEASED", "EXTENDED", "BEST",
+        "MINI", "THEMES", "FAVORITE", "FAVOURITE", "FAVORITES", "MY", "HOURS", "HOUR", "LOOP", "LOOPED",
+        "REACTION", "TRAILER",
+    )
+
+    /**
+     * A YouTube playlist that looks like the game's complete original soundtrack (the game's own
+     * audio, uploaded track by track): named for that game and as an OST, not an arrangement,
+     * medley, extended loop or gameplay video list, and long enough to be the whole thing.
+     */
+    fun isSoundtrackPlaylist(playlist: Album, game: Game): Boolean {
+        val t = normalize(playlist.title)
+        if (!matches(game.match, playlist.title)) return false
+        if (ostPhrases.none { hasWord(t, it) }) return false
+        if (notTheOriginal.any { hasWord(t, it) }) return false
+        if (notACompleteSoundtrack.any { hasWord(t, it) }) return false
+        return playlist.trackCount in 20..400
+    }
+
+    /** Official channel uploads first, then the most complete playlist. */
+    fun playlistScore(playlist: Album): Long {
+        var s = playlist.trackCount
+        if (isOfficialArtist(playlist.artist)) s += 1000
+        return s
+    }
+
+    /**
+     * Video titles in fan playlists carry extra noise: "FFX-2 OST - 01 - Eternity ~Memory of
+     * Lightwaves~ [HD]" → "Eternity ~Memory of Lightwaves~". Picks the part that is the song's
+     * name (not the game, "OST", or a track number) and drops quality tags.
+     */
+    fun cleanTrackTitle(raw: String, game: Game): String {
+        val gameWords = titleTokens(game).toSet() + setOf(
+            "FINAL", "FANTASY", "FF", "OST", "SOUNDTRACK", "ORIGINAL", "MUSIC", "DISC", "CD", "TRACK", "BGM",
+        )
+        var t = Normalizer.normalize(raw, Normalizer.Form.NFKC)
+        t = Regex("[\\[(【](?:[^\\])】]*\\b(?:hd|hq|ost|audio|official|soundtrack|1080p|720p|4k|lyrics|extended|ps\\d|ver\\.?)\\b[^\\])】]*)[\\])】]",
+            RegexOption.IGNORE_CASE).replace(t, " ")
+        val parts = t.split(Regex("\\s+[-–—|/]\\s+|\\s*[:：]\\s+")).map { it.trim() }.filter { it.isNotEmpty() }
+        val song = parts.firstOrNull { part ->
+            val tokens = normalize(part).split(' ').filter { it.isNotEmpty() }
+            tokens.isNotEmpty() && !tokens.all { it in gameWords || isNumeral(it) || it.all(Char::isDigit) || it.startsWith("FF") }
+        } ?: parts.lastOrNull() ?: raw
+        return Regex("^\\s*(?:disc\\s*\\d+\\s*)?(?:track\\s*)?\\d{1,3}(?=[.\\s_)-])[.\\s_)-]+").replace(song, "").trim().ifEmpty { raw }
     }
 }

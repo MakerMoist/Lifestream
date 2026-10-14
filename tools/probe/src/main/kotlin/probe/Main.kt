@@ -14,73 +14,107 @@ import org.schabi.newpipe.extractor.localization.Localization
 import org.schabi.newpipe.extractor.playlist.PlaylistInfo
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 import org.schabi.newpipe.extractor.search.SearchInfo
-import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQueryHandlerFactory as F
 import java.io.File
+import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQueryHandlerFactory as F
 
 /**
- * For every game in the catalog, shows what YouTube Music actually returns and what the app's
- * rules make of it: official albums picked, every album result with match flags, and the best
- * full-soundtrack playlists (the candidate "second source" for gaps).
+ * Runs the same soundtrack pipeline as the app (official albums → playlist fallback, title
+ * cleaning, one version per song) for every catalog game against YouTube Music, and writes
+ * a report of what each game would play.
  */
 fun main(args: Array<String>) {
     NewPipe.init(OkHttpDownloader(Http.client), Localization("en", "US"), ContentCountry("US"))
     val only = args.toSet()
-    val out = StringBuilder("# Soundtrack probe\n\n")
-    val summary = StringBuilder("## Summary\n\n| game | official albums | official tracks | best playlist |\n|---|---|---|---|\n")
+    val detail = StringBuilder()
+    val summary = StringBuilder(
+        "## Summary\n\n| game | source | albums used | songs (1 version each) | first songs |\n|---|---|---|---|---|\n"
+    )
 
     for (game in Catalog.games.filter { only.isEmpty() || it.id in only }) {
         println("probing ${game.id}")
-        out.append("## ${game.title} (`${game.id}`)\n\n")
-        val albums = LinkedHashMap<String, Album>()
-        for (q in listOf(game.query, "${game.title} soundtrack")) {
-            try {
-                search(q, F.MUSIC_ALBUMS, pages = 2).mapNotNull { (it as? PlaylistInfoItem)?.toAlbum() }
-                    .forEach { albums.putIfAbsent(it.url, it) }
-            } catch (e: Exception) {
-                out.append("- album search failed for \"$q\": ${e.javaClass.simpleName}: ${e.message}\n")
-            }
-        }
-        val official = albums.values
-            .filter { Matching.matches(game.match, it.title) && Matching.isOfficialSoundtrack(it) }
-            .sortedByDescending { Matching.score(it, game) }
-
-        var officialTracks = 0
-        out.append("**Official picked (${official.size})**\n\n")
-        for (a in official) {
-            val n = runCatching { PlaylistInfo.getInfo(ServiceList.YouTube, a.url).streamCount }.getOrDefault(-1L)
-            officialTracks += n.coerceAtLeast(0).toInt()
-            out.append("- ${a.title} — *${a.artist}* — ${a.trackCount} listed / $n loaded — score ${Matching.score(a, game)}\n")
-        }
-        out.append("\n**All album results**\n\n")
-        for (a in albums.values) {
-            val m = if (Matching.matches(game.match, a.title)) "M" else "-"
-            val o = if (Matching.isOfficialSoundtrack(a)) "O" else "-"
-            out.append("- `$m$o` ${a.title} — *${a.artist}* — ${a.trackCount}\n")
+        detail.append("## ${game.title} (`${game.id}`)\n\n")
+        val sources = try {
+            sourcesFor(game, detail)
+        } catch (e: Exception) {
+            detail.append("- FAILED: ${e.javaClass.simpleName}: ${e.message}\n\n")
+            summary.append("| ${game.id} | error | | | ${e.javaClass.simpleName} |\n")
+            continue
         }
 
-        out.append("\n**Playlist candidates**\n\n")
-        val playlists = LinkedHashMap<String, Album>()
-        for (q in listOf("${game.title} OST", "${game.title} original soundtrack full")) {
-            try {
-                search(q, F.PLAYLISTS, pages = 1).mapNotNull { (it as? PlaylistInfoItem)?.toAlbum() }
-                    .forEach { playlists.putIfAbsent(it.url, it) }
+        val songs = LinkedHashMap<String, String>()
+        var used = 0
+        for (album in sources.take(8)) {
+            val titles = try {
+                allTitles(album.url)
             } catch (e: Exception) {
-                out.append("- playlist search failed for \"$q\": ${e.javaClass.simpleName}: ${e.message}\n")
+                detail.append("- could not load ${album.title}: ${e.message}\n")
+                continue
+            }
+            if (titles.size < 4 && sources.size > 1) {
+                detail.append("- skipped (too small, ${titles.size}): ${album.title}\n")
+                continue
+            }
+            used++
+            val clean = if (album.fromPlaylist) {
+                titles.filterNot { it.equals("Private video", true) || it.equals("Deleted video", true) }
+                    .map { Matching.cleanTrackTitle(it, game) }
+            } else titles
+            clean.forEach { songs.putIfAbsent(Matching.songKey(it), it) }
+            detail.append("- used: ${album.title} — *${album.artist}* — ${titles.size} tracks${if (album.fromPlaylist) " (playlist)" else ""}\n")
+            if (album.fromPlaylist) {
+                titles.take(6).zip(clean.take(6)).forEach { (raw, c) -> detail.append("    - `$raw` → **$c**\n") }
             }
         }
-        val ranked = playlists.values.sortedByDescending { if (Matching.matches(game.match, it.title)) 1 else 0 }
-        for (p in ranked.take(12)) {
-            val m = if (Matching.matches(game.match, p.title)) "M" else "-"
-            out.append("- `$m` ${p.title} — *${p.artist}* — ${p.trackCount} — ${p.url}\n")
+        detail.append("\n")
+        val source = when {
+            sources.isEmpty() -> "NONE"
+            sources.first().fromPlaylist -> "playlist"
+            else -> "official"
         }
-        out.append("\n")
-        val best = ranked.firstOrNull { Matching.matches(game.match, it.title) }
-        summary.append("| ${game.id} | ${official.size} | $officialTracks | ${best?.let { "${it.title} (${it.trackCount})" } ?: "—"} |\n")
+        val first = songs.values.take(4).joinToString("; ")
+        summary.append("| ${game.id} | $source | $used | ${songs.size} | $first |\n")
     }
 
     val target = File(System.getenv("PROBE_OUT") ?: "report.md").absoluteFile
-    target.writeText(summary.toString() + "\n" + out.toString())
+    target.writeText(summary.toString() + "\n# Detail\n\n" + detail.toString())
     println("wrote $target")
+}
+
+/** Mirrors MusicRepository.gameAlbums. */
+private fun sourcesFor(game: Game, log: StringBuilder): List<Album> {
+    val found = LinkedHashMap<String, Album>()
+    for (q in listOf(game.query, "${game.title} soundtrack")) {
+        if (found.isNotEmpty()) break
+        search(q, F.MUSIC_ALBUMS, pages = 2).mapNotNull { (it as? PlaylistInfoItem)?.toAlbum() }
+            .filter { Matching.matches(game.match, it.title) && Matching.isOfficialSoundtrack(it) }
+            .forEach { found.putIfAbsent(it.url, it) }
+    }
+    if (found.isEmpty()) {
+        val playlists = LinkedHashMap<String, Album>()
+        for (q in listOf("${game.title} OST", "${game.title} original soundtrack")) {
+            search(q, F.PLAYLISTS, pages = 1).mapNotNull { (it as? PlaylistInfoItem)?.toAlbum() }
+                .filter { Matching.isSoundtrackPlaylist(it, game) }
+                .forEach { playlists.putIfAbsent(it.url, it) }
+        }
+        log.append("- playlist candidates: ${playlists.values.joinToString { "${it.title} (${it.trackCount})" }}\n")
+        playlists.values.maxByOrNull { Matching.playlistScore(it) }?.let { found[it.url] = it.copy(fromPlaylist = true) }
+    }
+    return found.values.sortedByDescending { Matching.score(it, game) }
+}
+
+private fun allTitles(url: String): List<String> {
+    val yt = ServiceList.YouTube
+    val info = PlaylistInfo.getInfo(yt, url)
+    val titles = info.relatedItems.map { it.name ?: "" }.toMutableList()
+    var next = if (info.hasNextPage()) info.nextPage else null
+    var pages = 0
+    while (next != null && pages < 20) {
+        val more = PlaylistInfo.getMoreItems(yt, url, next)
+        titles += more.items.map { it.name ?: "" }
+        next = if (more.hasNextPage()) more.nextPage else null
+        pages++
+    }
+    return titles
 }
 
 private fun search(query: String, filter: String, pages: Int): List<InfoItem> {
@@ -106,6 +140,3 @@ private fun PlaylistInfoItem.toAlbum() = Album(
     trackCount = streamCount,
     thumbnail = null,
 )
-
-@Suppress("unused")
-private fun Game.label() = "$title ($id)"

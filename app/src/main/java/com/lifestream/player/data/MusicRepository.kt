@@ -79,6 +79,30 @@ object MusicRepository {
                 }
             }
 
+            // Second source: no official album on YouTube Music (e.g. X-2, Crisis Core Reunion,
+            // Lost Odyssey). Use the most complete upload of the game's own soundtrack instead.
+            if (found.isEmpty()) {
+                val playlists = LinkedHashMap<String, Album>()
+                for (query in listOf("${game.title} OST", "${game.title} original soundtrack")) {
+                    try {
+                        val handler = yt.searchQHFactory.fromQuery(
+                            query, listOf(YoutubeSearchQueryHandlerFactory.PLAYLISTS), "",
+                        )
+                        SearchInfo.getInfo(yt, handler).relatedItems
+                            .filterIsInstance<PlaylistInfoItem>()
+                            .mapNotNull { it.toAlbum() }
+                            .filter { Matching.isSoundtrackPlaylist(it, game) }
+                            .forEach { playlists.putIfAbsent(it.url, it) }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        lastError = e
+                    }
+                }
+                playlists.values.maxByOrNull { Matching.playlistScore(it) }
+                    ?.let { found[it.url] = it.copy(fromPlaylist = true) }
+            }
+
             if (found.isEmpty()) lastError?.let { throw it }
             val ranked = found.values.sortedByDescending { Matching.score(it, game) }
             if (ranked.isNotEmpty()) albumCache[game.id] = ranked
@@ -114,7 +138,19 @@ object MusicRepository {
                     if (index == 0 && albumPage == null) throw e
                     Paged(emptyList(), null)
                 }
-                out += result.items
+                val album = list[index]
+                val firstAndOnlyPage = albumPage == null && result.next == null
+                // Skip singles and previews that sit next to the real soundtrack.
+                val tooSmall = firstAndOnlyPage && result.items.size < 4 && max > 1
+                if (!tooSmall) {
+                    out += if (album.fromPlaylist) {
+                        result.items
+                            .filterNot { it.title.equals("Private video", true) || it.title.equals("Deleted video", true) }
+                            .map { it.copy(title = Matching.cleanTrackTitle(it.title, game)) }
+                    } else {
+                        result.items
+                    }
+                }
                 if (result.next != null) {
                     albumPage = result.next
                 } else {

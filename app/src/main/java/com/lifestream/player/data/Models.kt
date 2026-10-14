@@ -35,6 +35,8 @@ data class Album(
     val artist: String,
     val trackCount: Long,
     val thumbnail: String?,
+    /** True when this is a fan-uploaded full-soundtrack playlist used because no official album exists. */
+    val fromPlaylist: Boolean = false,
 )
 
 data class Game(
