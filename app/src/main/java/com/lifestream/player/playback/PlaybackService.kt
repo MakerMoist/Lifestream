@@ -17,6 +17,7 @@ import androidx.media3.session.MediaSessionService
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.lifestream.player.MainActivity
+import com.lifestream.player.data.AppSettings
 import com.lifestream.player.R
 
 /**
@@ -42,10 +43,13 @@ class PlaybackService : MediaSessionService() {
                 /* handleAudioFocus = */ true,
             )
             .setHandleAudioBecomingNoisy(true)
+            // Lets the player follow the phone's media volume (see VolumeListener).
+            .setDeviceVolumeControlEnabled(true)
             .setWakeMode(C.WAKE_MODE_NETWORK)
             .build()
 
         player.addListener(RecoveryListener(player))
+        player.addListener(VolumeListener(player))
 
         setMediaNotificationProvider(
             DefaultMediaNotificationProvider.Builder(this).build().apply {
@@ -109,6 +113,14 @@ class PlaybackService : MediaSessionService() {
             mediaItems: MutableList<MediaItem>,
         ): ListenableFuture<MutableList<MediaItem>> =
             Futures.immediateFuture(mediaItems.mapNotNull { it.withPlayableUri() }.toMutableList())
+    }
+
+    /** Pauses when the media volume is turned all the way down (switchable in Settings). */
+    private class VolumeListener(private val player: ExoPlayer) : Player.Listener {
+        override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
+            if (!AppSettings.pauseAtZeroVolume.value) return
+            if ((volume <= 0 || muted) && player.playWhenReady) player.pause()
+        }
     }
 
     /**

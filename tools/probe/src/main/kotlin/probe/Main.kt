@@ -26,6 +26,10 @@ import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQu
  */
 fun main(args: Array<String>) {
     NewPipe.init(OkHttpDownloader(Http.client), Localization("en", "US"), ContentCountry("US"))
+    if ("--extra" in args) {
+        runChecklist(args.filter { it != "--extra" }.toSet(), "extra.tsv")
+        return
+    }
     if ("--albums" in args) {
         runAlbums(args.filter { it != "--albums" }.toSet())
         return

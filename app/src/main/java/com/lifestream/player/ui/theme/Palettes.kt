@@ -21,40 +21,56 @@ data class Palette(
 object Palettes {
     private fun c(hex: Long) = Color(hex)
 
+    /**
+     * Every theme is dark, with text, buttons and highlights checked for strong contrast
+     * (body text at least 12:1 on the background, accents at least 7:1) and three clearly
+     * different highlight colours, so nothing blends together.
+     */
     val all: List<Palette> = listOf(
+        // glowing blue-green Lifestream, materia gold
         Palette("lifestream", "Lifestream", "The original look",
-            c(0xFF0A0E1C), c(0xFF111733), c(0xFF182046), c(0xFF8AD8FF), c(0xFF6EF2B5), c(0xFFE8C46A),
-            c(0xFFE6EAF7), c(0xFFB8C2E0)),
+            c(0xFF060A16), c(0xFF0E1530), c(0xFF18224A), c(0xFF7DD6FF), c(0xFF5CF2B0), c(0xFFF5C86A),
+            c(0xFFEEF3FF), c(0xFFB9C4E4)),
+        // mako green, reactor-fire orange, pale steel-yellow
         Palette("midgar", "Midgar", "Final Fantasy VII",
-            c(0xFF070B09), c(0xFF0E1612), c(0xFF17231D), c(0xFF5CF2A0), c(0xFF9DFFD0), c(0xFFE0703F),
-            c(0xFFE3EDE7), c(0xFFA9BDB2)),
+            c(0xFF050807), c(0xFF0C1612), c(0xFF15241D), c(0xFF4CF59E), c(0xFFFF8F3F), c(0xFFE4E8A0),
+            c(0xFFEAF4EE), c(0xFFA9C2B6)),
+        // opera magenta, snowfield ice, esper gold
         Palette("narshe", "Narshe", "Final Fantasy VI",
-            c(0xFF0F0712), c(0xFF1A0D20), c(0xFF271430), c(0xFFE68AE6), c(0xFF9FE3FF), c(0xFFF0C77A),
-            c(0xFFF2E8F4), c(0xFFC2AECA)),
+            c(0xFF0D0814), c(0xFF1A1029), c(0xFF281A3E), c(0xFFF7A1EC), c(0xFF8FE3FF), c(0xFFFFD27C),
+            c(0xFFF6EEFA), c(0xFFC6B4D2)),
+        // SeeD blue, Griever red, Garden ivory
         Palette("balamb", "Balamb", "Final Fantasy VIII",
-            c(0xFF0B0F14), c(0xFF141B24), c(0xFF1E2834), c(0xFF9CC8FF), c(0xFFE3ECF5), c(0xFFE8E0C8),
-            c(0xFFE6ECF2), c(0xFFA8B4C2)),
+            c(0xFF05090F), c(0xFF0D1622), c(0xFF172435), c(0xFF8CC8FF), c(0xFFFF6E7F), c(0xFFE9E0C6),
+            c(0xFFECF2F8), c(0xFFAEBCCB)),
+        // storybook gold, rose, Gaia green
         Palette("alexandria", "Alexandria", "Final Fantasy IX",
-            c(0xFF140A10), c(0xFF21121B), c(0xFF301A28), c(0xFFF2C46A), c(0xFFFF9FB0), c(0xFFE6A97A),
-            c(0xFFF4E9EE), c(0xFFC9AFBD)),
+            c(0xFF120810), c(0xFF22101E), c(0xFF33192D), c(0xFFFFCB5C), c(0xFFFF8FAE), c(0xFFB7E4A0),
+            c(0xFFFBEFF4), c(0xFFD2B6C6)),
+        // sunset orange, pyrefly cyan, dream violet
         Palette("zanarkand", "Zanarkand", "Final Fantasy X",
-            c(0xFF070E1F), c(0xFF0D1A33), c(0xFF15284A), c(0xFFFFB070), c(0xFF7FE6FF), c(0xFFFFD58A),
-            c(0xFFEAF1FA), c(0xFFAFC2DA)),
+            c(0xFF04101A), c(0xFF0B1B2B), c(0xFF13283F), c(0xFFFFA25C), c(0xFF6FE8FF), c(0xFFE3C6FF),
+            c(0xFFEAF4FA), c(0xFFAFC5D6)),
+        // sandstone gold, Mist teal, magicite lavender
         Palette("ivalice", "Ivalice", "Final Fantasy XII",
-            c(0xFF120D07), c(0xFF1E160C), c(0xFF2C2113), c(0xFFE8B25A), c(0xFF5FD3C6), c(0xFFF2D79A),
-            c(0xFFF2EADC), c(0xFFC4B49A)),
+            c(0xFF110C07), c(0xFF1E160D), c(0xFF2D2215), c(0xFFF0C25E), c(0xFF4ED6C8), c(0xFFCDB8FF),
+            c(0xFFF7F0E4), c(0xFFCDBFA8)),
+        // crystal cyan, Serah pink, Etro violet
         Palette("cocoon", "Cocoon", "Final Fantasy XIII",
-            c(0xFF08111A), c(0xFF0F1D2A), c(0xFF182C3D), c(0xFF9FF0FF), c(0xFFFF8FB8), c(0xFFDDEFFF),
-            c(0xFFE8F5FA), c(0xFFA9C3D1)),
+            c(0xFF060B13), c(0xFF0D1724), c(0xFF152338), c(0xFF8CF2FF), c(0xFFFF7FB8), c(0xFFD8C4FF),
+            c(0xFFEEF6FF), c(0xFFB3C3D8)),
+        // aether violet, Meteor red, Crystarium gold
         Palette("eorzea", "Eorzea", "Final Fantasy XIV",
-            c(0xFF0B0716), c(0xFF150E26), c(0xFF211838), c(0xFFB9A2FF), c(0xFFFF6A5A), c(0xFFE2C47A),
-            c(0xFFECE6F7), c(0xFFB8ADCE)),
+            c(0xFF0B0915), c(0xFF151129), c(0xFF211B3C), c(0xFFB9A3FF), c(0xFFFF6A5C), c(0xFFF0CF7A),
+            c(0xFFF2EFFF), c(0xFFBFB8DA)),
+        // royal silver, crystal blue, Lucian gold
         Palette("lucis", "Lucis", "Final Fantasy XV",
-            c(0xFF08090B), c(0xFF111317), c(0xFF1B1E24), c(0xFFD6DCE6), c(0xFF7FC8FF), c(0xFFCBB27A),
-            c(0xFFECEEF2), c(0xFFA7ADB8)),
+            c(0xFF050506), c(0xFF101114), c(0xFF1B1D23), c(0xFFE2E7F0), c(0xFF5FAEFF), c(0xFFD9B76A),
+            c(0xFFF4F6FA), c(0xFFB8BDC8)),
+        // Phoenix fire, Shiva ice, Garuda wind
         Palette("valisthea", "Valisthea", "Final Fantasy XVI",
-            c(0xFF0E0807), c(0xFF1A0F0C), c(0xFF281713), c(0xFFFF8A4C), c(0xFF8FD3FF), c(0xFFE8C27A),
-            c(0xFFF3E9E4), c(0xFFC3ADA4)),
+            c(0xFF0F0806), c(0xFF1D110C), c(0xFF2C1A12), c(0xFFFF8E48), c(0xFF92DBFF), c(0xFFBDF07E),
+            c(0xFFFBF1EC), c(0xFFD4BDB0)),
     )
 
     val default: Palette get() = all.first()

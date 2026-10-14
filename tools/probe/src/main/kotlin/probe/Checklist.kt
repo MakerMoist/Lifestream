@@ -15,8 +15,8 @@ internal data class Song(val id: String, val title: String, val artist: String, 
  * Checks each game's soundtrack against a song list (data/tfbl.tsv: Theatrhythm Final Bar Line)
  * and, for songs that aren't in what the game plays, lists the best search candidates.
  */
-fun runChecklist(only: Set<String>) {
-    val file = listOf("data/tfbl.tsv", "tools/probe/data/tfbl.tsv").map(::File).first { it.exists() }
+fun runChecklist(only: Set<String>, name: String = "tfbl.tsv") {
+    val file = listOf("data/$name", "tools/probe/data/$name").map(::File).first { it.exists() }
     val wanted = file.readLines()
         .filter { it.isNotBlank() && !it.startsWith("#") }
         .map { it.split('\t', limit = 2) }

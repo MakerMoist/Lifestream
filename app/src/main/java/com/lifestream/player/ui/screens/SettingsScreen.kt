@@ -270,6 +270,7 @@ fun UpdatePrompt() {
 fun SettingsScreen(onOpenThemes: () -> Unit) {
     val vm = rememberUpdateViewModel()
     val autoUpdate by AppSettings.autoUpdate.collectAsStateWithLifecycle()
+    val pauseAtZeroVolume by AppSettings.pauseAtZeroVolume.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
     val themeId by AppSettings.themeId.collectAsStateWithLifecycle()
@@ -307,6 +308,16 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
                 }
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = continueFromSearch, onCheckedChange = { AppSettings.setContinueFromSearch(it) })
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Pause When Volume Is Turned All the Way Down",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = pauseAtZeroVolume, onCheckedChange = { AppSettings.setPauseAtZeroVolume(it) })
             }
         }
 
@@ -392,11 +403,6 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Check Automatically", style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        "When the app opens, look for a new version and ask if you'd like to update.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                 }
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = autoUpdate, onCheckedChange = { AppSettings.setAutoUpdate(it) })
