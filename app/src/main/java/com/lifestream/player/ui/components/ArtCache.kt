@@ -26,7 +26,7 @@ object ArtCache {
     fun clear() = bitmaps.clear()
 
     /**
-     * The art is stored at 1080x1200 so it's sharp on any screen, but cards are about half the
+     * The art is stored at 1080x800 so it's sharp on any screen, but cards are about half the
      * screen wide; each one is scaled to that so all of them together stay small in memory.
      */
     fun load(context: Context, res: Int): ImageBitmap? = bitmaps[res] ?: runCatching {

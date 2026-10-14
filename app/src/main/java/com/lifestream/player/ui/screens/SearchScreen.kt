@@ -284,7 +284,7 @@ private fun GameRow(game: Game, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (game.art != 0) {
-            // The card art, already decoded at card size (the files themselves are 1080x1200).
+            // The card art, already decoded at card size (the files themselves are 1080x800).
             val art = rememberArt(game.art)
             Box(
                 Modifier

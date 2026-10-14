@@ -93,7 +93,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
@@ -432,8 +431,8 @@ fun GameCard(
                     bitmap = art,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    // The art is portrait; keep its upper part (where most scenes put their focus).
-                    alignment = BiasAlignment(0f, -0.35f),
+                    // The art is painted at the card's own shape, so it fits without cropping.
+                    alignment = Alignment.Center,
                     modifier = Modifier.fillMaxSize().alpha(artAlpha),
                 )
             }

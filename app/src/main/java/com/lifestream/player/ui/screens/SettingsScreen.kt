@@ -340,22 +340,6 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
             }
         }
 
-        SectionLabel("Search", Modifier.padding(top = 8.dp))
-        SettingsCard {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Open Keyboard on Search", style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        "Tapping the Search tab puts the cursor in the search box so you can start typing.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Spacer(Modifier.width(12.dp))
-                Switch(checked = searchKeyboard, onCheckedChange = { AppSettings.setSearchKeyboard(it) })
-            }
-        }
-
         SectionLabel("Interface", Modifier.padding(top = 8.dp))
         ThemeRow(Palettes.byId(themeId), onClick = onOpenThemes)
         SettingsCard {
@@ -386,10 +370,26 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
                 Switch(checked = showQuotes, onCheckedChange = { AppSettings.setShowQuotes(it) })
             }
         }
-
-        // Saved Songs stays near the bottom, just above App Updates.
-        SectionLabel("Saved Songs", Modifier.padding(top = 8.dp))
         SettingsCard {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Open Keyboard on Search", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Tapping the Search tab puts the cursor in the search box so you can start typing.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = searchKeyboard, onCheckedChange = { AppSettings.setSearchKeyboard(it) })
+            }
+        }
+
+        // System sits at the bottom: saved songs, then app updates last.
+        SectionLabel("System", Modifier.padding(top = 8.dp))
+        SettingsCard {
+            Text("Saved Songs", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
             Text("Keep Recently Played Songs", style = MaterialTheme.typography.bodyLarge)
             Text(
                 "Cache recently streamed songs locally instead of using data. Speeds up listening but uses more storage.",
@@ -450,7 +450,6 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
 
 
         // App updates always stays last, with its check button always visible.
-        SectionLabel("App Updates", Modifier.padding(top = 8.dp))
         SettingsCard {
             Text("LifeStream ${Updater.currentVersionName}", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
