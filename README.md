@@ -61,6 +61,8 @@ The illustrations in `app/src/main/res/drawable-nodpi/art_*.webp` are original, 
 - Streaming YouTube content outside YouTube's own apps isn't permitted by YouTube's Terms of Service. This app is intended for personal use.
 - "Final Fantasy" is a trademark of Square Enix. Lifestream is an unofficial fan project and uses no Square Enix artwork or logos; album art comes from YouTube at runtime.
 
+- Song coverage is checked against Theatrhythm Final Bar Line's song list (`tools/probe/data/tfbl.tsv`; run the Soundtrack probe workflow with `--tfbl`). Songs missing from a game's streaming albums are added to that game as pinned extra recordings.
+
 ## Project layout
 
 ```

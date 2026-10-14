@@ -74,6 +74,11 @@ fun main(args: Array<String>) {
             }
         }
         for (extra in game.extras) {
+            extra.pinnedTrack()?.let { pinned ->
+                detail.append("- extra \"${extra.title}\" pinned to ${pinned.id}\n")
+                songs.putIfAbsent(Matching.songKey(pinned.title), pinned.title)
+                continue
+            }
             val results = runCatching {
                 search(extra.query, F.MUSIC_SONGS, pages = 1).mapNotNull { it as? StreamInfoItem }.map {
                     Track(
