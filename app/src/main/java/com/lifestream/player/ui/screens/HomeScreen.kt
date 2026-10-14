@@ -120,8 +120,12 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                     )
                     Spacer(Modifier.height(16.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilledTonalButton(onClick = { onOpenGame(Catalog.games.random()) }) {
-                            Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(18.dp))
+                        FilledTonalButton(onClick = { vm.surprise() }, enabled = !vm.surprising) {
+                            if (vm.surprising) {
+                                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(18.dp))
+                            }
                             Spacer(Modifier.width(8.dp))
                             Text("Surprise me")
                         }
@@ -132,6 +136,10 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                                 Text("Shuffle favorites")
                             }
                         }
+                    }
+                    vm.surpriseNote?.let { note ->
+                        Spacer(Modifier.height(8.dp))
+                        Text(note, style = MaterialTheme.typography.bodySmall, color = LsColors.Mako)
                     }
                 }
             }

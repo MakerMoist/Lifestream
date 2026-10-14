@@ -73,6 +73,47 @@ class HomeViewModel : ViewModel() {
         }
     }
 
+    // ---- Surprise me: shuffle a random soundtrack ----
+
+    var surprising by mutableStateOf(false)
+        private set
+    var surpriseNote by mutableStateOf<String?>(null)
+        private set
+    private var lastSurprise: String? = null
+
+    fun surprise() {
+        if (surprising) return
+        surprising = true
+        surpriseNote = null
+        viewModelScope.launch {
+            try {
+                // A few attempts in case a soundtrack can't be loaded right now.
+                val candidates = Catalog.games.filter { it.id != lastSurprise }.shuffled().take(4)
+                for (game in candidates) {
+                    val tracks = SoundtrackIndex.tracksFor(game.id) ?: tracksFor(game)
+                    if (tracks.isNotEmpty()) {
+                        lastSurprise = game.id
+                        PlayerConnection.playTracks(tracks, shuffle = true)
+                        surpriseNote = "Shuffling ${game.title}"
+                        clearNoteLater("Shuffling ${game.title}")
+                        return@launch
+                    }
+                }
+                surpriseNote = "Couldn't load a soundtrack. Check your connection."
+                clearNoteLater("Couldn't load a soundtrack. Check your connection.")
+            } finally {
+                surprising = false
+            }
+        }
+    }
+
+    private fun clearNoteLater(note: String) {
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(6000)
+            if (surpriseNote == note) surpriseNote = null
+        }
+    }
+
     /** About 40 tracks per soundtrack from its matching albums; a failing one is just skipped. */
     private suspend fun tracksFor(game: Game): List<Track> = SoundtrackIndex.tracksFor(game.id)?.take(60) ?: try {
         val source = MusicRepository.gameTracks(game)

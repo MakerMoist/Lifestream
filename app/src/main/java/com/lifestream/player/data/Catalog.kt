@@ -8,8 +8,8 @@ object Catalog {
 
     private fun c(hex: Long) = Color(hex)
 
-    private fun num(vararg n: String, exclude: List<String> = emptyList()) =
-        MatchSpec(numerals = n.toSet(), exclude = exclude)
+    private fun num(vararg n: String, exclude: List<String> = emptyList(), notWith: Set<String> = emptySet()) =
+        MatchSpec(numerals = n.toSet(), exclude = exclude, excludeNumerals = notWith)
 
     /** Other entries in the franchise that must not leak into the original VII. */
     private val notOriginalVII = listOf(
@@ -58,9 +58,9 @@ object Catalog {
         Game("ff9", "IX", "Final Fantasy IX", 2000, "Nobuo Uematsu",
             "Final Fantasy IX original soundtrack", c(0xFF422006), c(0xFFFCD34D), match = num("IX"), art = R.drawable.art_ff9),
         Game("ff10", "X", "Final Fantasy X", 2001, "Uematsu · Hamauzu · Nakano",
-            "Final Fantasy X original soundtrack", c(0xFF0C4A6E), c(0xFF7DD3FC), match = num("X"), art = R.drawable.art_ff10),
+            "Final Fantasy X original soundtrack", c(0xFF0C4A6E), c(0xFF7DD3FC), match = num("X", notWith = setOf("X2")), art = R.drawable.art_ff10),
         Game("ff10-2", "X-2", "Final Fantasy X-2", 2003, "Noriko Matsueda · Takahito Eguchi",
-            "Final Fantasy X-2 original soundtrack", c(0xFF500724), c(0xFFF9A8D4), match = num("X2"), art = R.drawable.art_ff10_2),
+            "Final Fantasy X-2 original soundtrack", c(0xFF500724), c(0xFFF9A8D4), match = num("X2", notWith = setOf("X")), art = R.drawable.art_ff10_2),
         Game("ff11", "XI", "Final Fantasy XI", 2002, "Uematsu · Mizuta · Tanioka",
             "Final Fantasy XI original soundtrack", c(0xFF1C1917), c(0xFFD6D3D1), match = num("XI"), art = R.drawable.art_ff11),
         Game("ff12", "XII", "Final Fantasy XII", 2006, "Hitoshi Sakimoto",

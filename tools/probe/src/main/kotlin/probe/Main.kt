@@ -58,6 +58,7 @@ fun main(args: Array<String>) {
             val clean = if (album.fromPlaylist) {
                 titles.filterNot { it.equals("Private video", true) || it.equals("Deleted video", true) }
                     .map { Matching.cleanTrackTitle(it, game) }
+                    .filterNot { Matching.isFillerTrack(it) }
             } else titles
             clean.forEach { songs.putIfAbsent(Matching.songKey(it), it) }
             detail.append("- used: ${album.title} — *${album.artist}* — ${titles.size} tracks${if (album.fromPlaylist) " (playlist)" else ""}\n")

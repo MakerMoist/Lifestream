@@ -13,6 +13,7 @@ import java.util.Locale
  * - [exclude]: none may appear (e.g. the original VII excludes REMAKE / REBIRTH)
  * - [allowBare]: accept "Final Fantasy" with no numeral at all (only the first game)
  * - [requireFinalFantasy]: false for non-FF soundtracks such as Chrono Trigger
+ * - [excludeNumerals]: reject combined releases that also cover another game
  */
 data class MatchSpec(
     val numerals: Set<String> = emptySet(),
@@ -21,6 +22,8 @@ data class MatchSpec(
     val exclude: List<String> = emptyList(),
     val allowBare: Boolean = false,
     val requireFinalFantasy: Boolean = true,
+    /** Titles that also name one of these games are rejected (e.g. "X/X-2 HD Remaster" for X-2). */
+    val excludeNumerals: Set<String> = emptySet(),
 )
 
 object Matching {
@@ -149,6 +152,7 @@ object Matching {
         if (spec.anyOf.isNotEmpty() && spec.anyOf.none { hasWord(t, it) }) return false
         if (spec.numerals.isEmpty()) return true
         val found = numerals(t)
+        if (found.any { it in spec.excludeNumerals }) return false
         if (found.isEmpty()) return spec.allowBare && bareTitleIsSoundtrack(t)
         return found.any { it in spec.numerals }
     }
@@ -272,6 +276,11 @@ object Matching {
      * name (not the game, "OST", or a track number) and drops quality tags.
      */
     private val numberingToken = Regex("^(DISC|CD|TRACK|NO|VOL)?\\d+$")
+
+    private val filler = Regex("^\\s*(bonus\\s*track|piano\\s*mini-?game|mini-?game|unused|sound\\s*test)\\b", RegexOption.IGNORE_CASE)
+
+    /** Extras some uploads tack on that aren't part of the game's soundtrack. */
+    fun isFillerTrack(cleanTitle: String): Boolean = filler.containsMatchIn(cleanTitle)
 
     fun cleanTrackTitle(raw: String, game: Game): String {
         val gameWords = titleTokens(game).toSet() + setOf(

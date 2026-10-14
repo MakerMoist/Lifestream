@@ -147,6 +147,7 @@ object MusicRepository {
                         result.items
                             .filterNot { it.title.equals("Private video", true) || it.title.equals("Deleted video", true) }
                             .map { it.copy(title = Matching.cleanTrackTitle(it.title, game)) }
+                            .filterNot { Matching.isFillerTrack(it.title) }
                     } else {
                         result.items
                     }
