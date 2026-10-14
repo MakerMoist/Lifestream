@@ -46,12 +46,14 @@ data class Game(
     val colorA: Color,
     val colorB: Color,
     val series: Series = Series.MAINLINE,
+    /** Which album titles count as this game's music. */
+    val match: MatchSpec = MatchSpec(),
 )
 
 enum class Series(val label: String) {
     MAINLINE("Main series"),
     REMAKE("VII Remake series"),
-    SPINOFF("Spin-offs & collections"),
+    SPINOFF("Spin-offs, collections & more"),
 }
 
 fun formatDuration(seconds: Long): String {

@@ -4,7 +4,7 @@ A standalone Android music player for Final Fantasy soundtracks. Audio is stream
 
 ## Features
 
-- **Soundtrack catalog** — 25 games and collections in three sections: the main series I–XVI including X-2, the VII Remake series (Remake, INTERmission, Rebirth), and spin-offs (Tactics, Crisis Core and Reunion, Distant Worlds, Piano Collections), each with a Tracks tab and an Albums tab.
+- **Soundtrack catalog** — 27 games and collections in three sections: the main series I–XVI including X-2; the VII Remake series (Remake, INTERmission, Rebirth); and spin-offs, collections & more (Tactics, Crisis Core –Reunion–, Chrono Trigger, Chrono Cross, Lost Odyssey, Distant Worlds, Piano Collections). Each has a Tracks tab and an Albums tab.
 - **Multi-select**: press and hold a soundtrack, tap more (or "Select all" for a section), then Play or Shuffle them as one queue.
 - **Search** with an optional "Final Fantasy only" filter, songs and albums tabs, and quick-pick suggestions.
 - **Own player** built on Media3 ExoPlayer: background playback, media notification, lock-screen and headset controls, audio focus, pause on headphone unplug.
@@ -15,7 +15,7 @@ A standalone Android music player for Final Fantasy soundtracks. Audio is stream
 
 ## How streaming works
 
-1. `MusicRepository` uses [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) to search YouTube Music (songs and albums), falling back to regular YouTube search.
+1. `MusicRepository` uses [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) to search YouTube Music. A game's tracks come from its official soundtrack albums: album titles are checked against that specific game by `Matching` (so VII never picks up Remake or Rebirth, X never picks up X-2, and covers, lo-fi and similar filler are dropped), with the original soundtrack ranked first. Song search is only a filtered fallback.
 2. Each queued track is just `lifestream://track/<videoId>`. Right before it plays, `StreamResolver` asks the extractor for the best original-language audio-only stream and caches the URL until it expires.
 3. `YouTubeStreamDataSource` downloads that audio in 1 MiB chunks using the same `range`/`rn` request style YouTube's own clients use, which avoids throttling. ExoPlayer sees one continuous stream.
 

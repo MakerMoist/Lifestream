@@ -26,7 +26,6 @@ import com.lifestream.player.data.PagedSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.schabi.newpipe.extractor.Page
 
 /** Observable, incrementally-loaded list backed by a [PagedSource]. */
 class PagedList<T>(
@@ -43,7 +42,7 @@ class PagedList<T>(
     var endReached by mutableStateOf(false)
         private set
 
-    private var next: Page? = null
+    private var next: Any? = null
 
     fun loadMore() {
         if (loading || endReached) return
@@ -51,11 +50,20 @@ class PagedList<T>(
         error = null
         scope.launch {
             try {
-                val page = source.load(next)
+                // Filtering can leave a page empty; keep going (a few pages max) so the
+                // list never sits on a spinner with nothing new to show.
                 val seen = items.mapTo(HashSet<String>(), key)
-                items = items + page.items.filter { seen.add(key(it)) }
-                next = page.next
-                endReached = page.next == null
+                var added = 0
+                var attempts = 0
+                do {
+                    val page = source.load(next)
+                    val fresh = page.items.filter { seen.add(key(it)) }
+                    items = items + fresh
+                    added += fresh.size
+                    next = page.next
+                    attempts++
+                } while (added == 0 && next != null && attempts < 6)
+                endReached = next == null
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

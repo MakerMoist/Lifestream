@@ -71,20 +71,19 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    /** Up to two pages (~40 tracks) per soundtrack; a failing soundtrack is just skipped. */
+    /** About 40 tracks per soundtrack from its matching albums; a failing one is just skipped. */
     private suspend fun tracksFor(game: Game): List<Track> = try {
-        val source = MusicRepository.songSearch(game.query)
-        val first = source.load(null)
-        val second = first.next?.let { next ->
-            try {
-                source.load(next).items
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                emptyList()
-            }
-        }.orEmpty()
-        first.items + second
+        val source = MusicRepository.gameTracks(game)
+        val out = mutableListOf<Track>()
+        var next: Any? = null
+        var loads = 0
+        do {
+            val page = source.load(next)
+            out += page.items
+            next = page.next
+            loads++
+        } while (next != null && out.size < 40 && loads < 6)
+        out.take(60)
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
@@ -93,8 +92,8 @@ class HomeViewModel : ViewModel() {
 }
 
 class GameViewModel(game: Game) : ViewModel() {
-    val tracks = PagedList(viewModelScope, MusicRepository.songSearch(game.query)) { it.id }
-    val albums = PagedList(viewModelScope, MusicRepository.albumSearch(game.query)) { it.url }
+    val tracks = PagedList(viewModelScope, MusicRepository.gameTracks(game)) { it.id }
+    val albums = PagedList(viewModelScope, MusicRepository.gameAlbumsSource(game)) { it.url }
     var tab by mutableStateOf(0)
 }
 
@@ -119,8 +118,8 @@ class SearchViewModel : ViewModel() {
         input = q
         val full = if (ffOnly && !q.contains("final fantasy", ignoreCase = true)) "final fantasy $q" else q
         submitted = full
-        songs = PagedList(viewModelScope, MusicRepository.songSearch(full)) { it.id }
-        albums = PagedList(viewModelScope, MusicRepository.albumSearch(full)) { it.url }
+        songs = PagedList(viewModelScope, MusicRepository.songSearch(full, finalFantasyOnly = ffOnly)) { it.id }
+        albums = PagedList(viewModelScope, MusicRepository.albumSearch(full, finalFantasyOnly = ffOnly)) { it.url }
     }
 }
 
