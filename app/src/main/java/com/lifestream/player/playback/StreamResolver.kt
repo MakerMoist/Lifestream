@@ -15,16 +15,30 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object StreamResolver {
 
-    private data class Entry(val url: String, val expiresAtMs: Long)
+    /** A playable audio file: its URL and YouTube format id (itag, -1 if unknown). */
+    data class Resolved(val url: String, val itag: Int)
+
+    /** All usable audio files for a video, best first. */
+    private data class Entry(val streams: List<Resolved>, val expiresAtMs: Long)
 
     private val cache = ConcurrentHashMap<String, Entry>()
 
     @Throws(IOException::class)
-    fun resolve(videoId: String): String {
+    fun resolve(videoId: String): String = resolveStream(videoId, null).url
+
+    /**
+     * Resolves the best audio file, or [preferredItag] when that format is available (used to
+     * finish a partly saved song from the same file).
+     */
+    @Throws(IOException::class)
+    fun resolveStream(videoId: String, preferredItag: Int?): Resolved {
         if (!SafeInput.isVideoId(videoId)) throw IOException("Invalid track id")
         val now = System.currentTimeMillis()
-        cache[videoId]?.let { if (it.expiresAtMs - now > 5 * 60_000) return it.url }
+        val entry = cache[videoId]?.takeIf { it.expiresAtMs - now > 5 * 60_000 } ?: load(videoId, now)
+        return preferredItag?.let { tag -> entry.streams.firstOrNull { it.itag == tag } } ?: entry.streams.first()
+    }
 
+    private fun load(videoId: String, now: Long): Entry {
         val info = try {
             StreamInfo.getInfo(ServiceList.YouTube, "https://www.youtube.com/watch?v=$videoId")
         } catch (e: IOException) {
@@ -33,24 +47,25 @@ object StreamResolver {
             throw IOException("Couldn't load stream info for $videoId: ${e.message}", e)
         }
 
-        val best = info.audioStreams
+        val streams = info.audioStreams
             .filter { it.isUrl && it.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP }
             .sortedWith(
                 compareBy<AudioStream> { trackPenalty(it) }
                     .thenByDescending { maxOf(it.averageBitrate, it.bitrate) }
             )
-            .firstOrNull()
-            ?: throw IOException("No playable audio stream for $videoId")
+            .mapNotNull { stream ->
+                val parsed = Uri.parse(stream.content)
+                if (SafeInput.isHttps(parsed) && SafeInput.isGoogleVideoHost(parsed.host)) {
+                    Resolved(stream.content, stream.itag)
+                } else {
+                    null
+                }
+            }
+        if (streams.isEmpty()) throw IOException("No playable audio stream for $videoId")
 
-        val url = best.content
-        val parsed = Uri.parse(url)
-        if (!SafeInput.isHttps(parsed) || !SafeInput.isGoogleVideoHost(parsed.host)) {
-            throw IOException("Unexpected stream host for $videoId")
-        }
-        val expiresAt = parsed.getQueryParameter("expire")?.toLongOrNull()?.times(1000)
+        val expiresAt = Uri.parse(streams.first().url).getQueryParameter("expire")?.toLongOrNull()?.times(1000)
             ?: (now + 3 * 60 * 60_000)
-        cache[videoId] = Entry(url, expiresAt)
-        return url
+        return Entry(streams, expiresAt).also { cache[videoId] = it }
     }
 
     fun invalidate(videoId: String) {

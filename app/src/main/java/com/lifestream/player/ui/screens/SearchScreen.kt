@@ -34,11 +34,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,6 +62,11 @@ import com.lifestream.player.ui.theme.LsColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+
+/** Set when the Search tab is tapped, so the search box can take focus once. */
+object SearchFocus {
+    var requested by mutableStateOf(false)
+}
 
 private val suggestions = listOf(
     "One-Winged Angel", "To Zanarkand", "Liberi Fatali", "Dancing Mad", "Prelude",
@@ -75,6 +86,23 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
     val index by SoundtrackIndex.tracks.collectAsStateWithLifecycle()
     val progress by SoundtrackIndex.progress.collectAsStateWithLifecycle()
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
+    val searchKeyboard by AppSettings.searchKeyboard.collectAsStateWithLifecycle()
+    val focusRequester = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+
+    // Tapping the Search tab opens the keyboard straight away (switchable in Settings).
+    LaunchedEffect(SearchFocus.requested) {
+        if (!SearchFocus.requested) return@LaunchedEffect
+        SearchFocus.requested = false
+        if (searchKeyboard) {
+            try {
+                focusRequester.requestFocus()
+                keyboard?.show()
+            } catch (_: IllegalStateException) {
+                // The search box isn't on screen yet; nothing to focus.
+            }
+        }
+    }
 
     LaunchedEffect(Unit) { SoundtrackIndex.ensureBuilt() }
 
@@ -99,7 +127,8 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
             onValueChange = { vm.input = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, top = 16.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+                .focusRequester(focusRequester),
             placeholder = { Text("Songs or games, e.g. \"Prelude\" or \"FF7\"") },
             leadingIcon = { Icon(Icons.Rounded.Search, null) },
             trailingIcon = {

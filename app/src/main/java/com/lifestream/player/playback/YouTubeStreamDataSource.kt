@@ -215,7 +215,7 @@ class YouTubeStreamDataSource(private val client: OkHttpClient) : BaseDataSource
     }
 }
 
-/** Builds the DataSource chain used by the player: lifestream://track/<id> → YouTube audio bytes. */
+/** Builds the DataSource chain used by the player: lifestream://track/<id> → saved or YouTube audio bytes. */
 @OptIn(UnstableApi::class)
 object StreamDataSources {
     const val SCHEME = "lifestream"
@@ -227,15 +227,21 @@ object StreamDataSources {
 
     fun factory(): DataSource.Factory {
         val upstream = DataSource.Factory { YouTubeStreamDataSource(Http.client) }
-        return ResolvingDataSource.Factory(upstream) { spec ->
+        val network = ResolvingDataSource.Factory(upstream) { spec ->
             if (spec.uri.scheme == SCHEME) {
                 val id = spec.uri.lastPathSegment
                 if (!SafeInput.isVideoId(id)) throw IOException("Invalid track id")
-                spec.withUri(Uri.parse(StreamResolver.resolve(id!!)))
+                // Finish a partly saved song from the same audio file it started with.
+                val videoId = id!!
+                val stream = StreamResolver.resolveStream(videoId, SongCache.rememberedItag(videoId))
+                SongCache.rememberItag(videoId, stream.itag)
+                spec.withUri(Uri.parse(stream.url))
             } else {
                 // Only our own lifestream:// items are ever played.
                 throw IOException("Unsupported media URI scheme: ${spec.uri.scheme}")
             }
         }
+        // Recently played songs are kept on the phone and replayed from there.
+        return SongCache.wrap(network)
     }
 }

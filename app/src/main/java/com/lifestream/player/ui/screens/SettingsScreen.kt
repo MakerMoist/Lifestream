@@ -5,6 +5,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,12 +23,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +41,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -54,13 +60,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lifestream.player.BuildConfig
 import com.lifestream.player.data.AppSettings
+import com.lifestream.player.playback.SongCache
 import com.lifestream.player.ui.components.SectionLabel
 import com.lifestream.player.ui.theme.LsColors
 import com.lifestream.player.ui.theme.Palette
 import com.lifestream.player.ui.theme.Palettes
 import com.lifestream.player.update.Updater
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 sealed interface UpdateState {
@@ -114,6 +123,40 @@ class SettingsViewModel : ViewModel() {
         }
     }
 
+    /** Space used by saved songs, in bytes (-1 until measured). */
+    var cacheUsedBytes by mutableLongStateOf(-1L)
+        private set
+    var clearingCache by mutableStateOf(false)
+        private set
+
+    fun refreshCacheUsage() {
+        viewModelScope.launch {
+            cacheUsedBytes = withContext(Dispatchers.IO) { SongCache.usedBytes() }
+        }
+    }
+
+    fun setCacheLimit(mb: Int) {
+        AppSettings.setCacheLimitMb(mb)
+        viewModelScope.launch {
+            cacheUsedBytes = withContext(Dispatchers.IO) {
+                SongCache.applyLimit(mb)
+                SongCache.usedBytes()
+            }
+        }
+    }
+
+    fun clearCache() {
+        if (clearingCache) return
+        clearingCache = true
+        viewModelScope.launch {
+            cacheUsedBytes = withContext(Dispatchers.IO) {
+                SongCache.clear()
+                SongCache.usedBytes()
+            }
+            clearingCache = false
+        }
+    }
+
     /** Called when returning from the "install unknown apps" screen. */
     fun onResume(context: Context) {
         val s = state
@@ -124,14 +167,18 @@ class SettingsViewModel : ViewModel() {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen() {
     val vm: SettingsViewModel = viewModel()
     val context = LocalContext.current
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
     val themeId by AppSettings.themeId.collectAsStateWithLifecycle()
+    val searchKeyboard by AppSettings.searchKeyboard.collectAsStateWithLifecycle()
+    val cacheLimitMb by AppSettings.cacheLimitMb.collectAsStateWithLifecycle()
     LifecycleResumeEffect(Unit) {
         vm.onResume(context)
+        vm.refreshCacheUsage()
         onPauseOrDispose { }
     }
 
@@ -161,6 +208,64 @@ fun SettingsScreen() {
                 }
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = continueFromSearch, onCheckedChange = { AppSettings.setContinueFromSearch(it) })
+            }
+        }
+
+        SectionLabel("Search", Modifier.padding(top = 8.dp))
+        SettingsCard {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Open the keyboard on Search", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Tapping the Search tab puts the cursor in the search box so you can start typing.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = searchKeyboard, onCheckedChange = { AppSettings.setSearchKeyboard(it) })
+            }
+        }
+
+        SectionLabel("Saved songs", Modifier.padding(top = 8.dp))
+        SettingsCard {
+            Text("Keep recently played songs", style = MaterialTheme.typography.bodyLarge)
+            Text(
+                "Songs you play are saved on your phone, so playing them again doesn't stream them " +
+                    "again — and songs played all the way through work offline. The oldest are " +
+                    "removed when the space below is full.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(12.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                AppSettings.CACHE_LIMIT_CHOICES.forEach { mb ->
+                    FilterChip(
+                        selected = cacheLimitMb == mb,
+                        onClick = { vm.setCacheLimit(mb) },
+                        label = { Text(cacheLimitLabel(mb)) },
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                when {
+                    vm.cacheUsedBytes < 0 -> "Measuring…"
+                    cacheLimitMb == 0 -> "Songs aren't being saved. Using ${formatBytes(vm.cacheUsedBytes)}."
+                    else -> "Using ${formatBytes(vm.cacheUsedBytes)} of ${cacheLimitLabel(cacheLimitMb)}."
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(12.dp))
+            OutlinedButton(
+                onClick = { vm.clearCache() },
+                enabled = !vm.clearingCache && vm.cacheUsedBytes != 0L,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Rounded.DeleteSweep, null, Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(if (vm.clearingCache) "Clearing…" else "Clear cache")
             }
         }
 
@@ -264,6 +369,22 @@ private fun UpdateSection(vm: SettingsViewModel, context: Context) {
                 Text(s.message, style = MaterialTheme.typography.bodyMedium)
             }
         }
+    }
+}
+
+private fun cacheLimitLabel(mb: Int): String = when {
+    mb == 0 -> "Off"
+    mb >= 1024 -> "${mb / 1024} GB"
+    else -> "$mb MB"
+}
+
+private fun formatBytes(bytes: Long): String {
+    val mb = bytes / (1024.0 * 1024.0)
+    return when {
+        bytes <= 0L -> "0 MB"
+        mb < 1 -> "<1 MB"
+        mb >= 1024 -> String.format(java.util.Locale.US, "%.1f GB", mb / 1024)
+        else -> "${mb.toInt()} MB"
     }
 }
 

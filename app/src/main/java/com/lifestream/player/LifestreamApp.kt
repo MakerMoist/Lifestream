@@ -3,6 +3,7 @@ package com.lifestream.player
 import android.app.Application
 import com.lifestream.player.data.AppSettings
 import com.lifestream.player.data.Library
+import com.lifestream.player.playback.SongCache
 import com.lifestream.player.data.SoundtrackIndex
 import com.lifestream.player.data.TitleTranslator
 import com.lifestream.player.net.Http
@@ -19,6 +20,7 @@ class LifestreamApp : Application() {
         NewPipe.init(OkHttpDownloader(Http.client), Localization("en", "US"), ContentCountry("US"))
         AppSettings.init(this)
         Library.init(this)
+        SongCache.init(this)
         SoundtrackIndex.init(this)
         TitleTranslator.prefetch()
     }

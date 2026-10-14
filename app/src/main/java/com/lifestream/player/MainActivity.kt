@@ -59,6 +59,7 @@ import com.lifestream.player.ui.screens.PlaylistScreen
 import com.lifestream.player.ui.components.TrackActionsHost
 import com.lifestream.player.ui.screens.NowPlayingScreen
 import com.lifestream.player.ui.screens.SearchScreen
+import com.lifestream.player.ui.screens.SearchFocus
 import com.lifestream.player.ui.screens.SettingsScreen
 import com.lifestream.player.ui.theme.LifestreamTheme
 import com.lifestream.player.ui.theme.LsColors
@@ -183,6 +184,7 @@ private fun BottomBar(nav: NavHostController) {
             NavigationBarItem(
                 selected = section == item.route,
                 onClick = {
+                    if (item.route == "search") SearchFocus.requested = true
                     if (item.route == section) {
                         // Already in this section: go back to its first screen.
                         if (!nav.popBackStack(item.route, inclusive = false)) {
