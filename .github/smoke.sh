@@ -19,6 +19,54 @@ if ! adb shell pidof "$PKG" >/dev/null; then
   fail=1
 fi
 
+# Tap the element whose text matches $1 (found through the accessibility tree).
+tap_text() {
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+  adb pull /sdcard/ui.xml ui.xml >/dev/null 2>&1
+  python3 - "$1" <<'PY' > tap.txt
+import re, sys
+xml = open("ui.xml", encoding="utf-8", errors="ignore").read()
+for m in re.finditer(r'<node [^>]*>', xml):
+    node = m.group(0)
+    t = re.search(r'text="([^"]*)"', node)
+    if t and t.group(1) == sys.argv[1]:
+        b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', node)
+        if b:
+            x1, y1, x2, y2 = map(int, b.groups())
+            print((x1 + x2) // 2, (y1 + y2) // 2)
+            break
+PY
+  if [ -s tap.txt ]; then adb shell input tap $(cat tap.txt); return 0; fi
+  return 1
+}
+
+# Play a soundtrack: this runs the whole streaming path (the YouTube extractor and its
+# JavaScript engine resolving a stream, the download, decoding and the volume leveler).
+played=0
+if tap_text "Final Fantasy VII"; then
+  sleep 20
+  if tap_text "Play all"; then
+    sleep 45
+    state=$(adb shell dumpsys media_session | grep -m1 -oE "state=[A-Z_]+\([0-9]+\)|state=[0-9]+")
+    echo "Media session: $state"
+    if adb shell dumpsys media_session | grep -qE "state=PLAYING|state=3[^0-9]|state=3$"; then
+      played=1
+      echo "::notice::A song is playing (stream resolved and decoding)"
+    else
+      echo "::warning::Playback didn't reach PLAYING (the emulator may have no route to YouTube): $state"
+    fi
+  else
+    echo "::warning::Couldn't find the Play all button"
+  fi
+else
+  echo "::warning::Couldn't find the Final Fantasy VII card"
+fi
+
+if ! adb shell pidof "$PKG" >/dev/null; then
+  echo "::error::LifeStream stopped while playing"
+  fail=1
+fi
+
 adb logcat -d -b crash > crash.txt 2>/dev/null || true
 if grep -q "$PKG" crash.txt; then
   echo "::error::LifeStream crashed"
