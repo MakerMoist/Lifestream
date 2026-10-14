@@ -73,9 +73,21 @@ object Catalog {
             "Final Fantasy XIII-2 original soundtrack", c(0xFF1E0B3A), c(0xFFB9A2FF),
             match = num("XIII2", notWith = setOf("XIII")), art = R.drawable.art_ff13_2),
         Game("ff14", "XIV", "Final Fantasy XIV", 2013, "Masayoshi Soken",
-            "Final Fantasy XIV original soundtrack", c(0xFF2E1065), c(0xFFC4B5FD), match = num("XIV"), art = R.drawable.art_ff14),
+            "Final Fantasy XIV original soundtrack", c(0xFF2E1065), c(0xFFC4B5FD), match = num("XIV"), art = R.drawable.art_ff14,
+            // Each expansion and each run of patches has its own official album.
+            albumQueries = listOf(
+                "Before the Fall Final Fantasy XIV original soundtrack",
+                "Heavensward Final Fantasy XIV original soundtrack",
+                "The Far Edge of Fate Final Fantasy XIV original soundtrack",
+                "Stormblood Final Fantasy XIV original soundtrack",
+                "Shadowbringers Final Fantasy XIV original soundtrack",
+                "Endwalker Final Fantasy XIV original soundtrack",
+                "Dawntrail Final Fantasy XIV original soundtrack",
+            ),
+            maxAlbums = 16),
         Game("ff15", "XV", "Final Fantasy XV", 2016, "Yoko Shimomura",
-            "Final Fantasy XV original soundtrack", c(0xFF0A0A0A), c(0xFFA3A3A3), match = num("XV"), art = R.drawable.art_ff15),
+            "Final Fantasy XV original soundtrack", c(0xFF0A0A0A), c(0xFFA3A3A3), match = num("XV"), art = R.drawable.art_ff15,
+            albumQueries = listOf("Final Fantasy XV Episode Ardyn original soundtrack")),
         Game("ff16", "XVI", "Final Fantasy XVI", 2023, "Masayoshi Soken",
             "Final Fantasy XVI original soundtrack", c(0xFF450A0A), c(0xFFFB923C), match = num("XVI"), art = R.drawable.art_ff16),
 

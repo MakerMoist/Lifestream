@@ -62,6 +62,10 @@ data class Game(
     @DrawableRes val art: Int = 0,
     /** Songs from the game that aren't on its soundtrack album (e.g. a localized theme song). */
     val extras: List<ExtraSong> = emptyList(),
+    /** More album searches for games whose music is split across many official albums. */
+    val albumQueries: List<String> = emptyList(),
+    /** How many official albums the game's list plays through. */
+    val maxAlbums: Int = 8,
 )
 
 /**

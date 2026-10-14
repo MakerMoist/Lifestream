@@ -49,7 +49,7 @@ fun main(args: Array<String>) {
 
         val songs = LinkedHashMap<String, String>()
         var used = 0
-        for (album in sources.take(8)) {
+        for (album in sources.take(game.maxAlbums)) {
             val titles = try {
                 allTitles(album.url)
             } catch (e: Exception) {
@@ -109,8 +109,8 @@ fun main(args: Array<String>) {
 /** Mirrors MusicRepository.gameAlbums. */
 internal fun sourcesFor(game: Game, log: StringBuilder): List<Album> {
     val found = LinkedHashMap<String, Album>()
-    for (q in listOf(game.query, "${game.title} soundtrack")) {
-        if (found.isNotEmpty()) break
+    for ((i, q) in (listOf(game.query, "${game.title} soundtrack") + game.albumQueries).withIndex()) {
+        if (i == 1 && found.isNotEmpty()) continue
         search(q, F.MUSIC_ALBUMS, pages = 2).mapNotNull { (it as? PlaylistInfoItem)?.toAlbum() }
             .filter { Matching.matches(game.match, it.title) && Matching.isOfficialSoundtrack(it) }
             .forEach { found.putIfAbsent(it.url, it) }

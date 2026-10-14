@@ -116,7 +116,7 @@ private fun sameSong(wanted: String, title: String): Boolean {
 private fun gameSongs(game: Game, log: StringBuilder): List<Song> {
     val sources = sourcesFor(game, StringBuilder())
     val songs = LinkedHashMap<String, Song>()
-    for (album in sources.take(8)) {
+    for (album in sources.take(game.maxAlbums)) {
         val items = runCatching { allItems(album.url) }.getOrDefault(emptyList())
         if (items.size < 4 && sources.size > 1) continue
         log.append("- album: ${album.title} — ${album.artist} — ${items.size}${if (album.fromPlaylist) " (playlist)" else ""}\n")

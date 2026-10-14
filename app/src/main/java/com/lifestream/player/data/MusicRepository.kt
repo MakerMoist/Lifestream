@@ -30,12 +30,6 @@ object MusicRepository {
 
     private val yt get() = ServiceList.YouTube
 
-    /**
-     * Some soundtracks are split across several official albums (e.g. XIV's expansions,
-     * or Vol. 1 / Vol. 2 releases). The Tracks tab plays through up to this many, best first.
-     */
-    private const val MAX_ALBUMS_PER_GAME = 8
-
     private val albumCache = ConcurrentHashMap<String, List<Album>>()
 
     // ---- Per-game sources: the game's official original soundtrack, nothing else ----
@@ -60,9 +54,10 @@ object MusicRepository {
             }
 
             // A second wording helps older games whose OST is titled "Original Sound Version".
-            val queries = listOf(game.query, "${game.title} soundtrack")
-            for (query in queries) {
-                if (found.isNotEmpty()) break
+            // Games split across many albums (e.g. XIV's expansions and patches) search for each.
+            val queries = listOf(game.query, "${game.title} soundtrack") + game.albumQueries
+            for ((i, query) in queries.withIndex()) {
+                if (i == 1 && found.isNotEmpty()) continue
                 try {
                     val handler = yt.searchQHFactory.fromQuery(
                         query, listOf(YoutubeSearchQueryHandlerFactory.MUSIC_ALBUMS), "",
@@ -127,7 +122,7 @@ object MusicRepository {
 
         override suspend fun load(page: Any?): Paged<Track> {
             val list = albums ?: gameAlbums(game).also { albums = it }
-            val max = minOf(list.size, MAX_ALBUMS_PER_GAME)
+            val max = minOf(list.size, game.maxAlbums)
             val out = mutableListOf<Track>()
             while (out.isEmpty() && index < max) {
                 val result = try {
