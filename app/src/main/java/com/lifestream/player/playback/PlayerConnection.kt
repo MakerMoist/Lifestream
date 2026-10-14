@@ -296,6 +296,10 @@ object PlayerConnection {
         var cause: Throwable? = error
         while (cause != null) {
             if (cause is StreamHttpException) return "YouTube refused the stream (HTTP ${cause.code})."
+            val message = cause.message.orEmpty()
+            if ("not a bot" in message || "LOGIN_REQUIRED" in message) {
+                return "YouTube is blocking playback on this network for now. Try again later or switch networks."
+            }
             cause = cause.cause
         }
         return when (error.errorCode) {

@@ -64,10 +64,10 @@ jobs:
       - name: Build release APK (not debuggable)
         env:
           LIFESTREAM_VERSION_CODE: ${{ github.run_number }}
-          # Build 57 is 1.4.0; later builds count up from there (1.4.1, 1.4.2, ...).
+          # Build 64 is 1.4.5 (two test builds used 62-63); later builds count up from there.
           # (Earlier: 49 = 1.1.0, 50 = 1.1.5, 51 = 1.2.0, 53 = 1.3.0, 54 = 1.3.5, 56 = 1.3.7.)
           VERSION_PREFIX: "1.4"
-          VERSION_BASE_RUN: 57
+          VERSION_BASE_RUN: 59
           LIFESTREAM_KEYSTORE_PASSWORD: ${{ secrets.LIFESTREAM_KEYSTORE_PASSWORD }}
           LIFESTREAM_KEY_ALIAS: ${{ secrets.LIFESTREAM_KEY_ALIAS }}
           LIFESTREAM_KEY_PASSWORD: ${{ secrets.LIFESTREAM_KEY_PASSWORD }}

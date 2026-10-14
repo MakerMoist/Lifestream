@@ -266,17 +266,32 @@ class PlaybackService : MediaSessionService() {
     private class RecoveryListener(private val player: ExoPlayer) : Player.Listener {
         private val retried = mutableSetOf<String>()
 
+        /**
+         * Songs that failed one after another. When several in a row fail (no connection, or
+         * YouTube refusing this network) it stops and shows the error instead of racing through
+         * the whole queue.
+         */
+        private var failedInARow = 0
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            if (isPlaying) failedInARow = 0
+        }
+
         override fun onPlayerError(error: PlaybackException) {
             val id = player.currentMediaItem?.mediaId ?: return
             StreamResolver.invalidate(id)
             if (retried.add(id)) {
                 player.prepare()
                 player.play()
-            } else if (player.hasNextMediaItem()) {
+            } else if (++failedInARow < MAX_FAILED_IN_A_ROW && player.hasNextMediaItem()) {
                 player.seekToNextMediaItem()
                 player.prepare()
                 player.play()
             }
+        }
+
+        private companion object {
+            const val MAX_FAILED_IN_A_ROW = 3
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
