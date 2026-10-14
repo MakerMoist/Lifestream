@@ -54,6 +54,7 @@ import com.lifestream.player.data.Catalog
 import com.lifestream.player.playback.PlayerConnection
 import com.lifestream.player.ui.components.MiniPlayer
 import com.lifestream.player.ui.screens.GameScreen
+import com.lifestream.player.ui.screens.HomeReselect
 import com.lifestream.player.ui.screens.HomeScreen
 import com.lifestream.player.ui.screens.LibraryScreen
 import com.lifestream.player.ui.screens.PlaylistScreen
@@ -194,8 +195,12 @@ private fun BottomBar(nav: NavHostController) {
                 onClick = {
                     if (item.route == "search") SearchFocus.requested = true
                     if (item.route == section) {
-                        // Already in this section: go back to its first screen.
-                        if (!nav.popBackStack(item.route, inclusive = false)) {
+                        if (entry?.destination?.route == item.route) {
+                            // Already on this section's first screen: nothing to navigate; Home
+                            // just scrolls back to the top.
+                            if (item.route == "home") HomeReselect.count++
+                        } else if (!nav.popBackStack(item.route, inclusive = false)) {
+                            // Inside the section: go back to its first screen.
                             nav.navigate(item.route) { launchSingleTop = true }
                         }
                     } else {

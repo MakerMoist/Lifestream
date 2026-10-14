@@ -16,8 +16,8 @@ object AppSettings {
     private const val KEY_CACHE_LIMIT_MB = "cache_limit_mb"
 
     /** Size choices for saved songs, in MB (0 = don't save songs). */
-    val CACHE_LIMIT_CHOICES = listOf(0, 500, 1024, 2048, 5120, 10240)
-    const val DEFAULT_CACHE_LIMIT_MB = 1024
+    val CACHE_LIMIT_CHOICES = listOf(0, 2048, 5120, 10240)
+    const val DEFAULT_CACHE_LIMIT_MB = 2048
 
     private lateinit var prefs: SharedPreferences
 

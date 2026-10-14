@@ -1,5 +1,12 @@
 package com.lifestream.player.ui.screens
 
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.animateFloatAsState
@@ -106,6 +113,12 @@ import com.lifestream.player.ui.components.VillainQuotes
 import com.lifestream.player.ui.components.villainQuotes
 import com.lifestream.player.ui.theme.LsColors
 
+/** Bumped when the Home tab is tapped while already on Home. */
+object HomeReselect {
+    var count by mutableIntStateOf(0)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(onOpenGame: (Game) -> Unit) {
     val recents by Library.recents.collectAsStateWithLifecycle()
@@ -116,24 +129,50 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
     val index by SoundtrackIndex.tracks.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    // New picks each time Home is shown; they stay put while you're here.
-    val visitSeed = remember { System.nanoTime() }
+    val gridState = rememberLazyGridState()
+    val scope = rememberCoroutineScope()
+
+    // A new quote and new picks each time Home is shown, and when you pull down to refresh.
+    // They stay put otherwise, so the row doesn't shuffle under your finger as songs change.
+    var quoteIndex by remember { mutableIntStateOf(VillainQuotes.next()) }
+    var seed by remember { mutableLongStateOf(System.nanoTime()) }
+    var refreshing by remember { mutableStateOf(false) }
     var recommended by remember { mutableStateOf<List<Track>>(emptyList()) }
-    // Worked out once per visit (and again as more soundtracks finish indexing), not on every
-    // song change, so the row doesn't shuffle under your finger.
-    LaunchedEffect(recents.isNotEmpty(), index.size) {
+    LaunchedEffect(recents.isNotEmpty(), index.size, seed) {
         recommended = withContext(Dispatchers.Default) {
-            Recommendations.recommend(recents, index, visitSeed) { t -> SoundtrackIndex.gameOf(t)?.id }
+            Recommendations.recommend(recents, index, seed) { t -> SoundtrackIndex.gameOf(t)?.id }
         }
+    }
+    fun refresh() {
+        if (refreshing) return
+        refreshing = true
+        quoteIndex = VillainQuotes.next()
+        seed = System.nanoTime()
+        SoundtrackIndex.ensureBuilt()
+        scope.launch {
+            delay(700) // long enough to see the spinner settle
+            refreshing = false
+        }
+    }
+
+    // Tapping Home while on Home scrolls back to the top.
+    val reselectAtStart = remember { HomeReselect.count }
+    LaunchedEffect(HomeReselect.count) {
+        if (HomeReselect.count != reselectAtStart) gridState.animateScrollToItem(0)
     }
     LaunchedEffect(Unit) { ArtCache.warm(context, Catalog.games.map { it.art }) }
 
     // Back leaves selection mode instead of the app.
     BackHandler(enabled = selecting) { vm.clear() }
 
-    Box(Modifier.fillMaxSize()) {
+    PullToRefreshBox(
+        isRefreshing = refreshing,
+        onRefresh = { refresh() },
+        modifier = Modifier.fillMaxSize(),
+    ) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
+            state = gridState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = if (selecting) 112.dp else 24.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -145,8 +184,7 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                         .statusBarsPadding()
                         .padding(top = 20.dp, bottom = 4.dp),
                 ) {
-                    // A new villain line every time Home is shown; tap it for another.
-                    var quoteIndex by remember { mutableIntStateOf(VillainQuotes.next()) }
+                    // Tap the quote for another one.
                     val quote = villainQuotes[quoteIndex]
                     AnimatedContent(
                         targetState = quote,
