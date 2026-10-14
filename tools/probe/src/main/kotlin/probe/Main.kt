@@ -97,7 +97,12 @@ private fun sourcesFor(game: Game, log: StringBuilder): List<Album> {
                 .filter { Matching.isSoundtrackPlaylist(it, game) }
                 .forEach { playlists.putIfAbsent(it.url, it) }
         }
-        log.append("- playlist candidates: ${playlists.values.joinToString { "${it.title} (${it.trackCount})" }}\n")
+        log.append("- playlist candidates:\n")
+        for (c in playlists.values) {
+            log.append("  - **${c.title}** — *${c.artist}* — ${c.trackCount} — ${c.url}\n")
+            val sample = runCatching { allTitles(c.url) }.getOrDefault(emptyList())
+            log.append("    - ${sample.joinToString(" | ") { Matching.cleanTrackTitle(it, game) }}\n")
+        }
         playlists.values.maxByOrNull { Matching.playlistScore(it) }?.let { found[it.url] = it.copy(fromPlaylist = true) }
     }
     return found.values.sortedByDescending { Matching.score(it, game) }
