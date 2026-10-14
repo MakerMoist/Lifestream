@@ -1,8 +1,11 @@
 name: Smoke test
 
 # Installs a release build (shrunk exactly like the published one) on an Android emulator,
-# launches it and checks it keeps running without crashing. Start it from the Actions tab.
+# launches it and checks it keeps running without crashing. Runs when the smoke-test branch is
+# pushed (nothing is published from there), or from the Actions tab.
 on:
+  push:
+    branches: [ smoke-test ]
   workflow_dispatch:
 
 permissions:
