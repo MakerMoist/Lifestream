@@ -46,6 +46,7 @@ object Matching {
         "MATSUEDA", "EGUCHI", "MASAHARU IWATA", "MIZUTA", "TANIOKA", "JUNYA NAKANO", "SEKITO",
         "KAWAMORI", "ARNIE ROTH", "BLACK MAGES", "SQUARE ENIX", "SQUARESOFT", "SHOTARO SHIMA",
         "KAZUHIKO TOYAMA", "RYO YAMAZAKI", "DISTANT WORLDS", "HIROKAZU AKIYAMA", "MITSUDA",
+        "NORIKO MATSUEDA", "TAKAHITO EGUCHI", "YOSHITAKA SUZUKI", "TSUYOSHI SEKITO",
     )
 
     fun normalize(raw: String): String {
@@ -147,17 +148,44 @@ object Matching {
         return t.ifEmpty { title.lowercase(Locale.ROOT).trim() }
     }
 
-    /** Higher is better: official soundtracks by the real composers first. */
+    private val ostPhrases = listOf(
+        "ORIGINAL SOUNDTRACK", "ORIGINAL SOUND TRACK", "ORIGINAL SOUND VERSION", "OST", "OSV", "SOUNDTRACK",
+    )
+
+    /** Words that mark an arrangement, compilation or extra rather than the game's own soundtrack. */
+    private val notTheOriginal = listOf(
+        "PIANO", "ORCHESTRA", "ORCHESTRAL", "ORCHESTRATIONS", "SYMPHONIC", "SYMPHONY", "ARRANGE", "ARRANGED",
+        "ARRANGEMENT", "ARRANGEMENTS", "VOCAL", "VOCALS", "ACOUSTIC", "GUITAR", "JAZZ", "BRASS", "STRINGS",
+        "CONCERT", "LIVE", "PLUS", "SELECTION", "SELECTIONS", "COLLECTION", "COLLECTIONS", "BEST", "SPECIAL",
+        "DISTANT WORLDS", "TRIBUTE", "COVER", "COVERS", "REMIX", "REMIXES", "REMIXED", "MUSIC BOX", "SINGLE",
+        "BATTLE TRAX", "BLACK MAGES", "PRELUDE",
+    )
+
+    private val remasterWords = listOf("REMASTER", "REMASTERED", "HD", "PIXEL", "REMASTERS")
+
+    /**
+     * True only for a game's official original soundtrack: titled as an OST (or the older
+     * "Original Sound Version"), not an arrangement or extra, and released by the composers or
+     * Square Enix (YouTube Music lists the label or composer as the album artist).
+     */
+    fun isOfficialSoundtrack(album: Album): Boolean {
+        val t = normalize(album.title)
+        if (ostPhrases.none { hasWord(t, it) }) return false
+        if (notTheOriginal.any { hasWord(t, it) }) return false
+        if (junk.any { hasWord(t, it) }) return false
+        if (album.trackCount in 1..3) return false
+        val artist = normalize(album.artist)
+        return isOfficialArtist(album.artist) || hasWord(artist, "VARIOUS ARTISTS")
+    }
+
+    /** Higher is better: the original release before remasters, the composers' own credit first. */
     fun score(album: Album, game: Game): Int {
         val t = normalize(album.title)
         var s = 0
-        if (hasWord(t, "ORIGINAL SOUNDTRACK") || hasWord(t, "OST") || hasWord(t, "ORIGINAL SOUND TRACK")) s += 4
+        if (hasWord(t, "ORIGINAL SOUNDTRACK") || hasWord(t, "ORIGINAL SOUND VERSION")) s += 2
         if (isOfficialArtist(album.artist)) s += 3
-        if (game.series != Series.SPINOFF) {
-            listOf("PIANO", "ORCHESTRA", "ORCHESTRAL", "ARRANGE", "ARRANGED", "VOCAL", "ACOUSTIC")
-                .forEach { if (hasWord(t, it)) s -= 2 }
-        }
-        if (album.trackCount in 1..3) s -= 2 // singles
+        if (remasterWords.any { hasWord(t, it) }) s -= 3
+        if (album.trackCount >= 20) s += 1
         return s
     }
 }

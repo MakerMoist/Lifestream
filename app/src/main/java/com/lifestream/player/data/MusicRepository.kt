@@ -30,17 +30,21 @@ object MusicRepository {
 
     private val yt get() = ServiceList.YouTube
 
-    /** How many matching albums a game's Tracks tab draws from, best match first. */
-    private const val MAX_ALBUMS_PER_GAME = 4
+    /**
+     * Some soundtracks are split across several official albums (e.g. XIV's expansions,
+     * or Vol. 1 / Vol. 2 releases). The Tracks tab plays through up to this many, best first.
+     */
+    private const val MAX_ALBUMS_PER_GAME = 8
 
     private val albumCache = ConcurrentHashMap<String, List<Album>>()
 
-    // ---- Per-game sources (album-first, so everything is from a real soundtrack) ----
+    // ---- Per-game sources: the game's official original soundtrack, nothing else ----
 
     /**
-     * A game's official soundtrack albums: YouTube Music album search, kept only when the
-     * title matches that specific game (see [Matching]), ranked so the original soundtrack
-     * by the real composers comes first.
+     * A game's official original soundtrack album(s): YouTube Music albums whose title matches
+     * that specific game (see [Matching.matches]) and that are the real OST release
+     * (see [Matching.isOfficialSoundtrack]). Ranked so the original release comes before
+     * remasters. No fan playlists, arrangements or loose song search.
      */
     suspend fun gameAlbums(game: Game): List<Album> {
         albumCache[game.id]?.let { return it }
@@ -51,17 +55,21 @@ object MusicRepository {
             fun add(items: List<InfoItem>) {
                 items.filterIsInstance<PlaylistInfoItem>()
                     .mapNotNull { it.toAlbum() }
-                    .filter { Matching.matches(game.match, it.title) }
+                    .filter { Matching.matches(game.match, it.title) && Matching.isOfficialSoundtrack(it) }
                     .forEach { found.putIfAbsent(it.url, it) }
             }
 
-            for (filter in listOf(YoutubeSearchQueryHandlerFactory.MUSIC_ALBUMS, YoutubeSearchQueryHandlerFactory.PLAYLISTS)) {
+            // A second wording helps older games whose OST is titled "Original Sound Version".
+            val queries = listOf(game.query, "${game.title} soundtrack")
+            for (query in queries) {
                 if (found.isNotEmpty()) break
                 try {
-                    val handler = yt.searchQHFactory.fromQuery(game.query, listOf(filter), "")
+                    val handler = yt.searchQHFactory.fromQuery(
+                        query, listOf(YoutubeSearchQueryHandlerFactory.MUSIC_ALBUMS), "",
+                    )
                     val info = SearchInfo.getInfo(yt, handler)
                     add(info.relatedItems)
-                    if (found.size < 3 && info.hasNextPage()) {
+                    if (info.hasNextPage()) {
                         add(SearchInfo.getMoreItems(yt, handler, info.nextPage).items)
                     }
                 } catch (e: CancellationException) {
@@ -82,7 +90,7 @@ object MusicRepository {
         override suspend fun load(page: Any?): Paged<Album> = Paged(gameAlbums(game), null)
     }
 
-    /** A game's tracks, taken album by album from its matching soundtracks. */
+    /** A game's tracks, played through its official soundtrack album(s) in order. */
     fun gameTracks(game: Game): PagedSource<Track> = GameTracksSource(game)
 
     private object More
@@ -91,19 +99,9 @@ object MusicRepository {
         private var albums: List<Album>? = null
         private var index = 0
         private var albumPage: Any? = null
-        private var fallback: PagedSource<Track>? = null
 
         override suspend fun load(page: Any?): Paged<Track> {
-            fallback?.let { return it.load(page) }
-
             val list = albums ?: gameAlbums(game).also { albums = it }
-            if (list.isEmpty()) {
-                // No album matched: fall back to song search, keeping only clearly-FF tracks.
-                val fb = songSearch(game.query, finalFantasyOnly = true)
-                fallback = fb
-                return fb.load(null)
-            }
-
             val max = minOf(list.size, MAX_ALBUMS_PER_GAME)
             val out = mutableListOf<Track>()
             while (out.isEmpty() && index < max) {
@@ -112,7 +110,7 @@ object MusicRepository {
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    // The best album failing is a real error; a later one is just skipped.
+                    // The main album failing is a real error; a later volume is just skipped.
                     if (index == 0 && albumPage == null) throw e
                     Paged(emptyList(), null)
                 }
@@ -229,8 +227,8 @@ object MusicRepository {
         val id = runCatching { yt.streamLHFactory.getId(url) }.getOrNull() ?: return null
         return Track(
             id = id,
-            title = name ?: "Unknown track",
-            artist = cleanArtist(uploaderName),
+            title = TitleTranslator.toEnglish(name ?: "Unknown track"),
+            artist = TitleTranslator.toEnglish(cleanArtist(uploaderName)),
             durationSec = duration,
             thumbnail = bestImage(thumbnails),
         )
@@ -240,8 +238,8 @@ object MusicRepository {
         val u = url ?: return null
         return Album(
             url = u,
-            title = name ?: "Untitled",
-            artist = cleanArtist(uploaderName),
+            title = TitleTranslator.toEnglish(name ?: "Untitled"),
+            artist = TitleTranslator.toEnglish(cleanArtist(uploaderName)),
             trackCount = streamCount,
             thumbnail = bestImage(thumbnails),
         )

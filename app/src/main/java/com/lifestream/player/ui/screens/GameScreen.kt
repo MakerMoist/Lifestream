@@ -148,11 +148,21 @@ fun GameScreen(game: Game, onBack: () -> Unit, onOpenAlbum: (Album) -> Unit) {
         }
 
         if (vm.tab == 0) {
-            pagedItems(vm.tracks, footerKey = "tracks-footer", key = { "t-${it.id}" }) { index, track ->
+            pagedItems(
+                vm.tracks,
+                footerKey = "tracks-footer",
+                key = { "t-${it.id}" },
+                emptyText = "No official soundtrack for this game on YouTube Music yet.",
+            ) { index, track ->
                 TrackRow(track, onClick = { PlayerConnection.playTracks(vm.tracks.items, index) })
             }
         } else {
-            pagedItems(vm.albums, footerKey = "albums-footer", key = { "a-${it.url}" }) { _, album ->
+            pagedItems(
+                vm.albums,
+                footerKey = "albums-footer",
+                key = { "a-${it.url}" },
+                emptyText = "No official soundtrack for this game on YouTube Music yet.",
+            ) { _, album ->
                 AlbumRow(album, onClick = { onOpenAlbum(album) })
             }
         }

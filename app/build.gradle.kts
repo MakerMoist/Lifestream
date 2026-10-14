@@ -84,6 +84,9 @@ dependencies {
     implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.5")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
+    // Japanese → English titles, translated on the device
+    implementation("com.google.mlkit:translate:17.0.3")
+
     // Images / async
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
