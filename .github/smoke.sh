@@ -58,8 +58,8 @@ if tap_text "Final Fantasy" || tap_text "Final Fantasy II"; then
       echo "::notice::A song is playing (stream resolved and decoding) after about $((i * 10)) s"
     else
       echo "::warning::Playback didn't reach PLAYING: $state"
-      adb logcat -d 2>/dev/null | grep -iE "ExoPlayerImplInternal|Playback error|StreamHttp|ParsingException|ExtractionException|ReCaptcha|IOException|sign in|bot" \
-        | grep -v "^--" | tail -20 | sed 's/^/::warning::/' || true
+      adb logcat -d 2>/dev/null | grep -E "ExoPlayerImplInternal|AndroidRuntime" | grep -vE "^\S+ \S+ +[0-9]+ +[0-9]+ [A-Z] [A-Za-z]+: +at " \
+        | grep -v "^--" | sort -u -k6 | head -25 | cut -c1-500 | sed 's/^/::warning::/' || true
     fi
   else
     echo "::warning::Couldn't find the Play all button"
