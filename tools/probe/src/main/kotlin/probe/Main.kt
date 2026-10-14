@@ -26,6 +26,10 @@ import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQu
  */
 fun main(args: Array<String>) {
     NewPipe.init(OkHttpDownloader(Http.client), Localization("en", "US"), ContentCountry("US"))
+    if ("--covers" in args) {
+        runCovers()
+        return
+    }
     if ("--titles" in args) {
         runTitles(args.filter { it != "--titles" }.toSet())
         return
