@@ -102,7 +102,7 @@ object Updater {
             val target = File(dir, "Lifestream-${release.versionCode}.apk")
             val partial = File(dir, "${target.name}.part")
 
-            client.newCall(Request.Builder().url(release.apkUrl).header("User-Agent", "Lifestream").build())
+            client.newCall(Request.Builder().url(release.apkUrl).header("User-Agent", "LifeStream").build())
                 .execute().use { response ->
                     if (!response.isSuccessful) throw IOException("Download failed (HTTP ${response.code}).")
                     requireGitHub(response.request.url.toString()) // where redirects actually landed
@@ -141,7 +141,7 @@ object Updater {
             if (!partial.renameTo(target)) throw IOException("Couldn't save the update.")
             if (!signedLikeThisApp(context, target)) {
                 target.delete()
-                throw IOException("This build isn't signed with Lifestream's key, so it can't update the installed app.")
+                throw IOException("This build isn't signed with LifeStream's key, so it can't update the installed app.")
             }
             // The APK itself must be the version the release says it is, and newer than this one.
             val apkVersion = archiveVersionCode(context, target)
@@ -176,7 +176,7 @@ object Updater {
 
     private fun getText(url: String, accept: String? = null): String {
         requireGitHub(url)
-        val request = Request.Builder().url(url).header("User-Agent", "Lifestream")
+        val request = Request.Builder().url(url).header("User-Agent", "LifeStream")
             .apply { if (accept != null) header("Accept", accept) }
             .build()
         client.newCall(request).execute().use { response ->

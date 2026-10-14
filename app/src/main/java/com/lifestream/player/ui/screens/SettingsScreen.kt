@@ -238,7 +238,7 @@ fun UpdatePrompt() {
                 if (asking) {
                     val size = if (release.apkSize > 0) " (${release.apkSize / (1024 * 1024)} MB)" else ""
                     Text(
-                        "Lifestream ${release.versionName}$size is ready. You have ${Updater.currentVersionName}. " +
+                        "LifeStream ${release.versionName}$size is ready. You have ${Updater.currentVersionName}. " +
                             "Would you like to update now?",
                     )
                 } else {
@@ -311,11 +311,14 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
             }
             Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    "Pause When Volume Is Turned All the Way Down",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f),
-                )
+                Column(Modifier.weight(1f)) {
+                    Text("Pause On Zero Volume", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "When lowering the volume, if it reaches 0; the currently playing song will be paused.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = pauseAtZeroVolume, onCheckedChange = { AppSettings.setPauseAtZeroVolume(it) })
             }
@@ -337,9 +340,18 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
             }
         }
 
+        SectionLabel("Interface", Modifier.padding(top = 8.dp))
+        ThemeRow(Palettes.byId(themeId), onClick = onOpenThemes)
+
+        // Saved Songs stays near the bottom, just above App Updates.
         SectionLabel("Saved Songs", Modifier.padding(top = 8.dp))
         SettingsCard {
             Text("Keep Recently Played Songs", style = MaterialTheme.typography.bodyLarge)
+            Text(
+                "Cache recently streamed songs locally instead of using data. Speeds up listening but uses more storage.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Spacer(Modifier.height(12.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AppSettings.CACHE_LIMIT_CHOICES.forEach { mb ->
@@ -392,20 +404,21 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
             }
         }
 
-        SectionLabel("Theme", Modifier.padding(top = 8.dp))
-        ThemeRow(Palettes.byId(themeId), onClick = onOpenThemes)
 
         // App updates always stays last, with its check button always visible.
         SectionLabel("App Updates", Modifier.padding(top = 8.dp))
         SettingsCard {
-            Text("Lifestream ${Updater.currentVersionName}", style = MaterialTheme.typography.titleMedium)
+            Text("LifeStream ${Updater.currentVersionName}", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Check Automatically", style = MaterialTheme.typography.bodyLarge)
                 }
                 Spacer(Modifier.width(12.dp))
-                Switch(checked = autoUpdate, onCheckedChange = { AppSettings.setAutoUpdate(it) })
+                Switch(checked = autoUpdate, onCheckedChange = {
+                    AppSettings.setAutoUpdate(it)
+                    if (it) vm.check() // check right away when it's switched on
+                })
             }
             Spacer(Modifier.height(12.dp))
             if (vm.state != UpdateState.Idle) {
@@ -471,7 +484,7 @@ private fun UpdateSection(vm: SettingsViewModel, context: Context, showActions: 
 
         is UpdateState.NeedsPermission -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                "Downloaded and verified. Android needs your OK for Lifestream to install updates — " +
+                "Downloaded and verified. Android needs your OK for LifeStream to install updates — " +
                     "turn on \"Allow from this source\", then come back.",
                 style = MaterialTheme.typography.bodyMedium,
             )

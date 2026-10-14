@@ -28,7 +28,7 @@ object Palettes {
      */
     val all: List<Palette> = listOf(
         // glowing blue-green Lifestream, materia gold
-        Palette("lifestream", "Lifestream", "The original look",
+        Palette("lifestream", "LifeStream", "The original look",
             c(0xFF060A16), c(0xFF0E1530), c(0xFF18224A), c(0xFF7DD6FF), c(0xFF5CF2B0), c(0xFFF5C86A),
             c(0xFFEEF3FF), c(0xFFB9C4E4)),
         // mako green, reactor-fire orange, pale steel-yellow

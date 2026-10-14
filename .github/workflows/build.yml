@@ -120,11 +120,11 @@ jobs:
           SIGNED: ${{ needs.build.outputs.signed }}
         run: |
           gh release view latest -R "$REPO" >/dev/null 2>&1 || \
-            gh release create latest -R "$REPO" --prerelease --title "Lifestream (latest build)" \
-              --notes "Latest Lifestream build. Install Lifestream.apk; Lifestream.apk.sha256 is its checksum."
+            gh release create latest -R "$REPO" --prerelease --title "LifeStream (latest build)" \
+              --notes "Latest LifeStream build. Install Lifestream.apk; Lifestream.apk.sha256 is its checksum."
           gh release upload latest Lifestream.apk Lifestream.apk.sha256 version.json -R "$REPO" --clobber
           VERSION=$(python3 -c "import json; print(json.load(open('version.json'))['versionName'])")
-          gh release edit latest -R "$REPO" --title "Lifestream $VERSION"
+          gh release edit latest -R "$REPO" --title "LifeStream $VERSION"
           # Point the "latest" tag at the commit this build came from. The app only reads the
           # release's files, so if GitHub's API hiccups here it's retried, then just a warning.
           for attempt in 1 2 3; do

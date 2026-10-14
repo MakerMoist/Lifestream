@@ -231,7 +231,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
             EmptyState(
                 title = if (progress.running) "Still indexing…" else "No Final Fantasy music found",
                 body = if (progress.running) "More soundtracks are being added; results will appear as they load."
-                else "Search only covers the soundtracks in Lifestream.",
+                else "Search only covers the soundtracks in LifeStream.",
             )
             return@Column
         }

@@ -18,7 +18,7 @@ object AppSettings {
     private const val KEY_PAUSE_AT_ZERO_VOLUME = "pause_at_zero_volume"
 
     /** Size choices for saved songs, in MB (0 = don't save songs). */
-    val CACHE_LIMIT_CHOICES = listOf(0, 2048, 5120, 10240)
+    val CACHE_LIMIT_CHOICES = listOf(0, 2048, 4096, 6144, 8192)
     const val DEFAULT_CACHE_LIMIT_MB = 2048
 
     private lateinit var prefs: SharedPreferences
@@ -43,9 +43,9 @@ object AppSettings {
     /** How much space recently played songs may use on the phone, in MB (0 = off). */
     val cacheLimitMb: StateFlow<Int> = _cacheLimitMb.asStateFlow()
 
-    private val _autoUpdate = MutableStateFlow(true)
+    private val _autoUpdate = MutableStateFlow(false)
 
-    /** Check GitHub for a new version when the app opens, and ask before updating. */
+    /** Check GitHub for a new version when the app opens, and ask before updating. Off unless turned on. */
     val autoUpdate: StateFlow<Boolean> = _autoUpdate.asStateFlow()
 
     private val _pauseAtZeroVolume = MutableStateFlow(true)
@@ -57,10 +57,12 @@ object AppSettings {
         prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
         _continueFromSearch.value = prefs.getBoolean(KEY_CONTINUE_FROM_SEARCH, true)
         _searchKeyboard.value = prefs.getBoolean(KEY_SEARCH_KEYBOARD, true)
-        _autoUpdate.value = prefs.getBoolean(KEY_AUTO_UPDATE, true)
+        _autoUpdate.value = prefs.getBoolean(KEY_AUTO_UPDATE, false)
         _pauseAtZeroVolume.value = prefs.getBoolean(KEY_PAUSE_AT_ZERO_VOLUME, true)
-        _cacheLimitMb.value = prefs.getInt(KEY_CACHE_LIMIT_MB, DEFAULT_CACHE_LIMIT_MB)
-            .takeIf { it in CACHE_LIMIT_CHOICES } ?: DEFAULT_CACHE_LIMIT_MB
+        // A size from an older version (e.g. 5 or 10 GB) becomes the largest choice that fits in it.
+        val stored = prefs.getInt(KEY_CACHE_LIMIT_MB, DEFAULT_CACHE_LIMIT_MB)
+        _cacheLimitMb.value = if (stored in CACHE_LIMIT_CHOICES) stored
+        else CACHE_LIMIT_CHOICES.lastOrNull { it in 1..stored } ?: DEFAULT_CACHE_LIMIT_MB
         // byId falls back to the default for unknown or tampered values.
         val palette = Palettes.byId(prefs.getString(KEY_THEME, null))
         _themeId.value = palette.id
