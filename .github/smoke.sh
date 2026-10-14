@@ -46,14 +46,20 @@ played=0
 if tap_text "Final Fantasy" || tap_text "Final Fantasy II"; then
   sleep 20
   if tap_text "Play all"; then
-    sleep 45
-    state=$(adb shell dumpsys media_session | grep -m1 -oE "state=[A-Z_]+\([0-9]+\)|state=[0-9]+")
+    # Resolving the first stream downloads and runs YouTube's player script, which is slow on
+    # an emulator; give it up to three minutes.
+    for i in $(seq 1 18); do
+      sleep 10
+      state=$(adb shell dumpsys media_session | grep -m1 -oE "state=[A-Z_]+\([0-9]+\)|state=[0-9]+")
+      if echo "$state" | grep -qE "PLAYING|state=3$"; then played=1; break; fi
+    done
     echo "Media session: $state"
-    if adb shell dumpsys media_session | grep -qE "state=PLAYING|state=3[^0-9]|state=3$"; then
-      played=1
-      echo "::notice::A song is playing (stream resolved and decoding)"
+    if [ "$played" = 1 ]; then
+      echo "::notice::A song is playing (stream resolved and decoding) after about $((i * 10)) s"
     else
-      echo "::warning::Playback didn't reach PLAYING (the emulator may have no route to YouTube): $state"
+      echo "::warning::Playback didn't reach PLAYING: $state"
+      adb logcat -d 2>/dev/null | grep -iE "ExoPlayerImplInternal|Playback error|StreamHttp|ParsingException|ExtractionException|ReCaptcha|IOException|sign in|bot" \
+        | grep -v "^--" | tail -20 | sed 's/^/::warning::/' || true
     fi
   else
     echo "::warning::Couldn't find the Play all button"
