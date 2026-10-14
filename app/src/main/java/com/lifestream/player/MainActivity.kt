@@ -1,7 +1,6 @@
 package com.lifestream.player
 
 import android.Manifest
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -52,8 +51,6 @@ import androidx.navigation.compose.rememberNavController
 import com.lifestream.player.data.Catalog
 import com.lifestream.player.playback.PlayerConnection
 import com.lifestream.player.ui.components.MiniPlayer
-import com.lifestream.player.ui.screens.AlbumHolder
-import com.lifestream.player.ui.screens.AlbumScreen
 import com.lifestream.player.ui.screens.GameScreen
 import com.lifestream.player.ui.screens.HomeScreen
 import com.lifestream.player.ui.screens.LibraryScreen
@@ -126,10 +123,7 @@ private fun LifestreamRoot() {
                     HomeScreen(onOpenGame = { nav.navigate("game/${it.id}") })
                 }
                 composable("search") {
-                    SearchScreen(onOpenAlbum = { album ->
-                        AlbumHolder.put(album)
-                        nav.navigate("album/${Uri.encode(album.url)}")
-                    })
+                    SearchScreen(onOpenGame = { nav.navigate("game/${it.id}") })
                 }
                 composable("library") { LibraryScreen() }
                 composable("game/{id}") { entry ->
@@ -137,11 +131,6 @@ private fun LifestreamRoot() {
                     if (game != null) {
                         GameScreen(game = game, onBack = { nav.popBackStack() })
                     }
-                }
-                composable("album/{url}") { entry ->
-                    val raw = entry.arguments?.getString("url") ?: return@composable
-                    val url = if (raw.startsWith("http")) raw else Uri.decode(raw)
-                    AlbumScreen(url = url, onBack = { nav.popBackStack() })
                 }
             }
         }

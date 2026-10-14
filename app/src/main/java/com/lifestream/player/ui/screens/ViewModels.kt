@@ -5,10 +5,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lifestream.player.data.Album
 import com.lifestream.player.data.Catalog
 import com.lifestream.player.data.Game
 import com.lifestream.player.data.Matching
+import com.lifestream.player.data.SoundtrackIndex
+import com.lifestream.player.data.PagedSource
+import com.lifestream.player.data.Paged
 import com.lifestream.player.data.MusicRepository
 import com.lifestream.player.data.Track
 import com.lifestream.player.playback.PlayerConnection
@@ -17,7 +19,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
-import java.util.concurrent.ConcurrentHashMap
 
 /** Multi-select on the Home grid: pick several soundtracks and play them as one queue. */
 class HomeViewModel : ViewModel() {
@@ -73,7 +74,7 @@ class HomeViewModel : ViewModel() {
     }
 
     /** About 40 tracks per soundtrack from its matching albums; a failing one is just skipped. */
-    private suspend fun tracksFor(game: Game): List<Track> = try {
+    private suspend fun tracksFor(game: Game): List<Track> = SoundtrackIndex.tracksFor(game.id)?.take(60) ?: try {
         val source = MusicRepository.gameTracks(game)
         val out = mutableListOf<Track>()
         var next: Any? = null
@@ -94,42 +95,19 @@ class HomeViewModel : ViewModel() {
 
 class GameViewModel(game: Game) : ViewModel() {
     // One version of each song: the original soundtrack loads first, so its version wins.
-    val tracks = PagedList(viewModelScope, MusicRepository.gameTracks(game)) { Matching.songKey(it.title) }
+    val tracks = PagedList(
+        viewModelScope,
+        SoundtrackIndex.tracksFor(game.id)?.let { cached ->
+            object : PagedSource<Track> {
+                override suspend fun load(page: Any?) = Paged(cached, null)
+            }
+        } ?: MusicRepository.gameTracks(game),
+    ) { Matching.songKey(it.title) }
 }
 
-class AlbumViewModel(url: String) : ViewModel() {
-    val tracks = PagedList(viewModelScope, MusicRepository.albumTracks(url)) { it.id }
-}
-
+/** Search is local (see SoundtrackIndex); this just keeps the query and results across rotation. */
 class SearchViewModel : ViewModel() {
     var input by mutableStateOf("")
-    var ffOnly by mutableStateOf(true)
-    var tab by mutableStateOf(0)
-    var submitted by mutableStateOf<String?>(null)
-        private set
-    var songs by mutableStateOf<PagedList<Track>?>(null)
-        private set
-    var albums by mutableStateOf<PagedList<Album>?>(null)
-        private set
-
-    fun submit(text: String = input) {
-        val q = text.trim()
-        if (q.isEmpty()) return
-        input = q
-        val full = if (ffOnly && !q.contains("final fantasy", ignoreCase = true)) "final fantasy $q" else q
-        submitted = full
-        songs = PagedList(viewModelScope, MusicRepository.songSearch(full, finalFantasyOnly = ffOnly)) {
-            Matching.songKey(it.title)
-        }
-        albums = PagedList(viewModelScope, MusicRepository.albumSearch(full, finalFantasyOnly = ffOnly)) { it.url }
-    }
-}
-
-/** Lets the album screen show the header info it was opened with while tracks load. */
-object AlbumHolder {
-    private val albums = ConcurrentHashMap<String, Album>()
-    fun put(album: Album) {
-        albums[album.url] = album
-    }
-    fun get(url: String): Album? = albums[url]
+    var games by mutableStateOf<List<Game>>(emptyList())
+    var hits by mutableStateOf<List<SoundtrackIndex.Hit>>(emptyList())
 }

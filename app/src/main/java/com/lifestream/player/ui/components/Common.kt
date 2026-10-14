@@ -90,6 +90,7 @@ fun TrackRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     leading: String? = null,
+    subtitle: String? = null,
 ) {
     val playerState by PlayerConnection.state.collectAsStateWithLifecycle()
     val favorites by Library.favorites.collectAsStateWithLifecycle()
@@ -136,7 +137,7 @@ fun TrackRow(
                 fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Normal,
                 color = if (isCurrent) LsColors.Mako else MaterialTheme.colorScheme.onSurface,
             )
-            val sub = listOf(track.artist, formatDuration(track.durationSec)).filter { it.isNotBlank() }
+            val sub = listOf(subtitle ?: track.artist, formatDuration(track.durationSec)).filter { it.isNotBlank() }
             Text(
                 sub.joinToString(" · "),
                 maxLines = 1,

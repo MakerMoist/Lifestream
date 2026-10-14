@@ -95,6 +95,29 @@ object Matching {
         return found
     }
 
+    fun isNumeralToken(token: String) = token in romanSet
+
+    /**
+     * Search words, normalized like titles, with shorthand expanded:
+     * "ff" → FINAL FANTASY, "ff7"/"ffvii" → FINAL FANTASY VII, "7" → VII.
+     */
+    fun queryTokens(query: String): List<String> {
+        val out = mutableListOf<String>()
+        for (tok in normalize(query).split(' ').filter { it.isNotEmpty() }) {
+            when {
+                tok == "FF" -> out += listOf("FINAL", "FANTASY")
+                tok.startsWith("FF") && isNumeral(tok.drop(2)) -> out += listOf("FINAL", "FANTASY", canonical(tok.drop(2)))
+                tok in arabic -> out += canonical(tok)
+                else -> out += tok
+            }
+        }
+        return out
+    }
+
+    /** A game's searchable words: its title plus its card numeral. */
+    fun titleTokens(game: Game): List<String> =
+        normalize("${game.title} ${game.numeral}").split(' ').filter { it.isNotEmpty() }
+
     fun isJunk(title: String): Boolean {
         val t = normalize(title)
         return junk.any { hasWord(t, it) }

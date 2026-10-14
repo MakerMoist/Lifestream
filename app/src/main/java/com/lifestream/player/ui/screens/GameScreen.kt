@@ -42,7 +42,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.lifestream.player.data.Album
 import com.lifestream.player.data.Game
 import com.lifestream.player.playback.PlayerConnection
 import com.lifestream.player.ui.components.Artwork
@@ -154,37 +153,3 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
         }
     }
 }
-
-@Composable
-fun AlbumRow(album: Album, onClick: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Artwork(album.thumbnail, Modifier.size(64.dp))
-        Spacer(Modifier.width(14.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                album.title,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            val sub = listOfNotNull(
-                album.artist.ifBlank { null },
-                album.trackCount.takeIf { it > 0 }?.let { "$it tracks" },
-            )
-            Text(
-                sub.joinToString(" · "),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-

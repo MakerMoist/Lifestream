@@ -9,7 +9,7 @@ A standalone Android music player for Final Fantasy soundtracks. Audio is stream
 - **Official soundtracks only**: each game plays only its official original soundtrack album(s) — no arrangements, fan uploads or covers. Remasters are used only when the original isn't available.
 - **English titles**: YouTube is asked for English metadata, and any Japanese track, album or artist name that remains is translated on the device (Google ML Kit, a one-time ~30 MB model download).
 - **One version per song**: remasters, piano/orchestral takes and duplicates collapse to a single entry (the original soundtrack's version wins).
-- **Search** with an optional "Final Fantasy only" filter, songs and albums tabs, and quick-pick suggestions.
+- **Strict search**: searches only the songs in Lifestream's own soundtracks (an on-device index built in the background) and the catalog's game names — e.g. "Prelude", "FF7", "Rebirth". Nothing comes from open YouTube search.
 - **Own player** built on Media3 ExoPlayer: background playback, media notification, lock-screen and headset controls, audio focus, pause on headphone unplug.
 - **Now Playing** screen: swipe the album art left or right to skip or go back, plus seek bar, shuffle, repeat (all / one), favorite, and an editable queue.
 - **Queue tools** on every track: play next, add to queue, add to favorites.
