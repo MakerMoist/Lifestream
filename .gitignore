@@ -10,3 +10,7 @@
 .cxx
 tools/art/out/
 __pycache__/
+tools/probe/build/
+tools/probe/.gradle/
+tools/probe/report.md
+.kotlin/
