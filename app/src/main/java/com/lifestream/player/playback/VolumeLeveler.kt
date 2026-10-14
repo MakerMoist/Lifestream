@@ -111,40 +111,34 @@ internal class LevelerCore(sampleRate: Int, private val channels: Int, startGain
     private val blockFrames = (sampleRate / 10).coerceAtLeast(1) // 100 ms
 
     // K-weighting: a high shelf (+4 dB above ~1.7 kHz) then a high-pass at ~38 Hz.
-    private val shelf: DoubleArray
-    private val highPass: DoubleArray
-    private val state = DoubleArray(channels * 4)
-
-    init {
-        val pi = Math.PI
-        run {
-            val f0 = 1681.974450955533
-            val g = 3.999843853973347
-            val q = 0.7071752369554196
-            val k = Math.tan(pi * f0 / sampleRate)
-            val vh = Math.pow(10.0, g / 20.0)
-            val vb = Math.pow(vh, 0.4996667741545416)
-            val a0 = 1.0 + k / q + k * k
-            shelf = doubleArrayOf(
-                (vh + vb * k / q + k * k) / a0,
-                2.0 * (k * k - vh) / a0,
-                (vh - vb * k / q + k * k) / a0,
-                2.0 * (k * k - 1.0) / a0,
-                (1.0 - k / q + k * k) / a0,
-            )
-        }
-        run {
-            val f0 = 38.13547087602444
-            val q = 0.5003270373238773
-            val k = Math.tan(pi * f0 / sampleRate)
-            val a0 = 1.0 + k / q + k * k
-            highPass = doubleArrayOf(
-                1.0, -2.0, 1.0,
-                2.0 * (k * k - 1.0) / a0,
-                (1.0 - k / q + k * k) / a0,
-            )
-        }
+    private val shelf: DoubleArray = run {
+        val f0 = 1681.974450955533
+        val g = 3.999843853973347
+        val q = 0.7071752369554196
+        val k = Math.tan(Math.PI * f0 / sampleRate)
+        val vh = Math.pow(10.0, g / 20.0)
+        val vb = Math.pow(vh, 0.4996667741545416)
+        val a0 = 1.0 + k / q + k * k
+        doubleArrayOf(
+            (vh + vb * k / q + k * k) / a0,
+            2.0 * (k * k - vh) / a0,
+            (vh - vb * k / q + k * k) / a0,
+            2.0 * (k * k - 1.0) / a0,
+            (1.0 - k / q + k * k) / a0,
+        )
     }
+    private val highPass: DoubleArray = run {
+        val f0 = 38.13547087602444
+        val q = 0.5003270373238773
+        val k = Math.tan(Math.PI * f0 / sampleRate)
+        val a0 = 1.0 + k / q + k * k
+        doubleArrayOf(
+            1.0, -2.0, 1.0,
+            2.0 * (k * k - 1.0) / a0,
+            (1.0 - k / q + k * k) / a0,
+        )
+    }
+    private val state = DoubleArray(channels * 4)
 
     // Measurement.
     private var blockEnergy = 0.0
