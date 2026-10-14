@@ -4,6 +4,7 @@ import com.lifestream.player.data.SearchHistory
 import android.app.Application
 import com.lifestream.player.data.AppSettings
 import com.lifestream.player.data.Library
+import com.lifestream.player.data.OfficialTitles
 import com.lifestream.player.playback.SongCache
 import com.lifestream.player.data.SoundtrackIndex
 import com.lifestream.player.data.TitleTranslator
@@ -20,6 +21,7 @@ class LifestreamApp : Application() {
         // Ask YouTube for English metadata; anything still in Japanese is translated on the device.
         NewPipe.init(OkHttpDownloader(Http.client), Localization("en", "US"), ContentCountry("US"))
         AppSettings.init(this)
+        OfficialTitles.init(this)
         Library.init(this)
         SearchHistory.init(this)
         SongCache.init(this)

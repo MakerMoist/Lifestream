@@ -30,7 +30,7 @@ import java.io.File
 object SoundtrackIndex {
 
     /** Bump when the way soundtracks are sourced changes, so old indexes are rebuilt. */
-    private const val VERSION = 9
+    private const val VERSION = 10
     private const val FILE_NAME = "soundtrack-index.json"
     private const val MAX_AGE_MS = 3L * 24 * 60 * 60 * 1000
     private const val MAX_TRACKS_PER_GAME = 400
@@ -192,7 +192,7 @@ object SoundtrackIndex {
                 val g = games.getJSONObject(id)
                 val arr = g.getJSONArray("tracks")
                 map[id] = (0 until arr.length()).mapNotNull { i ->
-                    arr.optJSONObject(i)?.let(Track::fromJson)?.copy(gameId = id)?.let(ArtistCredits::fix)
+                    arr.optJSONObject(i)?.let(Track::fromJson)?.copy(gameId = id)?.let(ArtistCredits::fix)?.let(OfficialTitles::fix)
                 }
                 stamps[id] = g.optLong("built")
             }

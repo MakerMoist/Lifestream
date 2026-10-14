@@ -13,8 +13,13 @@ private val uploadTag = Regex(
  * Strips upload tags from song and artist names: "[Official]", "(Official Audio)", "(Basiscape)"
  * and the like, in any bracket style, wherever they appear.
  */
+private val gameTag = Regex(
+    "^\\s*FFVII REMAKE:\\s*|\\s*[(（](FF7 Rebirth OST Ver\\.?|FF7R Ver\\.?|FF7 Rebirth Ver\\.?)[)）]",
+    RegexOption.IGNORE_CASE,
+)
+
 fun tidySongTitle(title: String): String {
-    val cleaned = title.replace(uploadTag, "").replace(Regex("\\s{2,}"), " ").trim().trimEnd('-', '–', '|', ' ')
+    val cleaned = title.replace(uploadTag, "").replace(gameTag, "").replace(Regex("\\s{2,}"), " ").trim().trimEnd('-', '–', '|', ' ')
     return cleaned.ifBlank { title }
 }
 

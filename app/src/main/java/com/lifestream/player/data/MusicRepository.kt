@@ -281,7 +281,8 @@ object MusicRepository {
         val id = runCatching { yt.streamLHFactory.getId(url) }.getOrNull() ?: return null
         return Track(
             id = id,
-            title = tidySongTitle(TitleTranslator.toEnglish(name ?: "Unknown track")),
+            // Square Enix's own English name when there is one, otherwise translated on the device.
+            title = OfficialTitles.forId(id) ?: tidySongTitle(TitleTranslator.toEnglish(name ?: "Unknown track")),
             // Known names first, so e.g. Uematsu's channel name never goes through machine translation.
             artist = ArtistCredits.canonical(TitleTranslator.toEnglish(ArtistCredits.canonical(cleanArtist(uploaderName)))),
             durationSec = duration,
