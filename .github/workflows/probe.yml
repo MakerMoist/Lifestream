@@ -31,7 +31,12 @@ jobs:
         run: |
           chmod +x ./gradlew
           set -o pipefail
-          ./gradlew --no-daemon -p tools/probe run --args="${{ github.event.inputs.games }}" 2>&1 | tee "$RUNNER_TEMP/probe.log"
+          GAMES="${{ github.event.inputs.games }}"
+          if [ -n "$GAMES" ]; then
+            ./gradlew --no-daemon -p tools/probe run --args="$GAMES" 2>&1 | tee "$RUNNER_TEMP/probe.log"
+          else
+            ./gradlew --no-daemon -p tools/probe run 2>&1 | tee "$RUNNER_TEMP/probe.log"
+          fi
 
       - name: Publish report
         if: always()
