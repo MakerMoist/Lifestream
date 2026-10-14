@@ -6,8 +6,9 @@ A standalone Android music player for Final Fantasy soundtracks. Audio is stream
 
 - **Soundtrack catalog** — 25 soundtracks, each with its own original card art. Main series: I–XVI with X-2, plus VII Remake, INTERmission and Rebirth right after VII. Spin-offs & more: Tactics, Crisis Core –Reunion–, Chrono Trigger, Chrono Cross, Lost Odyssey. Tapping one opens its original soundtrack track list.
 - **Multi-select**: press and hold a soundtrack, tap more (or "Select all" for a section), then Play or Shuffle them as one queue.
-- **Official soundtracks only**: each game plays only its official original soundtrack album(s) — no arrangements, fan uploads or covers. Remasters are used only when the original isn't available.
-- **English titles**: YouTube is asked for English metadata, and any Japanese track, album or artist name that remains is translated on the device (Google ML Kit, a one-time ~30 MB model download).
+- **Official soundtracks first**: each game plays its official original soundtrack album(s) — no arrangements, covers or spin-off albums, and originals before remasters/remakes. Where no official album exists on YouTube Music (currently X-2, Crisis Core –Reunion– and Lost Odyssey) it uses the most complete upload of the game's own soundtrack, with track names cleaned up.
+- **Search inside a soundtrack**: every game page has its own search box.
+- **English titles**: many official albums only carry Japanese track names. A built-in glossary maps Final Fantasy names and well-known titles to their official English (魔晄炉 → Mako Reactor, 片翼の天使 → One-Winged Angel), and anything left is translated on the device (Google ML Kit, a one-time ~30 MB model download).
 - **One version per song**: remasters, piano/orchestral takes and duplicates collapse to a single entry (the original soundtrack's version wins).
 - **Strict search**: searches only the songs in Lifestream's own soundtracks (an on-device index built in the background) and the catalog's game names — e.g. "Prelude", "FF7", "Rebirth". Nothing comes from open YouTube search.
 - **Own player** built on Media3 ExoPlayer: background playback, media notification, lock-screen and headset controls, audio focus, pause on headphone unplug.

@@ -114,6 +114,14 @@ object Matching {
         return out
     }
 
+    /** True if every search word starts a word of [title] ("one wing" → "One-Winged Angel"). */
+    fun titleMatches(title: String, query: String): Boolean {
+        val q = queryTokens(query)
+        if (q.isEmpty()) return true
+        val words = normalize(title).split(' ')
+        return q.all { w -> words.any { it.startsWith(w) } } || title.contains(query.trim(), ignoreCase = true)
+    }
+
     /** A game's searchable words: its title plus its card numeral. */
     fun titleTokens(game: Game): List<String> =
         normalize("${game.title} ${game.numeral}").split(' ').filter { it.isNotEmpty() }
@@ -263,18 +271,26 @@ object Matching {
      * Lightwaves~ [HD]" → "Eternity ~Memory of Lightwaves~". Picks the part that is the song's
      * name (not the game, "OST", or a track number) and drops quality tags.
      */
+    private val numberingToken = Regex("^(DISC|CD|TRACK|NO|VOL)?\\d+$")
+
     fun cleanTrackTitle(raw: String, game: Game): String {
         val gameWords = titleTokens(game).toSet() + setOf(
             "FINAL", "FANTASY", "FF", "OST", "SOUNDTRACK", "ORIGINAL", "MUSIC", "DISC", "CD", "TRACK", "BGM",
         )
-        var t = Normalizer.normalize(raw, Normalizer.Form.NFKC)
+        var t = Normalizer.normalize(raw, Normalizer.Form.NFKC).trim()
+        // `"Mission Start" CCFF7-R OST 03 …` → the quoted part is the song.
+        Regex("^[\"“「『]([^\"”」』]{2,})[\"”」』]").find(t)?.let { return it.groupValues[1].trim() }
         t = Regex("[\\[(【](?:[^\\])】]*\\b(?:hd|hq|ost|audio|official|soundtrack|1080p|720p|4k|lyrics|extended|ps\\d|ver\\.?)\\b[^\\])】]*)[\\])】]",
             RegexOption.IGNORE_CASE).replace(t, " ")
         val parts = t.split(Regex("\\s+[-–—|/]\\s+|\\s*[:：]\\s+")).map { it.trim() }.filter { it.isNotEmpty() }
-        val song = parts.firstOrNull { part ->
+        fun isNoise(part: String): Boolean {
             val tokens = normalize(part).split(' ').filter { it.isNotEmpty() }
-            tokens.isNotEmpty() && !tokens.all { it in gameWords || isNumeral(it) || it.all(Char::isDigit) || it.startsWith("FF") }
-        } ?: parts.lastOrNull() ?: raw
-        return Regex("^\\s*(?:disc\\s*\\d+\\s*)?(?:track\\s*)?\\d{1,3}(?=[.\\s_)-])[.\\s_)-]+").replace(song, "").trim().ifEmpty { raw }
+            return tokens.isEmpty() || tokens.all {
+                it in gameWords || isNumeral(it) || numberingToken.matches(it) || it.startsWith("FF")
+            }
+        }
+        val song = parts.firstOrNull { !isNoise(it) } ?: parts.lastOrNull() ?: raw
+        return Regex("^\\s*(?:disc\\s*\\d+\\s*)?(?:track\\s*)?\\d{1,3}(?=[.\\s_)-])[.\\s_)-]+", RegexOption.IGNORE_CASE)
+            .replace(song, "").trim().ifEmpty { raw }
     }
 }

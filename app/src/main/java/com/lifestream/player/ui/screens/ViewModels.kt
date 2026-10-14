@@ -103,6 +103,9 @@ class GameViewModel(game: Game) : ViewModel() {
             }
         } ?: MusicRepository.gameTracks(game),
     ) { Matching.songKey(it.title) }
+
+    /** Text in the "search this soundtrack" box. */
+    var filter by mutableStateOf("")
 }
 
 /** Search is local (see SoundtrackIndex); this just keeps the query and results across rotation. */

@@ -21,6 +21,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import com.lifestream.player.data.Matching
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -53,6 +66,15 @@ import com.lifestream.player.ui.theme.LsColors
 fun GameScreen(game: Game, onBack: () -> Unit) {
     val vm: GameViewModel = viewModel(key = "game-${game.id}") { GameViewModel(game) }
     val tracks = vm.tracks.items
+    val focus = LocalFocusManager.current
+    val filtering = vm.filter.isNotBlank()
+    val matches = remember(vm.filter, tracks) {
+        if (filtering) tracks.filter { Matching.titleMatches(it.title, vm.filter) } else emptyList()
+    }
+    // A search covers the whole soundtrack, so keep loading pages while one is active.
+    LaunchedEffect(filtering, tracks.size, vm.tracks.loading) {
+        if (filtering && !vm.tracks.endReached && !vm.tracks.loading) vm.tracks.loadMore()
+    }
 
     LazyColumn(Modifier.fillMaxSize()) {
         item(key = "header") {
@@ -143,13 +165,57 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
             )
         }
 
-        pagedItems(
-            vm.tracks,
-            footerKey = "tracks-footer",
-            key = { "t-${it.id}" },
-            emptyText = "No official soundtrack for this game on YouTube Music yet.",
-        ) { index, track ->
-            TrackRow(track, onClick = { PlayerConnection.playTracks(vm.tracks.items, index) })
+        item(key = "filter") {
+            OutlinedTextField(
+                value = vm.filter,
+                onValueChange = { vm.filter = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                placeholder = { Text("Search ${game.title}") },
+                leadingIcon = { Icon(Icons.Rounded.Search, null) },
+                trailingIcon = {
+                    if (vm.filter.isNotEmpty()) {
+                        IconButton(onClick = { vm.filter = "" }) { Icon(Icons.Rounded.Close, "Clear") }
+                    }
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(28.dp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
+            )
+        }
+
+        if (filtering) {
+            if (matches.isEmpty() && vm.tracks.endReached) {
+                item(key = "no-match") {
+                    Text(
+                        "No songs in ${game.title} match \"${vm.filter.trim()}\".",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(24.dp),
+                    )
+                }
+            }
+            itemsIndexed(matches, key = { _, t -> "f-${t.id}" }) { index, track ->
+                TrackRow(track, onClick = { PlayerConnection.playTracks(matches, index) })
+            }
+            if (!vm.tracks.endReached) {
+                item(key = "filter-loading") {
+                    Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(Modifier.size(28.dp), strokeWidth = 2.5.dp)
+                    }
+                }
+            }
+        } else {
+            pagedItems(
+                vm.tracks,
+                footerKey = "tracks-footer",
+                key = { "t-${it.id}" },
+                emptyText = "No official soundtrack for this game on YouTube Music yet.",
+            ) { index, track ->
+                TrackRow(track, onClick = { PlayerConnection.playTracks(vm.tracks.items, index) })
+            }
         }
     }
 }

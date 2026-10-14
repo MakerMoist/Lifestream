@@ -30,7 +30,7 @@ import java.io.File
 object SoundtrackIndex {
 
     /** Bump when the way soundtracks are sourced changes, so old indexes are rebuilt. */
-    private const val VERSION = 3
+    private const val VERSION = 4
     private const val FILE_NAME = "soundtrack-index.json"
     private const val MAX_AGE_MS = 3L * 24 * 60 * 60 * 1000
     private const val MAX_TRACKS_PER_GAME = 400
