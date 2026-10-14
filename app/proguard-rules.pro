@@ -24,3 +24,9 @@
 -dontwarn org.slf4j.**
 -dontwarn sun.misc.Unsafe
 -dontwarn org.re2j.**
+# Rhino's bytecode optimizer targets desktop Java's dynamic linker; on Android Rhino runs in
+# interpreted mode and never loads it.
+-dontwarn jdk.dynalink.**
+-dontwarn java.awt.**
+-dontwarn javax.swing.**
+-dontwarn javax.naming.**
