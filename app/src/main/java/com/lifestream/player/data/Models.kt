@@ -64,9 +64,22 @@ data class Game(
     val extras: List<ExtraSong> = emptyList(),
 )
 
-/** A specific recording to add to a game's list, found by exact title + artist. */
-data class ExtraSong(val title: String, val artist: String) {
+/**
+ * A specific recording to add to a game's list: either pinned to a YouTube id (checked ahead of
+ * time against the official soundtrack release) or found at runtime by exact title + artist.
+ */
+data class ExtraSong(
+    val title: String,
+    val artist: String,
+    val videoId: String? = null,
+    val durationSec: Long = 0,
+) {
     val query: String get() = "$artist $title"
+
+    /** The song as a track when it's pinned to a known recording. */
+    fun pinnedTrack(): Track? = videoId?.let {
+        Track(it, title, artist, durationSec, "https://i.ytimg.com/vi/$it/hqdefault.jpg")
+    }
 }
 
 enum class Series(val label: String) {

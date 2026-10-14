@@ -171,6 +171,7 @@ object MusicRepository {
 
     /** Finds each of [game]'s extra songs as its original recording; ones not found are skipped. */
     private suspend fun findExtras(game: Game): List<Track> = game.extras.mapNotNull { extra ->
+        extra.pinnedTrack()?.let { return@mapNotNull it }
         try {
             val results = songSearch(extra.query).load(null).items
             Matching.pickExtra(extra, results)

@@ -44,8 +44,9 @@ fun runChecklist(only: Set<String>) {
 
         var found = 0
         val missingDetail = StringBuilder()
+        val jpTitles = songs.map { norm(it.title.substringBefore(" - ")) }.toSet()
         for (title in titles.distinct()) {
-            val byTitle = songs.firstOrNull { Matching.searchScore(title, it.title) != null }
+            val byTitle = songs.firstOrNull { sameSong(title, it.title) }
             if (byTitle != null) {
                 found++
                 out.append("| $title | ok (title) | ${byTitle.title} |\n")
@@ -55,21 +56,25 @@ fun runChecklist(only: Set<String>) {
             val candidates = LinkedHashMap<String, Song>()
             for (q in listOf("${game.title} $title", "$title ${game.title} soundtrack")) {
                 runCatching { songSearch(q) }.getOrDefault(emptyList()).forEach { candidates.putIfAbsent(it.id, it) }
-                if (candidates.values.any { it.id in ids }) break
             }
-            val hit = candidates.values.firstOrNull { it.id in ids }
+            val named = candidates.values.filter { sameSong(title, it.title) }
+            // The same recording, or the same song under its Japanese title, is already there.
+            val hit = named.firstOrNull { it.id in ids }
+                ?: named.firstOrNull { it.title.contains(" - ") && norm(it.title.substringBefore(" - ")) in jpTitles }
             if (hit != null) {
                 found++
-                out.append("| $title | ok (id) | ${hit.title} |\n")
+                out.append("| $title | ok (search) | ${hit.title} |\n")
                 machine.append("$gameId\t$title\tok\t${hit.id}\t${hit.title}\t${hit.artist}\t${hit.sec}\n")
                 continue
             }
-            out.append("| $title | **MISSING** | see below |\n")
-            missingDetail.append("- **$title**\n")
-            candidates.values.take(8).forEach { c ->
+            val status = if (named.isEmpty()) "UNKNOWN" else "MISSING"
+            out.append("| $title | **$status** | see below |\n")
+            missingDetail.append("- **$title** ($status)\n")
+            (named + candidates.values.filter { it !in named }).take(8).forEach { c ->
                 val official = if (Matching.isOfficialArtist(c.artist)) "official" else ""
-                missingDetail.append("    - `${c.id}` ${c.title} — ${c.artist} — ${c.sec}s $official\n")
-                machine.append("$gameId\t$title\tcand\t${c.id}\t${c.title}\t${c.artist}\t${c.sec}\n")
+                val mark = if (c in named) "★" else ""
+                missingDetail.append("    - $mark`${c.id}` ${c.title} — ${c.artist} — ${c.sec}s $official\n")
+                machine.append("$gameId\t$title\t${if (c in named) "named" else "cand"}\t${c.id}\t${c.title}\t${c.artist}\t${c.sec}\n")
             }
             if (candidates.isEmpty()) machine.append("$gameId\t$title\tnone\t\t\t\t\n")
         }
@@ -82,6 +87,24 @@ fun runChecklist(only: Set<String>) {
     target.writeText("## Summary\n\n$summary\n$out")
     File(target.parentFile, "checklist.tsv").writeText(machine.toString())
     println("wrote $target")
+}
+
+private val stop = setOf("the", "a", "an", "of", "theme", "version", "ver", "from", "ff", "final", "fantasy")
+
+/** Lower-case words only (Latin letters / digits), without filler words. */
+private fun norm(raw: String): String =
+    Regex("[a-z0-9]+").findAll(raw.lowercase().replace("'", "")).map { it.value }
+        .filter { it !in stop }.joinToString(" ")
+
+/**
+ * True when [title] (e.g. "コーネリア城 - Castle Cornelia") names the wanted song: the wanted
+ * name's main part (before "~") appears in it as whole words.
+ */
+private fun sameSong(wanted: String, title: String): Boolean {
+    val main = norm(wanted.substringBefore("~"))
+    if (main.isEmpty()) return false
+    val t = " ${norm(title)} "
+    return t.contains(" $main ") || t.replace(" ", "").contains(main.replace(" ", "")) && main.length >= 8
 }
 
 /** What the app plays for [game]: its soundtrack album(s) (same rules as the app) plus extras. */
