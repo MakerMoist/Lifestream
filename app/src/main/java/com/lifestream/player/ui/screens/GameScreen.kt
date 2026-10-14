@@ -171,7 +171,7 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                 onValueChange = { vm.filter = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                    .padding(horizontal = 32.dp, vertical = 4.dp),
                 placeholder = { Text("Search ${game.title}") },
                 leadingIcon = { Icon(Icons.Rounded.Search, null) },
                 trailingIcon = {
