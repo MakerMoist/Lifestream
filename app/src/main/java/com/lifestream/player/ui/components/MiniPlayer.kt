@@ -15,6 +15,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.onSizeChanged
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -79,6 +81,9 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Mo
                             if (close) {
                                 offsetX.animateTo(widthPx, tween(160))
                                 PlayerConnection.stopAndClear()
+                                // Stay off-screen until the cleared queue reaches the UI, so the
+                                // bar doesn't flash back for a frame (or come back if it failed).
+                                withTimeoutOrNull(1500) { PlayerConnection.state.first { it.current == null } }
                                 offsetX.snapTo(0f)
                             } else {
                                 offsetX.animateTo(0f, spring(dampingRatio = 0.7f))

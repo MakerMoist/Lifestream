@@ -18,8 +18,10 @@ private val gameTag = Regex(
     RegexOption.IGNORE_CASE,
 )
 
+private val repeatedSpaces = Regex("\\s{2,}")
+
 fun tidySongTitle(title: String): String {
-    val cleaned = title.replace(uploadTag, "").replace(gameTag, "").replace(Regex("\\s{2,}"), " ").trim().trimEnd('-', '–', '|', ' ')
+    val cleaned = title.replace(uploadTag, "").replace(gameTag, "").replace(repeatedSpaces, " ").trim().trimEnd('-', '–', '|', ' ')
     return cleaned.ifBlank { title }
 }
 

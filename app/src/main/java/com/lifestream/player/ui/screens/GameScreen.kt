@@ -10,7 +10,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.ImageBitmap
+import com.lifestream.player.ui.components.ArtCache
+import com.lifestream.player.ui.components.rememberArt
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -93,12 +96,21 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                     .background(Brush.verticalGradient(listOf(game.colorA, LsColors.Night))),
             ) {
                 if (game.art != 0) {
-                    Image(
-                        painter = painterResource(game.art),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.matchParentSize(),
-                    )
+                    // The card's art (already decoded) shows at once; a screen-wide copy decoded
+                    // in the background replaces it, so opening the page never waits on decoding.
+                    val context = LocalContext.current
+                    val card = rememberArt(game.art)
+                    val wide by produceState<ImageBitmap?>(null, game.art) {
+                        value = withContext(Dispatchers.IO) { ArtCache.loadWide(context, game.art) }
+                    }
+                    (wide ?: card)?.let { art ->
+                        Image(
+                            bitmap = art,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.matchParentSize(),
+                        )
+                    }
                     Box(
                         Modifier
                             .matchParentSize()

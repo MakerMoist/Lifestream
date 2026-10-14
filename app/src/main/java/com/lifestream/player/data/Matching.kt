@@ -108,7 +108,27 @@ object Matching {
      * Search words, normalized like titles, with shorthand expanded:
      * "ff" → FINAL FANTASY, "ff7"/"ffvii" → FINAL FANTASY VII, "7" → VII.
      */
-    fun queryTokens(query: String): List<String> {
+    /**
+     * A search compares one query against every song, so the query's tokens and normalized form
+     * are worked out once and reused (the last query is remembered), and song titles' normalized
+     * forms are kept between keystrokes.
+     */
+    @Volatile private var lastQuery: Triple<String, List<String>, String>? = null
+    private val normalizedTitles = java.util.concurrent.ConcurrentHashMap<String, String>()
+    private const val MAX_NORMALIZED_TITLES = 40_000
+
+    private fun forQuery(query: String): Triple<String, List<String>, String> =
+        lastQuery?.takeIf { it.first == query }
+            ?: Triple(query, computeQueryTokens(query), normalize(query)).also { lastQuery = it }
+
+    private fun normalizedTitle(title: String): String = normalizedTitles[title] ?: normalize(title).also {
+        if (normalizedTitles.size >= MAX_NORMALIZED_TITLES) normalizedTitles.clear()
+        normalizedTitles[title] = it
+    }
+
+    fun queryTokens(query: String): List<String> = forQuery(query).second
+
+    private fun computeQueryTokens(query: String): List<String> {
         val out = mutableListOf<String>()
         for (tok in normalize(query).split(' ').filter { it.isNotEmpty() }) {
             when {
@@ -181,9 +201,9 @@ object Matching {
      * - small typos are tolerated ("Sephirot", "Zanarkan")
      */
     fun searchScore(query: String, title: String, extraTokens: List<String> = emptyList()): Int? {
-        val q = queryTokens(query)
+        val (_, q, phrase) = forQuery(query)
         if (q.isEmpty()) return null
-        val normTitle = normalize(title)
+        val normTitle = normalizedTitle(title)
         val words = normTitle.split(' ').filter { it.isNotEmpty() }
         val all = words + extraTokens
         val compactQuery = q.joinToString("")
@@ -197,7 +217,6 @@ object Matching {
             compactQuery.length >= 6 && fuzzyContains(compactTitle, compactQuery) -> 1
             else -> return null
         }
-        val phrase = normalize(query)
         if (phrase.isNotEmpty() && normTitle.contains(phrase)) score += 2
         if (normTitle == phrase || compactTitle == compactQuery) score += 3
         return score

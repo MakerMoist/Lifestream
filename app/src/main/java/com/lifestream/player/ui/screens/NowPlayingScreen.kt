@@ -81,6 +81,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.media3.common.Player
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.lifestream.player.data.hiResArtwork
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import com.lifestream.player.data.Library
 import com.lifestream.player.data.formatDuration
@@ -113,8 +116,14 @@ fun NowPlayingScreen(onClose: () -> Unit) {
             // Blurred artwork wash behind everything (blur is a no-op before Android 12).
             val wash = remember(track?.thumbnail) { SafeInput.safeArtwork(track?.thumbnail) }
             if (wash != null) {
+                // Heavily blurred, so a small image looks the same and is far cheaper to hold and blur.
+                val context = LocalContext.current
+                val request = remember(wash) {
+                    val small = SafeInput.safeArtwork(hiResArtwork(wash, 120, videoThumbs = false)) ?: wash
+                    ImageRequest.Builder(context).data(small).size(96).crossfade(true).build()
+                }
                 AsyncImage(
-                    model = wash,
+                    model = request,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier

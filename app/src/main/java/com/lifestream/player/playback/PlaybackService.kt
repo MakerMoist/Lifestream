@@ -112,10 +112,12 @@ class PlaybackService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
 
     override fun onTaskRemoved(rootIntent: Intent?) {
+        // Keep playing in the background only if something is actually playing; a queue that
+        // finished or stopped on an error shouldn't keep the service (and its notification) alive.
         val player = session?.player
-        if (player == null || !player.playWhenReady || player.mediaItemCount == 0) {
-            stopSelf()
-        }
+        val playing = player != null && player.playWhenReady && player.mediaItemCount > 0 &&
+            player.playbackState != Player.STATE_IDLE && player.playbackState != Player.STATE_ENDED
+        if (!playing) stopSelf()
     }
 
     override fun onDestroy() {

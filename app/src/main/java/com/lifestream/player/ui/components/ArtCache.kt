@@ -42,6 +42,24 @@ object ArtCache {
         scaled.asImageBitmap()
     }.getOrNull()?.also { bitmaps[res] = it }
 
+    /**
+     * A screen-wide copy for a soundtrack page's header. Not kept: only one page shows it, and
+     * it's decoded off the main thread each time the page opens.
+     */
+    fun loadWide(context: Context, res: Int): ImageBitmap? = runCatching {
+        val target = context.resources.displayMetrics.widthPixels.coerceIn(320, 1080)
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeResource(context.resources, res, bounds)
+        val options = BitmapFactory.Options().apply {
+            inPreferredConfig = Bitmap.Config.RGB_565
+            // Skip decoding detail the screen can't show.
+            var sample = 1
+            while (bounds.outWidth / (sample * 2) >= target) sample *= 2
+            inSampleSize = sample
+        }
+        BitmapFactory.decodeResource(context.resources, res, options)?.asImageBitmap()
+    }.getOrNull()
+
     /** Decodes every card ahead of time so Home draws them straight away. */
     suspend fun warm(context: Context, ids: List<Int>) = withContext(Dispatchers.IO) {
         ids.filter { it != 0 }.forEach { load(context, it) }

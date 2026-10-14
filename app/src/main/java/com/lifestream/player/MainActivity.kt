@@ -1,6 +1,9 @@
 package com.lifestream.player
 
 import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import androidx.compose.ui.platform.LocalContext
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -233,6 +236,16 @@ private fun BottomBar(nav: NavHostController) {
 @Composable
 private fun NotificationPermissionRequest() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+    val context = LocalContext.current
+    // Ask only when it isn't granted, and once per visit (not again on every rotation).
+    var asked by rememberSaveable { mutableStateOf(false) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
-    LaunchedEffect(Unit) { launcher.launch(Manifest.permission.POST_NOTIFICATIONS) }
+    LaunchedEffect(Unit) {
+        val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        if (!granted && !asked) {
+            asked = true
+            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 }

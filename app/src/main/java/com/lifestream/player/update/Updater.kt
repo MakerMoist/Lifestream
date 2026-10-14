@@ -37,6 +37,7 @@ object Updater {
 
     private const val MAX_APK_BYTES = 300L * 1024 * 1024
     private const val MAX_JSON_BYTES = 2L * 1024 * 1024
+    private val sha256Hex = Regex("^[0-9a-f]{64}$")
 
     /**
      * Every hop of every update request — including redirects, which OkHttp would otherwise
@@ -79,7 +80,7 @@ object Updater {
         if (versionUrl == null || apkUrl == null) throw IOException("The latest release has no installable build yet.")
         val info = JSONObject(getText(versionUrl!!))
         val sha = info.optString("sha256").lowercase()
-        if (!sha.matches(Regex("^[0-9a-f]{64}$"))) throw IOException("The release's checksum is missing or invalid.")
+        if (!sha.matches(sha256Hex)) throw IOException("The release's checksum is missing or invalid.")
         val code = info.optInt("versionCode", -1)
         if (code <= 0) throw IOException("The release's version is missing or invalid.")
         Release(

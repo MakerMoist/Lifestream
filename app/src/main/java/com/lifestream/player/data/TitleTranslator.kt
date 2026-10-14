@@ -23,6 +23,8 @@ object TitleTranslator {
     private val japanese = Regex("[\\u3040-\\u30FF\\u31F0-\\u31FF\\u3400-\\u4DBF\\u4E00-\\u9FFF\\uFF66-\\uFF9F]")
 
     private val cache = ConcurrentHashMap<String, String>()
+    private val whitespace = Regex("\\s+")
+    private val spaceBeforePunctuation = Regex("\\s+([~)\\]』」、。,!?])")
 
     /**
      * Created when a title needs translating and closed again by [release]: with official English
@@ -131,7 +133,7 @@ object TitleTranslator {
         for ((jp, en) in glossary) {
             if (t.contains(jp)) t = t.replace(jp, " $en ")
         }
-        return t.replace(Regex("\\s+"), " ").replace(Regex("\\s+([~)\\]』」、。,!?])"), "$1").trim()
+        return t.replace(whitespace, " ").replace(spaceBeforePunctuation, "$1").trim()
     }
 
     fun toEnglish(text: String): String {
@@ -174,7 +176,7 @@ object TitleTranslator {
 
     /** Song-title casing: "one-winged angel" → "One-Winged Angel"; keeps existing capitals (VII, ~, etc.). */
     private fun tidy(raw: String): String {
-        val words = raw.trim().split(Regex("\\s+"))
+        val words = raw.trim().split(whitespace)
         return words.mapIndexed { i, word ->
             word.split("-").joinToString("-") { part ->
                 val lower = part.lowercase(Locale.ROOT)
