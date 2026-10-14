@@ -90,7 +90,7 @@ class HomeViewModel : ViewModel() {
                 // A few attempts in case a soundtrack can't be loaded right now.
                 val candidates = Catalog.games.filter { it.id != lastSurprise }.shuffled().take(4)
                 for (game in candidates) {
-                    val tracks = SoundtrackIndex.tracksFor(game.id) ?: tracksFor(game)
+                    val tracks = SoundtrackIndex.songsFor(game.id) ?: tracksFor(game)
                     if (tracks.isNotEmpty()) {
                         lastSurprise = game.id
                         PlayerConnection.playTracks(tracks, shuffle = true)
@@ -114,8 +114,11 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    /** About 40 tracks per soundtrack from its matching albums; a failing one is just skipped. */
-    private suspend fun tracksFor(game: Game): List<Track> = SoundtrackIndex.tracksFor(game.id)?.take(60) ?: try {
+    /**
+     * A soundtrack's songs, one version each: the whole thing once it's indexed, otherwise about
+     * 40 loaded straight from its albums. A failing soundtrack is just skipped.
+     */
+    private suspend fun tracksFor(game: Game): List<Track> = SoundtrackIndex.songsFor(game.id) ?: try {
         val source = MusicRepository.gameTracks(game)
         val out = mutableListOf<Track>()
         var next: Any? = null

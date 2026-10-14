@@ -64,8 +64,9 @@ jobs:
       - name: Build release APK (not debuggable)
         env:
           LIFESTREAM_VERSION_CODE: ${{ github.run_number }}
-          # Version 1.1.0 was build 49; later builds count up from there (1.1.1, 1.1.2, ...).
-          VERSION_BASE_RUN: 49
+          # Build 49 was 1.1.0; build 50 was published as 1.1.5 and later builds count up from
+          # there (1.1.6, 1.1.7, ...).
+          VERSION_BASE_RUN: 45
           LIFESTREAM_KEYSTORE_PASSWORD: ${{ secrets.LIFESTREAM_KEYSTORE_PASSWORD }}
           LIFESTREAM_KEY_ALIAS: ${{ secrets.LIFESTREAM_KEY_ALIAS }}
           LIFESTREAM_KEY_PASSWORD: ${{ secrets.LIFESTREAM_KEY_PASSWORD }}

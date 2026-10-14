@@ -33,6 +33,9 @@ data class PlayerUiState(
     val repeatMode: Int = Player.REPEAT_MODE_OFF,
     val queue: List<Track> = emptyList(),
     val currentIndex: Int = -1,
+    /** Whether skipping forward/back lands on another song (follows shuffle order and repeat). */
+    val hasNext: Boolean = false,
+    val hasPrevious: Boolean = false,
     val error: String? = null,
 )
 
@@ -48,14 +51,27 @@ object PlayerConnection {
     val state: StateFlow<PlayerUiState> = _state.asStateFlow()
 
     private val pending = mutableListOf<(MediaController) -> Unit>()
+    private var appContext: Context? = null
+
+    /** The queue as last built; rebuilt only when the playlist itself changes. */
+    private var queueCache: List<Track> = emptyList()
 
     fun connect(context: Context) {
         if (controller != null || connecting?.isActive == true) return
         val appContext = context.applicationContext
+        this.appContext = appContext
         connecting = scope.launch {
             val token = SessionToken(appContext, ComponentName(appContext, PlaybackService::class.java))
             val c = try {
-                MediaController.Builder(appContext, token).buildAsync().await()
+                MediaController.Builder(appContext, token)
+                    .setListener(object : MediaController.Listener {
+                        // The player service can be stopped by Android while the app stays open;
+                        // drop the dead connection so the next command reconnects.
+                        override fun onDisconnected(controller: MediaController) {
+                            scope.launch { onControllerLost(controller) }
+                        }
+                    })
+                    .buildAsync().await()
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 _state.update { it.copy(error = "Couldn't start the player service.") }
@@ -63,7 +79,7 @@ object PlayerConnection {
             }
             controller = c
             c.addListener(listener)
-            sync(c)
+            sync(c, rebuildQueue = true)
             pending.forEach { it(c) }
             pending.clear()
             startTicker()
@@ -79,9 +95,22 @@ object PlayerConnection {
         _state.update { it.copy(connected = false) }
     }
 
+    private fun onControllerLost(lost: MediaController) {
+        if (controller !== lost) return
+        lost.removeListener(listener)
+        controller = null
+        _state.update { it.copy(connected = false, isPlaying = false, isBuffering = false) }
+    }
+
     private fun withController(action: (MediaController) -> Unit) {
         val c = controller
-        if (c != null) action(c) else pending += action
+        if (c != null && c.isConnected) {
+            action(c)
+            return
+        }
+        if (c != null) onControllerLost(c)
+        pending += action
+        appContext?.let { connect(it) }
     }
 
     // ---- Commands ----
@@ -165,7 +194,7 @@ object PlayerConnection {
 
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) {
-            controller?.let { sync(it) }
+            controller?.let { sync(it, rebuildQueue = events.contains(Player.EVENT_TIMELINE_CHANGED)) }
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -177,8 +206,12 @@ object PlayerConnection {
         }
     }
 
-    private fun sync(c: MediaController) {
-        val queue = (0 until c.mediaItemCount).map { c.getMediaItemAt(it).toTrack() }
+    private fun sync(c: MediaController, rebuildQueue: Boolean = false) {
+        // Rebuilding a long queue on every event (position, buffering…) made big queues sluggish.
+        if (rebuildQueue || queueCache.size != c.mediaItemCount) {
+            queueCache = (0 until c.mediaItemCount).map { c.getMediaItemAt(it).toTrack() }
+        }
+        val queue = queueCache
         val duration = c.duration.takeIf { it > 0 }
             ?: c.currentMediaItem?.toTrack()?.durationSec?.takeIf { it > 0 }?.times(1000)
             ?: 0L
@@ -194,6 +227,8 @@ object PlayerConnection {
                 repeatMode = c.repeatMode,
                 queue = queue,
                 currentIndex = c.currentMediaItemIndex,
+                hasNext = c.hasNextMediaItem(),
+                hasPrevious = c.hasPreviousMediaItem(),
                 error = if (c.playerError == null) null else it.error,
             )
         }

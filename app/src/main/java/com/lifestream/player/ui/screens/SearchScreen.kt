@@ -55,6 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lifestream.player.data.AppSettings
 import com.lifestream.player.data.Game
+import com.lifestream.player.data.Matching
 import com.lifestream.player.data.SoundtrackIndex
 import com.lifestream.player.playback.PlayerConnection
 import com.lifestream.player.ui.components.EmptyState
@@ -252,8 +253,11 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
                             SearchHistory.add(vm.input)
                             if (continueFromSearch) {
                                 // This song first, then the rest of its soundtrack in random order.
-                                val rest = (SoundtrackIndex.tracksFor(hit.game.id) ?: emptyList())
-                                    .filter { it.id != hit.track.id }
+                                val rest = (SoundtrackIndex.songsFor(hit.game.id) ?: emptyList())
+                                    .filter {
+                                        it.id != hit.track.id &&
+                                            Matching.songKey(it.title) != Matching.songKey(hit.track.title)
+                                    }
                                     .shuffled()
                                 PlayerConnection.playTracks(listOf(hit.track) + rest, 0)
                             } else {

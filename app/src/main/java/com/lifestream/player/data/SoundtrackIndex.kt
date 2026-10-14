@@ -62,6 +62,9 @@ object SoundtrackIndex {
 
     fun tracksFor(gameId: String): List<Track>? = _tracks.value[gameId]?.takeIf { it.isNotEmpty() }
 
+    /** A soundtrack's songs with one version of each (the original release's, which comes first). */
+    fun songsFor(gameId: String): List<Track>? = tracksFor(gameId)?.distinctBy { Matching.songKey(it.title) }
+
     /** The soundtrack a song belongs to: from the song itself, or by finding it in the index. */
     fun gameOf(track: Track): Game? {
         track.gameId?.let { id -> Catalog.game(id)?.let { return it } }

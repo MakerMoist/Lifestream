@@ -359,11 +359,10 @@ private fun SwipeableArtwork(state: PlayerUiState) {
     var widthPx by remember { mutableFloatStateOf(1f) }
     val current by rememberUpdatedState(state)
 
-    fun canNext(s: PlayerUiState) =
-        s.currentIndex < s.queue.size - 1 || (s.repeatMode == Player.REPEAT_MODE_ALL && s.queue.size > 1)
+    // From the player itself, so shuffle order and repeat are taken into account.
+    fun canNext(s: PlayerUiState) = s.hasNext
 
-    fun canPrevious(s: PlayerUiState) =
-        s.currentIndex > 0 || (s.repeatMode == Player.REPEAT_MODE_ALL && s.queue.size > 1)
+    fun canPrevious(s: PlayerUiState) = s.hasPrevious
 
     Artwork(
         state.current?.thumbnail,

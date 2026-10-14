@@ -48,6 +48,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -231,7 +232,7 @@ fun UpdatePrompt() {
     AlertDialog(
         onDismissRequest = { if (vm.state !is UpdateState.Downloading) vm.dismissPrompt() },
         icon = { Icon(Icons.Rounded.SystemUpdate, null) },
-        title = { Text("Update available") },
+        title = { Text("Update Available") },
         text = {
             Column {
                 if (asking) {
@@ -258,7 +259,7 @@ fun UpdatePrompt() {
         },
         dismissButton = {
             if (vm.state !is UpdateState.Downloading) {
-                TextButton(onClick = { vm.dismissPrompt() }) { Text(if (asking) "Not now" else "Close") }
+                TextButton(onClick = { vm.dismissPrompt() }) { Text(if (asking) "Not Now" else "Close") }
             }
         },
     )
@@ -297,7 +298,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
         SettingsCard {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Keep playing after a search", style = MaterialTheme.typography.bodyLarge)
+                    Text("Keep Playing After a Search", style = MaterialTheme.typography.bodyLarge)
                     Text(
                         "When you play a song from Search, continue with the rest of its soundtrack, shuffled.",
                         style = MaterialTheme.typography.bodySmall,
@@ -313,7 +314,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
         SettingsCard {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Open the keyboard on Search", style = MaterialTheme.typography.bodyLarge)
+                    Text("Open the Keyboard on Search", style = MaterialTheme.typography.bodyLarge)
                     Text(
                         "Tapping the Search tab puts the cursor in the search box so you can start typing.",
                         style = MaterialTheme.typography.bodySmall,
@@ -325,16 +326,9 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
             }
         }
 
-        SectionLabel("Saved songs", Modifier.padding(top = 8.dp))
+        SectionLabel("Saved Songs", Modifier.padding(top = 8.dp))
         SettingsCard {
-            Text("Keep recently played songs", style = MaterialTheme.typography.bodyLarge)
-            Text(
-                "Songs you play are saved on your phone, so playing them again doesn't stream them " +
-                    "again — and songs played all the way through work offline. The oldest are " +
-                    "removed when the space below is full.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Text("Keep Recently Played Songs", style = MaterialTheme.typography.bodyLarge)
             Spacer(Modifier.height(12.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AppSettings.CACHE_LIMIT_CHOICES.forEach { mb ->
@@ -356,14 +350,34 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(12.dp))
+            var confirmClear by remember { mutableStateOf(false) }
+            if (confirmClear) {
+                AlertDialog(
+                    onDismissRequest = { confirmClear = false },
+                    title = { Text("Clear Cache?") },
+                    text = {
+                        Text(
+                            "This deletes ${formatBytes(vm.cacheUsedBytes)} of saved songs from your phone. " +
+                                "They'll stream again the next time you play them.",
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            vm.clearCache()
+                            confirmClear = false
+                        }) { Text("Clear") }
+                    },
+                    dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("Cancel") } },
+                )
+            }
             OutlinedButton(
-                onClick = { vm.clearCache() },
+                onClick = { confirmClear = true },
                 enabled = !vm.clearingCache && vm.cacheUsedBytes != 0L,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Icon(Icons.Rounded.DeleteSweep, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text(if (vm.clearingCache) "Clearing…" else "Clear cache")
+                Text(if (vm.clearingCache) "Clearing…" else "Clear Cache")
             }
         }
 
@@ -371,13 +385,13 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
         ThemeRow(Palettes.byId(themeId), onClick = onOpenThemes)
 
         // App updates always stays last, with its check button always visible.
-        SectionLabel("App updates", Modifier.padding(top = 8.dp))
+        SectionLabel("App Updates", Modifier.padding(top = 8.dp))
         SettingsCard {
             Text("Lifestream ${Updater.currentVersionName}", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Check automatically", style = MaterialTheme.typography.bodyLarge)
+                    Text("Check Automatically", style = MaterialTheme.typography.bodyLarge)
                     Text(
                         "When the app opens, look for a new version and ask if you'd like to update.",
                         style = MaterialTheme.typography.bodySmall,
@@ -396,7 +410,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
             Button(onClick = { vm.check() }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Rounded.SystemUpdate, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Check for updates")
+                Text("Check for Updates")
             }
         }
     }
@@ -432,7 +446,7 @@ private fun UpdateSection(vm: SettingsViewModel, context: Context, showActions: 
                 Button(onClick = { vm.download(context, s.release) }) {
                     Icon(Icons.Rounded.Download, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Download and install")
+                    Text("Download and Install")
                 }
             }
         }
@@ -456,7 +470,7 @@ private fun UpdateSection(vm: SettingsViewModel, context: Context, showActions: 
                 style = MaterialTheme.typography.bodyMedium,
             )
             if (showActions) {
-                Button(onClick = { Updater.openInstallPermission(context) }) { Text("Allow installing updates") }
+                Button(onClick = { Updater.openInstallPermission(context) }) { Text("Allow Installing Updates") }
             }
         }
 
