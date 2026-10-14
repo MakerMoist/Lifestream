@@ -59,6 +59,12 @@ class VolumeLeveler : BaseAudioProcessor() {
             core.newSong()
         }
         core.enabled = AppSettings.levelVolume.value
+        if (core.idle) {
+            // Switched off and back at normal volume: pass the audio through untouched.
+            out.put(inputBuffer)
+            out.flip()
+            return
+        }
 
         val channels = frame.size
         if (format.encoding == C.ENCODING_PCM_16BIT) {
@@ -107,6 +113,10 @@ internal class LevelerCore(sampleRate: Int, private val channels: Int, startGain
     var enabled = true
     var currentGainDb = startGainDb
         private set
+
+    /** Off, at unity gain and with the limiter released: nothing left to do to the audio. */
+    val idle: Boolean
+        get() = !enabled && currentGainDb == 0.0 && Math.abs(gain - 1.0) < 1e-6 && limiter > 0.9999
 
     private val blockFrames = (sampleRate / 10).coerceAtLeast(1) // 100 ms
 

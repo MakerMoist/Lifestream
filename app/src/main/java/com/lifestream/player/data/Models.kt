@@ -65,7 +65,7 @@ data class Track(
     companion object {
         /** YouTube video ids are exactly 11 characters of [A-Za-z0-9_-]. */
         private val videoId = Regex("^[A-Za-z0-9_-]{11}$")
-        private const val MAX_TEXT = 300
+        const val MAX_TEXT = 300
 
         /** Reads a stored song, or null if the entry isn't a valid one (e.g. a corrupted file). */
         fun fromJson(o: JSONObject): Track? {

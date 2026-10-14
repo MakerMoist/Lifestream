@@ -1,5 +1,7 @@
 package com.lifestream.player.data
 
+import com.lifestream.player.playback.SafeInput
+
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -279,17 +281,20 @@ object MusicRepository {
     private fun StreamInfoItem.toTrack(): Track? {
         if (streamType.name.contains("LIVE")) return null
         val id = runCatching { yt.streamLHFactory.getId(url) }.getOrNull() ?: return null
-        val raw = tidySongTitle(name ?: "Unknown track")
+        // Only real video ids reach the player (anything else would fail when it's queued).
+        if (!SafeInput.isVideoId(id)) return null
+        val raw = tidySongTitle(name ?: "Unknown track").take(Track.MAX_TEXT)
         // Square Enix's own English name when there is one, otherwise translated on the device.
-        val title = OfficialTitles.forId(id) ?: tidySongTitle(TitleTranslator.toEnglish(raw))
+        val title = (OfficialTitles.forId(id) ?: tidySongTitle(TitleTranslator.toEnglish(raw))).take(Track.MAX_TEXT)
         return Track(
             id = id,
             title = title,
             // The Japanese name stays searchable alongside the English one.
             altTitle = raw.takeIf { it != title && TitleTranslator.hasJapanese(it) }?.take(300),
             // Known names first, so e.g. Uematsu's channel name never goes through machine translation.
-            artist = ArtistCredits.canonical(TitleTranslator.toEnglish(ArtistCredits.canonical(cleanArtist(uploaderName)))),
-            durationSec = duration,
+            artist = ArtistCredits.canonical(TitleTranslator.toEnglish(ArtistCredits.canonical(cleanArtist(uploaderName))))
+                .take(Track.MAX_TEXT),
+            durationSec = duration.coerceIn(-1L, 24L * 3600),
             thumbnail = bestImage(thumbnails),
         )
     }
@@ -309,5 +314,5 @@ object MusicRepository {
         tidySongTitle((raw ?: "").removeSuffix(" - Topic").trim())
 
     private fun bestImage(images: List<Image>?): String? =
-        images?.maxByOrNull { it.height }?.url
+        images?.maxByOrNull { it.height }?.url?.let { SafeInput.safeArtwork(it) }
 }

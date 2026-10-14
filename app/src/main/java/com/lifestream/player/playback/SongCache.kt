@@ -73,20 +73,39 @@ object SongCache {
 
     private val refreshScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var refreshJob: Job? = null
+    @Volatile private var refreshWanted = false
 
-    /** Recomputes [cachedIds] shortly after the cache changes (many changes → one refresh). */
+    /**
+     * Recomputes [cachedIds] shortly after the cache changes. The cache reports every stored
+     * piece (thousands at start-up), so this only marks the list stale; one job does the work.
+     */
     fun scheduleRefresh() {
+        refreshWanted = true
         synchronized(refreshScope) {
-            refreshJob?.cancel()
+            if (refreshJob != null) return // the running job will see the request
             refreshJob = refreshScope.launch {
-                delay(1500)
-                val c = cache ?: return@launch
-                val ids = c.keys.toList()
-                    .filter { it.startsWith("track:") }
-                    .map { it.removePrefix("track:") }
-                    .filter { isFullyCached(it) }
-                    .toSet()
-                _cachedIds.value = ids
+                while (true) {
+                    delay(1500)
+                    refreshWanted = false
+                    // A failure here must not stop later refreshes.
+                    runCatching {
+                        cache?.let { c ->
+                            val ids = c.keys.toList()
+                                .filter { it.startsWith("track:") }
+                                .map { it.removePrefix("track:") }
+                                .filter { isFullyCached(it) }
+                                .toSet()
+                            if (ids != _cachedIds.value) _cachedIds.value = ids
+                        }
+                    }
+                    // Checked under the lock, so a request arriving now is never lost.
+                    synchronized(refreshScope) {
+                        if (!refreshWanted) {
+                            refreshJob = null
+                            return@launch
+                        }
+                    }
+                }
             }
         }
     }

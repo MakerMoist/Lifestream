@@ -63,6 +63,7 @@ object PlayerConnection {
     val currentId: StateFlow<String?> = _currentId.asStateFlow()
 
     private val pending = mutableListOf<(MediaController) -> Unit>()
+    private const val MAX_PENDING = 16
     private var appContext: Context? = null
 
     /** The queue as last built; rebuilt only when the playlist itself changes. */
@@ -86,6 +87,8 @@ object PlayerConnection {
                     .buildAsync().await()
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
+                // Commands waiting for this connection would never run; drop them.
+                pending.clear()
                 _state.update { it.copy(error = "Couldn't start the player service.") }
                 return@launch
             }
@@ -121,6 +124,8 @@ object PlayerConnection {
             return
         }
         if (c != null) onControllerLost(c)
+        // Only the last few taps matter while (re)connecting; never let this grow without bound.
+        if (pending.size >= MAX_PENDING) pending.removeAt(0)
         pending += action
         appContext?.let { connect(it) }
     }
@@ -132,11 +137,11 @@ object PlayerConnection {
         private set
 
     fun playTracks(tracks: List<Track>, startIndex: Int = 0, shuffle: Boolean = false, fromPlaylist: String? = null) {
-        playingPlaylistId = fromPlaylist
         // Drop anything without a valid video id (e.g. a corrupted saved favourite).
         val chosen = tracks.getOrNull(startIndex)
         val valid = tracks.filter { SafeInput.isVideoId(it.id) }
         if (valid.isEmpty()) return
+        playingPlaylistId = fromPlaylist
         withController { c ->
             c.shuffleModeEnabled = shuffle
             val start = if (shuffle) valid.indices.random() else valid.indexOf(chosen).coerceAtLeast(0)
@@ -221,6 +226,7 @@ object PlayerConnection {
 
     /** Stops playback and empties the queue (swiping the mini player away). */
     fun stopAndClear() = withController {
+        playingPlaylistId = null
         it.stop()
         it.clearMediaItems()
     }

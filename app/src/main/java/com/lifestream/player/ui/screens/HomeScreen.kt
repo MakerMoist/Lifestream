@@ -122,6 +122,9 @@ import com.lifestream.player.ui.theme.LsColors
 /** Bumped when the Home tab is tapped while already on Home. */
 object HomeReselect {
     var count by mutableIntStateOf(0)
+
+    /** True while Now Playing covers the whole screen, so Home doesn't animate unseen. */
+    var covered by mutableStateOf(false)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -174,8 +177,8 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
     // Keyed on the quote, so tapping or refreshing restarts the wait.
     val showQuotes by AppSettings.showQuotes.collectAsStateWithLifecycle()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    LaunchedEffect(quoteIndex, showQuotes) {
-        if (!showQuotes) return@LaunchedEffect
+    LaunchedEffect(quoteIndex, showQuotes, HomeReselect.covered) {
+        if (!showQuotes || HomeReselect.covered) return@LaunchedEffect
         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             delay(7_500)
             quoteIndex = VillainQuotes.next()

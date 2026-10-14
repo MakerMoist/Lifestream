@@ -21,6 +21,8 @@ android {
         versionName = System.getenv("LIFESTREAM_VERSION_NAME")
             ?.takeIf { it.matches(Regex("^\\d+\\.\\d+\\.\\d+$")) } ?: "1.4.0-dev"
         buildConfigField("String", "UPDATE_REPO", "\"MakerMoist/Lifestream\"")
+        // Phones run ARM; leaving out the x86 builds of native libraries keeps the APK small.
+        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
 
     // The release key comes from CI secrets via environment variables and is never committed.
@@ -40,8 +42,11 @@ android {
     buildTypes {
         release {
             isDebuggable = false
-            // The extractor relies on reflection (Rhino JS engine), so keep shrinking off.
-            isMinifyEnabled = false
+            // Unused code and resources are stripped (most of the APK was library code the app
+            // never calls). proguard-rules.pro keeps the extractor's reflective JS engine whole.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             // Local builds without the key fall back to the debug key so they still install.
             signingConfig = if (releaseKeystore != null) {
                 signingConfigs.getByName("release")

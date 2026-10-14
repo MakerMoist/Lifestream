@@ -52,11 +52,15 @@ object Matching {
         "NORIKO MATSUEDA", "TAKAHITO EGUCHI", "YOSHITAKA SUZUKI", "TSUYOSHI SEKITO",
     )
 
+    // Compiled once: these run for every song on every search keystroke.
+    private val sequelDash = Regex("\\b([IVX]+)\\s*-\\s*2\\b")
+    private val nonAlnumUpper = Regex("[^A-Z0-9]+")
+
     fun normalize(raw: String): String {
         var t = Normalizer.normalize(raw, Normalizer.Form.NFKC).uppercase(Locale.ROOT)
         // "X-2" → "X2", "XIII-2" → "XIII2" so sequels don't match their parent game
-        t = Regex("\\b([IVX]+)\\s*-\\s*2\\b").replace(t) { it.groupValues[1] + "2" }
-        return Regex("[^A-Z0-9]+").replace(t, " ").trim()
+        t = sequelDash.replace(t) { it.groupValues[1] + "2" }
+        return nonAlnumUpper.replace(t, " ").trim()
     }
 
     private fun hasWord(normalized: String, word: String) = " $normalized ".contains(" $word ")
@@ -309,15 +313,21 @@ object Matching {
      * "One-Winged Angel (Remastered)", "01. One-Winged Angel" and
      * "FINAL FANTASY VII - One-Winged Angel [Piano Ver.]" all become "one winged angel".
      */
+    private val bracketed = Regex("[(\\[【〔{「].*?[)\\]】〕}」]")
+    private val tildeQuoted = Regex("[~〜].*?[~〜]")
+    private val segmentSplit = Regex("\\s+[-–—|/]\\s+|\\s*[:：]\\s+")
+    private val leadingNumber = Regex("^(disc\\s*\\d+\\s*)?(track\\s*)?\\d{1,3}(?=[.\\s_-])[.\\s_-]+")
+    private val nonLetterDigit = Regex("[^\\p{L}\\p{N}]+")
+
     fun songKey(title: String): String {
         var t = Normalizer.normalize(title, Normalizer.Form.NFKC).lowercase(Locale.ROOT)
-        t = Regex("[(\\[【〔{「].*?[)\\]】〕}」]").replace(t, " ")
-        t = Regex("[~〜].*?[~〜]").replace(t, " ")
-        val segments = t.split(Regex("\\s+[-–—|/]\\s+|\\s*[:：]\\s+")).map { it.trim() }.filter { it.isNotEmpty() }
+        t = bracketed.replace(t, " ")
+        t = tildeQuoted.replace(t, " ")
+        val segments = t.split(segmentSplit).map { it.trim() }.filter { it.isNotEmpty() }
         t = segments.firstOrNull { !versionWords.containsMatchIn(it) && !numberingOnly.matches(it) }
             ?: segments.firstOrNull() ?: t
-        t = Regex("^(disc\\s*\\d+\\s*)?(track\\s*)?\\d{1,3}(?=[.\\s_-])[.\\s_-]+").replace(t, "")
-        t = Regex("[^\\p{L}\\p{N}]+").replace(t, " ").trim()
+        t = leadingNumber.replace(t, "")
+        t = nonLetterDigit.replace(t, " ").trim()
         return t.ifEmpty { title.lowercase(Locale.ROOT).trim() }
     }
 
@@ -415,10 +425,9 @@ object Matching {
         )
         var t = Normalizer.normalize(raw, Normalizer.Form.NFKC).trim()
         // `"Mission Start" CCFF7-R OST 03 …` → the quoted part is the song.
-        Regex("^[\"“「『]([^\"”」』]{2,})[\"”」』]").find(t)?.let { return it.groupValues[1].trim() }
-        t = Regex("[\\[(【](?:[^\\])】]*\\b(?:hd|hq|ost|audio|official|soundtrack|1080p|720p|4k|lyrics|extended|ps\\d|ver\\.?)\\b[^\\])】]*)[\\])】]",
-            RegexOption.IGNORE_CASE).replace(t, " ")
-        val parts = t.split(Regex("\\s+[-–—|/]\\s+|\\s*[:：]\\s+")).map { it.trim() }.filter { it.isNotEmpty() }
+        quotedSong.find(t)?.let { return it.groupValues[1].trim() }
+        t = qualityTag.replace(t, " ")
+        val parts = t.split(segmentSplit).map { it.trim() }.filter { it.isNotEmpty() }
         fun isNoise(part: String): Boolean {
             val tokens = normalize(part).split(' ').filter { it.isNotEmpty() }
             return tokens.isEmpty() || tokens.all {
@@ -426,7 +435,13 @@ object Matching {
             }
         }
         val song = parts.firstOrNull { !isNoise(it) } ?: parts.lastOrNull() ?: raw
-        return Regex("^\\s*(?:disc\\s*\\d+\\s*)?(?:track\\s*)?\\d{1,3}(?=[.\\s_)-])[.\\s_)-]+", RegexOption.IGNORE_CASE)
-            .replace(song, "").trim().ifEmpty { raw }
+        return trackNumber.replace(song, "").trim().ifEmpty { raw }
     }
+
+    private val quotedSong = Regex("^[\"“「『]([^\"”」』]{2,})[\"”」』]")
+    private val qualityTag = Regex(
+        "[\\[(【](?:[^\\])】]*\\b(?:hd|hq|ost|audio|official|soundtrack|1080p|720p|4k|lyrics|extended|ps\\d|ver\\.?)\\b[^\\])】]*)[\\])】]",
+        RegexOption.IGNORE_CASE,
+    )
+    private val trackNumber = Regex("^\\s*(?:disc\\s*\\d+\\s*)?(?:track\\s*)?\\d{1,3}(?=[.\\s_)-])[.\\s_)-]+", RegexOption.IGNORE_CASE)
 }

@@ -157,8 +157,10 @@ private fun LifestreamRoot() {
             }
         }
 
+        val playerOpen = showPlayer && playerState.current != null
+        LaunchedEffect(playerOpen) { HomeReselect.covered = playerOpen }
         AnimatedVisibility(
-            visible = showPlayer && playerState.current != null,
+            visible = playerOpen,
             enter = slideInVertically { it } + fadeIn(),
             exit = slideOutVertically { it } + fadeOut(),
         ) {

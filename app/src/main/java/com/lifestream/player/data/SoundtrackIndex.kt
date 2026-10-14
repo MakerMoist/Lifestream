@@ -37,6 +37,7 @@ object SoundtrackIndex {
     // XIV alone has ~800 songs across its albums; this only guards against a runaway source.
     private const val MAX_TRACKS_PER_GAME = 3000
     private const val RETRY_EMPTY_MS = 30L * 60 * 1000
+    private const val MAX_FILE_BYTES = 64L * 1024 * 1024
 
     data class Progress(val done: Int, val total: Int, val running: Boolean)
 
@@ -70,8 +71,19 @@ object SoundtrackIndex {
     /** The soundtrack a song belongs to: from the song itself, or by finding it in the index. */
     fun gameOf(track: Track): Game? {
         track.gameId?.let { id -> Catalog.game(id)?.let { return it } }
-        val id = _tracks.value.entries.firstOrNull { (_, list) -> list.any { it.id == track.id } }?.key
-        return id?.let { Catalog.game(it) }
+        return gameIdsByTrack()[track.id]?.let { Catalog.game(it) }
+    }
+
+    /** track id → game id, rebuilt only when the index itself changes. */
+    @Volatile private var byTrack: Pair<Map<String, List<Track>>, Map<String, String>>? = null
+
+    private fun gameIdsByTrack(): Map<String, String> {
+        val current = _tracks.value
+        byTrack?.let { (source, map) -> if (source === current) return map }
+        val map = HashMap<String, String>()
+        for ((gameId, list) in current) for (t in list) map.putIfAbsent(t.id, gameId)
+        byTrack = current to map
+        return map
     }
 
     /** Loads any game that is missing or stale. Safe to call often. */
@@ -187,6 +199,8 @@ object SoundtrackIndex {
     private fun readFromDisk() {
         runCatching {
             if (!file.exists()) return
+            // A damaged or runaway file is ignored (and rebuilt) rather than read into memory.
+            if (file.length() > MAX_FILE_BYTES) return
             val root = JSONObject(file.readText())
             if (root.optInt("version") != VERSION) return
             val games = root.getJSONObject("games")

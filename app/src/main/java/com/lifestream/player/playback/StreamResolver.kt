@@ -65,8 +65,20 @@ object StreamResolver {
 
         val expiresAt = Uri.parse(streams.first().url).getQueryParameter("expire")?.toLongOrNull()?.times(1000)
             ?: (now + 3 * 60 * 60_000)
+        prune(now)
         return Entry(streams, expiresAt).also { cache[videoId] = it }
     }
+
+    /** Links expire within hours, so old ones are just dropped; a long session can't pile them up. */
+    private fun prune(now: Long) {
+        cache.entries.removeIf { it.value.expiresAtMs <= now }
+        if (cache.size >= MAX_ENTRIES) {
+            cache.entries.sortedBy { it.value.expiresAtMs }.take(cache.size - MAX_ENTRIES + 1)
+                .forEach { cache.remove(it.key) }
+        }
+    }
+
+    private const val MAX_ENTRIES = 200
 
     fun invalidate(videoId: String) {
         cache.remove(videoId)
