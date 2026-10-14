@@ -4,44 +4,61 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
+/**
+ * The app's colours, always from the theme chosen in Settings. Reading them from Compose
+ * recolours the UI as soon as the theme changes.
+ */
 object LsColors {
-    val Night = Color(0xFF0A0E1C)
-    val Deep = Color(0xFF111733)
-    val Panel = Color(0xFF182046)
-    val Crystal = Color(0xFF8AD8FF)
-    val Mako = Color(0xFF6EF2B5)
-    val Gold = Color(0xFFE8C46A)
-    val Mist = Color(0xFFB8C2E0)
-    val Faint = Color(0xFF6B7499)
+    private val p get() = ThemeState.current
+    val Night: Color get() = p.night
+    val Deep: Color get() = p.deep
+    val Panel: Color get() = p.panel
+    val Crystal: Color get() = p.primary
+    val Mako: Color get() = p.accent
+    val Gold: Color get() = p.gold
+    val Mist: Color get() = p.mist
+    val Faint: Color get() = lerp(p.panel, p.mist, 0.45f)
+    /** Content drawn on top of the primary colour (e.g. the play button icon). */
+    val OnPrimary: Color get() = p.night
 }
 
-private val scheme = darkColorScheme(
-    primary = LsColors.Crystal,
-    onPrimary = Color(0xFF04223A),
-    primaryContainer = Color(0xFF123A5C),
-    onPrimaryContainer = Color(0xFFD5EEFF),
-    secondary = LsColors.Gold,
-    onSecondary = Color(0xFF2E2200),
-    tertiary = LsColors.Mako,
-    onTertiary = Color(0xFF003824),
-    background = LsColors.Night,
-    onBackground = Color(0xFFE6EAF7),
-    surface = LsColors.Night,
-    onSurface = Color(0xFFE6EAF7),
-    surfaceVariant = LsColors.Panel,
-    onSurfaceVariant = LsColors.Mist,
-    surfaceContainer = LsColors.Deep,
-    surfaceContainerHigh = LsColors.Panel,
-    surfaceContainerHighest = Color(0xFF212A57),
-    surfaceContainerLow = Color(0xFF0E1328),
-    outline = Color(0xFF3A4472),
-    outlineVariant = Color(0xFF262F5A),
+/** The theme currently applied (set from [com.lifestream.player.data.AppSettings]). */
+object ThemeState {
+    var current by mutableStateOf(Palettes.default)
+}
+
+private fun schemeFor(p: Palette) = darkColorScheme(
+    primary = p.primary,
+    onPrimary = p.night,
+    primaryContainer = lerp(p.panel, p.primary, 0.3f),
+    onPrimaryContainer = p.text,
+    secondary = p.gold,
+    onSecondary = p.night,
+    tertiary = p.accent,
+    onTertiary = p.night,
+    background = p.night,
+    onBackground = p.text,
+    surface = p.night,
+    onSurface = p.text,
+    surfaceVariant = p.panel,
+    onSurfaceVariant = p.mist,
+    surfaceContainer = p.deep,
+    surfaceContainerHigh = p.panel,
+    surfaceContainerHighest = lerp(p.panel, p.mist, 0.1f),
+    surfaceContainerLow = lerp(p.night, p.deep, 0.5f),
+    outline = lerp(p.panel, p.mist, 0.35f),
+    outlineVariant = lerp(p.deep, p.mist, 0.15f),
 )
 
 private val base = Typography()
@@ -58,5 +75,7 @@ private val typography = base.copy(
 
 @Composable
 fun LifestreamTheme(content: @Composable () -> Unit) {
+    val palette = ThemeState.current
+    val scheme = remember(palette) { schemeFor(palette) }
     MaterialTheme(colorScheme = scheme, typography = typography, content = content)
 }

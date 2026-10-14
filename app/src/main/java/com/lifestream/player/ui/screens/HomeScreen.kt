@@ -111,16 +111,7 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                         .statusBarsPadding()
                         .padding(top = 20.dp, bottom = 4.dp),
                 ) {
-                    Text("LIFESTREAM", style = MaterialTheme.typography.labelSmall, color = LsColors.Gold)
-                    Spacer(Modifier.height(4.dp))
-                    Text("Music of the crystals", style = MaterialTheme.typography.headlineMedium)
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        "Every Final Fantasy soundtrack, streamed in its own player. " +
-                            "Press and hold a soundtrack to pick several and play them together.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Text("Lifestream", style = MaterialTheme.typography.headlineMedium)
                     Spacer(Modifier.height(16.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilledTonalButton(onClick = { vm.surprise() }, enabled = !vm.surprising) {
@@ -287,7 +278,7 @@ fun GameCard(
             .clip(shape)
             .background(
                 Brush.linearGradient(
-                    listOf(game.colorA, Color(0xFF0A0E1C)),
+                    listOf(game.colorA, LsColors.Night),
                     start = Offset(0f, 0f),
                     end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
                 )
@@ -308,7 +299,7 @@ fun GameCard(
                     .background(
                         Brush.verticalGradient(
                             0.45f to Color.Transparent,
-                            1f to Color(0xE60A0E1C),
+                            1f to LsColors.Night.copy(alpha = 0.9f),
                         )
                     )
             )

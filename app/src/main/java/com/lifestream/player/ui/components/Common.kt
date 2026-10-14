@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -61,7 +62,7 @@ fun Artwork(
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Brush.linearGradient(listOf(LsColors.Panel, Color(0xFF243172)))),
+                .background(Brush.linearGradient(listOf(LsColors.Panel, lerp(LsColors.Panel, LsColors.Crystal, 0.25f)))),
             contentAlignment = Alignment.Center,
         ) {
             Icon(Icons.Rounded.MusicNote, null, tint = LsColors.Crystal.copy(alpha = 0.6f))

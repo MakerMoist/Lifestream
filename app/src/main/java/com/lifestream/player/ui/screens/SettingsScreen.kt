@@ -1,7 +1,10 @@
 package com.lifestream.player.ui.screens
 
 import android.content.Context
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -36,6 +40,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -47,6 +56,8 @@ import com.lifestream.player.BuildConfig
 import com.lifestream.player.data.AppSettings
 import com.lifestream.player.ui.components.SectionLabel
 import com.lifestream.player.ui.theme.LsColors
+import com.lifestream.player.ui.theme.Palette
+import com.lifestream.player.ui.theme.Palettes
 import com.lifestream.player.update.Updater
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -118,6 +129,7 @@ fun SettingsScreen() {
     val vm: SettingsViewModel = viewModel()
     val context = LocalContext.current
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
+    val themeId by AppSettings.themeId.collectAsStateWithLifecycle()
     LifecycleResumeEffect(Unit) {
         vm.onResume(context)
         onPauseOrDispose { }
@@ -151,6 +163,9 @@ fun SettingsScreen() {
                 Switch(checked = continueFromSearch, onCheckedChange = { AppSettings.setContinueFromSearch(it) })
             }
         }
+
+        SectionLabel("Theme", Modifier.padding(top = 8.dp))
+        ThemePicker(selectedId = themeId, onSelect = { AppSettings.setTheme(it) })
 
         // App updates always stays last, with its check button always visible.
         SectionLabel("App updates", Modifier.padding(top = 8.dp))
@@ -248,6 +263,81 @@ private fun UpdateSection(vm: SettingsViewModel, context: Context) {
                 Spacer(Modifier.width(8.dp))
                 Text(s.message, style = MaterialTheme.typography.bodyMedium)
             }
+        }
+    }
+}
+
+/** Two-column grid of theme swatches; each shows the theme's own background and colours. */
+@Composable
+private fun ThemePicker(selectedId: String, onSelect: (String) -> Unit) {
+    Column(
+        Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Palettes.all.chunked(2).forEach { pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                pair.forEach { palette ->
+                    ThemeSwatch(
+                        palette = palette,
+                        isSelected = palette.id == selectedId,
+                        onClick = { onSelect(palette.id) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                if (pair.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThemeSwatch(palette: Palette, isSelected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(14.dp)
+    Surface(
+        onClick = onClick,
+        shape = shape,
+        color = palette.night,
+        border = BorderStroke(
+            if (isSelected) 2.dp else 1.dp,
+            if (isSelected) palette.primary else palette.panel,
+        ),
+        modifier = modifier.semantics { this.selected = isSelected },
+    ) {
+        Column(
+            Modifier
+                .background(Brush.verticalGradient(listOf(palette.panel, palette.night)))
+                .padding(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                listOf(palette.primary, palette.accent, palette.gold).forEach { color ->
+                    Box(
+                        Modifier
+                            .padding(end = 6.dp)
+                            .size(14.dp)
+                            .clip(CircleShape)
+                            .background(color),
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                if (isSelected) {
+                    Icon(Icons.Rounded.CheckCircle, "Selected", tint = palette.primary, modifier = Modifier.size(18.dp))
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            Text(
+                palette.name,
+                style = MaterialTheme.typography.titleSmall,
+                color = palette.text,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                palette.inspiredBy,
+                style = MaterialTheme.typography.bodySmall,
+                color = palette.mist,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }

@@ -95,8 +95,8 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                             .matchParentSize()
                             .background(
                                 Brush.verticalGradient(
-                                    0f to Color(0x660A0E1C),
-                                    0.5f to Color(0x990A0E1C),
+                                    0f to LsColors.Night.copy(alpha = 0.4f),
+                                    0.5f to LsColors.Night.copy(alpha = 0.6f),
                                     1f to LsColors.Night,
                                 )
                             )

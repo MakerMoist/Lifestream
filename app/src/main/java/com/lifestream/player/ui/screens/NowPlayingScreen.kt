@@ -277,7 +277,7 @@ private fun Controls(state: PlayerUiState) {
                 Icon(
                     if (state.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                     if (state.isPlaying) "Pause" else "Play",
-                    tint = Color(0xFF04223A),
+                    tint = LsColors.OnPrimary,
                     modifier = Modifier.size(40.dp),
                 )
             }
