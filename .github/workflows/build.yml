@@ -78,7 +78,12 @@ jobs:
             export LIFESTREAM_VERSION_NAME="1.0.$LIFESTREAM_VERSION_CODE"
           fi
           chmod +x ./gradlew
-          ./gradlew --no-daemon assembleRelease
+          # Compiler errors also go up as annotations, so they show on the run's summary page.
+          set -o pipefail
+          if ! ./gradlew --no-daemon assembleRelease 2>&1 | tee "$RUNNER_TEMP/gradle.log"; then
+            grep -E '^e: |error:' "$RUNNER_TEMP/gradle.log" | head -20 | sed 's/^/::error::/' || true
+            exit 1
+          fi
           cp app/build/outputs/apk/release/app-release.apk Lifestream.apk
           sha256sum Lifestream.apk | tee Lifestream.apk.sha256
           # What the in-app updater reads to decide whether there's something newer.
