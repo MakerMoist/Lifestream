@@ -10,8 +10,8 @@ private val uploadTag = Regex(
 )
 
 /**
- * Strips upload tags from song names: "[Official]", "(Official Audio)", "(Basiscape)" and the
- * like, in any bracket style, wherever they appear.
+ * Strips upload tags from song and artist names: "[Official]", "(Official Audio)", "(Basiscape)"
+ * and the like, in any bracket style, wherever they appear.
  */
 fun tidySongTitle(title: String): String {
     val cleaned = title.replace(uploadTag, "").replace(Regex("\\s{2,}"), " ").trim().trimEnd('-', '–', '|', ' ')
@@ -50,7 +50,7 @@ data class Track(
             return Track(
                 id = id,
                 title = tidySongTitle(o.optString("title")).take(MAX_TEXT).ifBlank { "Unknown track" },
-                artist = o.optString("artist").take(MAX_TEXT),
+                artist = tidySongTitle(o.optString("artist")).take(MAX_TEXT),
                 durationSec = o.optLong("duration", -1).coerceIn(-1L, 24L * 3600),
                 thumbnail = o.optString("thumb").takeIf { it.startsWith("https://") && it.length <= 2048 },
                 gameId = o.optString("game").ifBlank { null }?.take(32),

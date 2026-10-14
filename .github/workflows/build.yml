@@ -64,15 +64,16 @@ jobs:
       - name: Build release APK (not debuggable)
         env:
           LIFESTREAM_VERSION_CODE: ${{ github.run_number }}
-          # Build 49 was 1.1.0; build 50 was published as 1.1.5 and later builds count up from
-          # there (1.1.6, 1.1.7, ...).
-          VERSION_BASE_RUN: 45
+          # Build 51 is 1.2.0; later builds count up from there (1.2.1, 1.2.2, ...).
+          # (Builds 49 and 50 were 1.1.0 and 1.1.5.)
+          VERSION_PREFIX: "1.2"
+          VERSION_BASE_RUN: 51
           LIFESTREAM_KEYSTORE_PASSWORD: ${{ secrets.LIFESTREAM_KEYSTORE_PASSWORD }}
           LIFESTREAM_KEY_ALIAS: ${{ secrets.LIFESTREAM_KEY_ALIAS }}
           LIFESTREAM_KEY_PASSWORD: ${{ secrets.LIFESTREAM_KEY_PASSWORD }}
         run: |
           if [ "$LIFESTREAM_VERSION_CODE" -ge "$VERSION_BASE_RUN" ]; then
-            export LIFESTREAM_VERSION_NAME="1.1.$((LIFESTREAM_VERSION_CODE - VERSION_BASE_RUN))"
+            export LIFESTREAM_VERSION_NAME="$VERSION_PREFIX.$((LIFESTREAM_VERSION_CODE - VERSION_BASE_RUN))"
           else
             export LIFESTREAM_VERSION_NAME="1.0.$LIFESTREAM_VERSION_CODE"
           fi

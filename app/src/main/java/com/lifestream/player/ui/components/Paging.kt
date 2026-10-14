@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -42,7 +43,12 @@ class PagedList<T>(
     var endReached by mutableStateOf(false)
         private set
 
+    /** Counts finished loads, so the footer asks again even when a load added nothing new. */
+    var loads by mutableIntStateOf(0)
+        private set
+
     private var next: Any? = null
+    private var emptyStreak = 0
 
     fun loadMore() {
         if (loading || endReached) return
@@ -63,13 +69,16 @@ class PagedList<T>(
                     next = page.next
                     attempts++
                 } while (added == 0 && next != null && attempts < 6)
-                endReached = next == null
+                // Give up after many pages in a row with nothing new, rather than spin forever.
+                emptyStreak = if (added == 0) emptyStreak + 1 else 0
+                endReached = next == null || emptyStreak >= 5
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 error = e.message?.take(160) ?: e.javaClass.simpleName
             } finally {
                 loading = false
+                loads++
             }
         }
     }
@@ -112,7 +121,7 @@ private fun <T> PagedFooter(list: PagedList<T>, emptyText: String) {
 
             !list.endReached -> {
                 CircularProgressIndicator(Modifier.size(28.dp), strokeWidth = 2.5.dp)
-                LaunchedEffect(list.items.size) { list.loadMore() }
+                LaunchedEffect(list.items.size, list.loads) { list.loadMore() }
             }
 
             list.items.isEmpty() -> Text(

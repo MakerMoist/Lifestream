@@ -123,7 +123,10 @@ object TitleTranslator {
 
     fun toEnglish(text: String): String {
         if (text.isBlank() || !hasJapanese(text)) return text
+        // Titles are short; anything huge isn't worth (or safe) sending through translation.
+        if (text.length > 300) return text
         cache[text]?.let { return it }
+        if (cache.size > 20_000) cache.clear()
         val prepared = applyGlossary(text)
         if (!hasJapanese(prepared)) return tidy(prepared).also { cache[text] = it }
         if (!ensureModel()) return prepared

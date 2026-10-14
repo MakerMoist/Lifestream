@@ -279,7 +279,7 @@ object MusicRepository {
         return Track(
             id = id,
             title = tidySongTitle(TitleTranslator.toEnglish(name ?: "Unknown track")),
-            artist = TitleTranslator.toEnglish(cleanArtist(uploaderName)),
+            artist = tidySongTitle(TitleTranslator.toEnglish(cleanArtist(uploaderName))),
             durationSec = duration,
             thumbnail = bestImage(thumbnails),
         )
@@ -290,14 +290,14 @@ object MusicRepository {
         return Album(
             url = u,
             title = TitleTranslator.toEnglish(name ?: "Untitled"),
-            artist = TitleTranslator.toEnglish(cleanArtist(uploaderName)),
+            artist = tidySongTitle(TitleTranslator.toEnglish(cleanArtist(uploaderName))),
             trackCount = streamCount,
             thumbnail = bestImage(thumbnails),
         )
     }
 
     private fun cleanArtist(raw: String?): String =
-        (raw ?: "").removeSuffix(" - Topic").trim()
+        tidySongTitle((raw ?: "").removeSuffix(" - Topic").trim())
 
     private fun bestImage(images: List<Image>?): String? =
         images?.maxByOrNull { it.height }?.url
