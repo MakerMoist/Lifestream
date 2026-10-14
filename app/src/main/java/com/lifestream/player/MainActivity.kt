@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -56,6 +57,7 @@ import com.lifestream.player.ui.screens.HomeScreen
 import com.lifestream.player.ui.screens.LibraryScreen
 import com.lifestream.player.ui.screens.NowPlayingScreen
 import com.lifestream.player.ui.screens.SearchScreen
+import com.lifestream.player.ui.screens.SettingsScreen
 import com.lifestream.player.ui.theme.LifestreamTheme
 import com.lifestream.player.ui.theme.LsColors
 
@@ -83,6 +85,7 @@ private val topLevel = listOf(
     TopLevel("home", "Home", Icons.Rounded.Home),
     TopLevel("search", "Search", Icons.Rounded.Search),
     TopLevel("library", "Library", Icons.Rounded.LibraryMusic),
+    TopLevel("settings", "Settings", Icons.Rounded.Settings),
 )
 
 @Composable
@@ -126,6 +129,7 @@ private fun LifestreamRoot() {
                     SearchScreen(onOpenGame = { nav.navigate("game/${it.id}") })
                 }
                 composable("library") { LibraryScreen() }
+                composable("settings") { SettingsScreen() }
                 composable("game/{id}") { entry ->
                     val game = entry.arguments?.getString("id")?.let { Catalog.game(it) }
                     if (game != null) {
@@ -145,19 +149,39 @@ private fun LifestreamRoot() {
     }
 }
 
+/**
+ * The bottom bar remembers which section you're in (a game page opened from Home still belongs to
+ * Home). Tapping a different section switches to it with its saved state; tapping the section
+ * you're already in returns to its first screen — e.g. Home from inside a game's song list.
+ */
 @Composable
 private fun BottomBar(nav: NavHostController) {
     val entry by nav.currentBackStackEntryAsState()
-    val current = entry?.destination?.route
+    var section by rememberSaveable { mutableStateOf("home") }
+    val topRoutes = remember { topLevel.map { it.route }.toSet() }
+
+    // Keep the highlight right when back navigation lands on another section's first screen.
+    LaunchedEffect(entry) {
+        entry?.destination?.route?.takeIf { it in topRoutes }?.let { section = it }
+    }
+
     NavigationBar(containerColor = LsColors.Night) {
         topLevel.forEach { item ->
             NavigationBarItem(
-                selected = current == item.route,
+                selected = section == item.route,
                 onClick = {
-                    nav.navigate(item.route) {
-                        popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
+                    if (item.route == section) {
+                        // Already in this section: go back to its first screen.
+                        if (!nav.popBackStack(item.route, inclusive = false)) {
+                            nav.navigate(item.route) { launchSingleTop = true }
+                        }
+                    } else {
+                        section = item.route
+                        nav.navigate(item.route) {
+                            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 },
                 icon = { Icon(item.icon, null) },

@@ -16,6 +16,7 @@ A standalone Android music player for Final Fantasy soundtracks. Audio is stream
 - **Now Playing** screen: swipe the album art left or right to skip or go back, plus seek bar, shuffle, repeat (all / one), favorite, and an editable queue.
 - **Queue tools** on every track: play next, add to queue, add to favorites.
 - **Library**: favorites and listening history, saved on the device.
+- **Settings → App updates**: checks this repo's `latest` release, downloads the new APK, verifies its SHA-256 and signing key, and hands it to Android's installer.
 - **Recovery**: expired or rejected stream URLs are re-resolved and retried automatically.
 
 ## How streaming works

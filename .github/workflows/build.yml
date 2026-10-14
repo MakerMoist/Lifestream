@@ -62,6 +62,7 @@ jobs:
 
       - name: Build release APK (not debuggable)
         env:
+          LIFESTREAM_VERSION_CODE: ${{ github.run_number }}
           LIFESTREAM_KEYSTORE_PASSWORD: ${{ secrets.LIFESTREAM_KEYSTORE_PASSWORD }}
           LIFESTREAM_KEY_ALIAS: ${{ secrets.LIFESTREAM_KEY_ALIAS }}
           LIFESTREAM_KEY_PASSWORD: ${{ secrets.LIFESTREAM_KEY_PASSWORD }}
@@ -70,6 +71,11 @@ jobs:
           ./gradlew --no-daemon assembleRelease
           cp app/build/outputs/apk/release/app-release.apk Lifestream.apk
           sha256sum Lifestream.apk | tee Lifestream.apk.sha256
+          # What the in-app updater reads to decide whether there's something newer.
+          SHA=$(cut -d' ' -f1 Lifestream.apk.sha256)
+          printf '{"versionCode": %s, "versionName": "1.0.%s", "sha256": "%s"}\n' \
+            "$LIFESTREAM_VERSION_CODE" "$LIFESTREAM_VERSION_CODE" "$SHA" > version.json
+          cat version.json
 
       - name: Remove signing key
         if: always()
@@ -82,6 +88,7 @@ jobs:
           path: |
             Lifestream.apk
             Lifestream.apk.sha256
+            version.json
 
 
   # Publishing is a separate job: only it can write to the repo, and only for pushes to main.
@@ -105,7 +112,9 @@ jobs:
           gh release view latest -R "$REPO" >/dev/null 2>&1 || \
             gh release create latest -R "$REPO" --prerelease --title "Lifestream (latest build)" \
               --notes "Latest Lifestream build. Install Lifestream.apk; Lifestream.apk.sha256 is its checksum."
-          gh release upload latest Lifestream.apk Lifestream.apk.sha256 -R "$REPO" --clobber
+          gh release upload latest Lifestream.apk Lifestream.apk.sha256 version.json -R "$REPO" --clobber
+          VERSION=$(python3 -c "import json; print(json.load(open('version.json'))['versionName'])")
+          gh release edit latest -R "$REPO" --title "Lifestream $VERSION"
           # The old debug build is no longer published.
           gh release delete-asset latest app-debug.apk -R "$REPO" -y 2>/dev/null || true
           if [ "$SIGNED" != "true" ]; then

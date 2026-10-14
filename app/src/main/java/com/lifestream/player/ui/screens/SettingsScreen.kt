@@ -1,0 +1,253 @@
+package com.lifestream.player.ui.screens
+
+import android.content.Context
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.SystemUpdate
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lifestream.player.BuildConfig
+import com.lifestream.player.ui.components.SectionLabel
+import com.lifestream.player.ui.theme.LsColors
+import com.lifestream.player.update.Updater
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
+import java.io.File
+
+sealed interface UpdateState {
+    data object Idle : UpdateState
+    data object Checking : UpdateState
+    data object UpToDate : UpdateState
+    data class Available(val release: Updater.Release) : UpdateState
+    data class Downloading(val release: Updater.Release, val progress: Float) : UpdateState
+    data class NeedsPermission(val release: Updater.Release, val apk: File) : UpdateState
+    data class ReadyToInstall(val release: Updater.Release, val apk: File) : UpdateState
+    data class Failed(val message: String) : UpdateState
+}
+
+class SettingsViewModel : ViewModel() {
+    var state by mutableStateOf<UpdateState>(UpdateState.Idle)
+        private set
+
+    fun check() {
+        if (state is UpdateState.Checking || state is UpdateState.Downloading) return
+        state = UpdateState.Checking
+        viewModelScope.launch {
+            state = try {
+                val latest = Updater.fetchLatest()
+                if (Updater.isNewer(latest)) UpdateState.Available(latest) else UpdateState.UpToDate
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                UpdateState.Failed(e.message ?: "Couldn't reach GitHub. Check your connection.")
+            }
+        }
+    }
+
+    fun download(context: Context, release: Updater.Release) {
+        if (state is UpdateState.Downloading) return
+        state = UpdateState.Downloading(release, 0f)
+        val app = context.applicationContext
+        viewModelScope.launch {
+            state = try {
+                val apk = Updater.download(app, release) { p -> state = UpdateState.Downloading(release, p) }
+                if (Updater.canInstall(app)) {
+                    Updater.launchInstaller(app, apk)
+                    UpdateState.ReadyToInstall(release, apk)
+                } else {
+                    UpdateState.NeedsPermission(release, apk)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                UpdateState.Failed(e.message ?: "Download failed.")
+            }
+        }
+    }
+
+    /** Called when returning from the "install unknown apps" screen. */
+    fun onResume(context: Context) {
+        val s = state
+        if (s is UpdateState.NeedsPermission && Updater.canInstall(context)) {
+            Updater.launchInstaller(context.applicationContext, s.apk)
+            state = UpdateState.ReadyToInstall(s.release, s.apk)
+        }
+    }
+}
+
+@Composable
+fun SettingsScreen() {
+    val vm: SettingsViewModel = viewModel()
+    val context = LocalContext.current
+    LifecycleResumeEffect(Unit) {
+        vm.onResume(context)
+        onPauseOrDispose { }
+    }
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = 24.dp),
+    ) {
+        Text(
+            "Settings",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp),
+        )
+
+        SectionLabel("App updates")
+        SettingsCard {
+            Text("Lifestream ${Updater.currentVersionName}", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Updates come from the Lifestream releases on GitHub (${BuildConfig.UPDATE_REPO}).",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(16.dp))
+            UpdateSection(vm, context)
+        }
+
+        SectionLabel("Safety", Modifier.padding(top = 8.dp))
+        SettingsCard {
+            Text(
+                "Every update is downloaded over HTTPS from GitHub, checked against its published " +
+                    "SHA-256 checksum, and must be signed with Lifestream's own key. Android always " +
+                    "asks you to confirm before installing.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun UpdateSection(vm: SettingsViewModel, context: Context) {
+    when (val s = vm.state) {
+        UpdateState.Idle -> Button(onClick = { vm.check() }) {
+            Icon(Icons.Rounded.SystemUpdate, null, Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Check for updates")
+        }
+
+        UpdateState.Checking -> Row(verticalAlignment = Alignment.CenterVertically) {
+            CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+            Spacer(Modifier.width(12.dp))
+            Text("Checking GitHub…", style = MaterialTheme.typography.bodyMedium)
+        }
+
+        UpdateState.UpToDate -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.CheckCircle, null, tint = LsColors.Mako)
+                Spacer(Modifier.width(8.dp))
+                Text("You're on the latest version.", style = MaterialTheme.typography.bodyMedium)
+            }
+            OutlinedButton(onClick = { vm.check() }) {
+                Icon(Icons.Rounded.Refresh, null, Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Check again")
+            }
+        }
+
+        is UpdateState.Available -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            val size = if (s.release.apkSize > 0) " (${s.release.apkSize / (1024 * 1024)} MB)" else ""
+            Text(
+                "Version ${s.release.versionName} is available$size.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = LsColors.Gold,
+            )
+            Button(onClick = { vm.download(context, s.release) }) {
+                Icon(Icons.Rounded.Download, null, Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Download and install")
+            }
+        }
+
+        is UpdateState.Downloading -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                "Downloading ${s.release.versionName}… ${(s.progress * 100).toInt()}%",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            LinearProgressIndicator(
+                progress = { s.progress },
+                modifier = Modifier.fillMaxWidth(),
+                color = LsColors.Mako,
+            )
+        }
+
+        is UpdateState.NeedsPermission -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                "Downloaded and verified. Android needs your OK for Lifestream to install updates — " +
+                    "turn on \"Allow from this source\", then come back.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Button(onClick = { Updater.openInstallPermission(context) }) { Text("Allow installing updates") }
+        }
+
+        is UpdateState.ReadyToInstall -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                "Version ${s.release.versionName} is ready. Confirm the install when Android asks.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Button(onClick = { Updater.launchInstaller(context, s.apk) }) { Text("Install") }
+        }
+
+        is UpdateState.Failed -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.Top) {
+                Icon(Icons.Rounded.ErrorOutline, null, tint = MaterialTheme.colorScheme.error)
+                Spacer(Modifier.width(8.dp))
+                Text(s.message, style = MaterialTheme.typography.bodyMedium)
+            }
+            OutlinedButton(onClick = { vm.check() }) { Text("Try again") }
+        }
+    }
+}
+
+@Composable
+private fun SettingsCard(content: @Composable () -> Unit) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+    ) {
+        Column(Modifier.padding(16.dp)) { content() }
+    }
+}
