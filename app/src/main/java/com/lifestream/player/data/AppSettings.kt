@@ -16,6 +16,7 @@ object AppSettings {
     private const val KEY_CACHE_LIMIT_MB = "cache_limit_mb"
     private const val KEY_AUTO_UPDATE = "auto_update"
     private const val KEY_PAUSE_AT_ZERO_VOLUME = "pause_at_zero_volume"
+    private const val KEY_RANDOM_SONG_ORDER = "random_song_order"
 
     /** Size choices for saved songs, in MB (0 = don't save songs). */
     val CACHE_LIMIT_CHOICES = listOf(0, 2048, 4096, 6144, 8192)
@@ -53,12 +54,18 @@ object AppSettings {
     /** Pause playback when the phone's media volume is turned all the way down. */
     val pauseAtZeroVolume: StateFlow<Boolean> = _pauseAtZeroVolume.asStateFlow()
 
+    private val _randomSongOrder = MutableStateFlow(true)
+
+    /** A soundtrack's song list opens in random order (true) or in soundtrack order (false). */
+    val randomSongOrder: StateFlow<Boolean> = _randomSongOrder.asStateFlow()
+
     fun init(context: Context) {
         prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
         _continueFromSearch.value = prefs.getBoolean(KEY_CONTINUE_FROM_SEARCH, true)
         _searchKeyboard.value = prefs.getBoolean(KEY_SEARCH_KEYBOARD, true)
         _autoUpdate.value = prefs.getBoolean(KEY_AUTO_UPDATE, false)
         _pauseAtZeroVolume.value = prefs.getBoolean(KEY_PAUSE_AT_ZERO_VOLUME, true)
+        _randomSongOrder.value = prefs.getBoolean(KEY_RANDOM_SONG_ORDER, true)
         // A size from an older version (e.g. 5 or 10 GB) becomes the largest choice that fits in it.
         val stored = prefs.getInt(KEY_CACHE_LIMIT_MB, DEFAULT_CACHE_LIMIT_MB)
         _cacheLimitMb.value = if (stored in CACHE_LIMIT_CHOICES) stored
@@ -79,6 +86,11 @@ object AppSettings {
         _themeId.value = palette.id
         ThemeState.current = palette
         prefs.edit().putString(KEY_THEME, palette.id).apply()
+    }
+
+    fun setRandomSongOrder(on: Boolean) {
+        _randomSongOrder.value = on
+        prefs.edit().putBoolean(KEY_RANDOM_SONG_ORDER, on).apply()
     }
 
     fun setPauseAtZeroVolume(on: Boolean) {

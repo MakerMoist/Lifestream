@@ -188,18 +188,18 @@ private fun PlaylistRow(p: Playlist, onClick: () -> Unit) {
 }
 
 @Composable
-private fun PlayShuffleRow(tracks: List<Track>, extra: @Composable () -> Unit = {}) {
+private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null, extra: @Composable () -> Unit = {}) {
     Row(
         Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Button(onClick = { PlayerConnection.playTracks(tracks) }, enabled = tracks.isNotEmpty()) {
+        Button(onClick = { PlayerConnection.playTracks(tracks, fromPlaylist = playlistId) }, enabled = tracks.isNotEmpty()) {
             Icon(Icons.Rounded.PlayArrow, null, Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
             Text("Play")
         }
-        OutlinedButton(onClick = { PlayerConnection.playTracks(tracks, shuffle = true) }, enabled = tracks.isNotEmpty()) {
+        OutlinedButton(onClick = { PlayerConnection.playTracks(tracks, shuffle = true, fromPlaylist = playlistId) }, enabled = tracks.isNotEmpty()) {
             Icon(Icons.Rounded.Shuffle, null, Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
             Text("Shuffle")
@@ -248,7 +248,7 @@ fun PlaylistScreen(playlistId: String, onBack: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 20.dp),
                 )
-                PlayShuffleRow(playlist.tracks)
+                PlayShuffleRow(playlist.tracks, playlistId = playlist.id)
             }
         }
         if (playlist.tracks.isEmpty()) {
@@ -260,7 +260,7 @@ fun PlaylistScreen(playlistId: String, onBack: () -> Unit) {
             TrackRow(
                 track,
                 playlistId = playlist.id,
-                onClick = { PlayerConnection.playTracks(playlist.tracks, index) },
+                onClick = { PlayerConnection.playTracks(playlist.tracks, index, fromPlaylist = playlist.id) },
             )
         }
     }

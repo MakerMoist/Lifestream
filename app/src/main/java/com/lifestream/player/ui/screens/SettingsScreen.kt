@@ -271,6 +271,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
     val vm = rememberUpdateViewModel()
     val autoUpdate by AppSettings.autoUpdate.collectAsStateWithLifecycle()
     val pauseAtZeroVolume by AppSettings.pauseAtZeroVolume.collectAsStateWithLifecycle()
+    val randomSongOrder by AppSettings.randomSongOrder.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
     val themeId by AppSettings.themeId.collectAsStateWithLifecycle()
@@ -299,7 +300,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
         SettingsCard {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Keep Playing After a Search", style = MaterialTheme.typography.bodyLarge)
+                    Text("Keep Playing After Searching", style = MaterialTheme.typography.bodyLarge)
                     Text(
                         "When you play a song from Search, continue with the rest of its soundtrack, shuffled.",
                         style = MaterialTheme.typography.bodySmall,
@@ -328,7 +329,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
         SettingsCard {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Open the Keyboard on Search", style = MaterialTheme.typography.bodyLarge)
+                    Text("Open Keyboard on Search", style = MaterialTheme.typography.bodyLarge)
                     Text(
                         "Tapping the Search tab puts the cursor in the search box so you can start typing.",
                         style = MaterialTheme.typography.bodySmall,
@@ -342,6 +343,22 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
 
         SectionLabel("Interface", Modifier.padding(top = 8.dp))
         ThemeRow(Palettes.byId(themeId), onClick = onOpenThemes)
+        SettingsCard {
+            Text("Song List Order", style = MaterialTheme.typography.bodyLarge)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = randomSongOrder,
+                    onClick = { AppSettings.setRandomSongOrder(true) },
+                    label = { Text("Random") },
+                )
+                FilterChip(
+                    selected = !randomSongOrder,
+                    onClick = { AppSettings.setRandomSongOrder(false) },
+                    label = { Text("Soundtrack Order") },
+                )
+            }
+        }
 
         // Saved Songs stays near the bottom, just above App Updates.
         SectionLabel("Saved Songs", Modifier.padding(top = 8.dp))

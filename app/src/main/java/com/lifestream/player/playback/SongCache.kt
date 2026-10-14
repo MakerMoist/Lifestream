@@ -1,5 +1,14 @@
 package com.lifestream.player.playback
 
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 import android.content.Context
 import android.net.Uri
 import androidx.annotation.OptIn
@@ -51,10 +60,36 @@ object SongCache {
             cache = runCatching {
                 SimpleCache(dir, evictor, StandaloneDatabaseProvider(context.applicationContext))
             }.getOrNull()
+            scheduleRefresh()
         }
     }
 
     val enabled: Boolean get() = cache != null && AppSettings.cacheLimitMb.value > 0
+
+    private val _cachedIds = MutableStateFlow<Set<String>>(emptySet())
+
+    /** Ids of songs saved in full on the phone (song rows show a check mark for these). */
+    val cachedIds: StateFlow<Set<String>> = _cachedIds.asStateFlow()
+
+    private val refreshScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var refreshJob: Job? = null
+
+    /** Recomputes [cachedIds] shortly after the cache changes (many changes → one refresh). */
+    fun scheduleRefresh() {
+        synchronized(refreshScope) {
+            refreshJob?.cancel()
+            refreshJob = refreshScope.launch {
+                delay(1500)
+                val c = cache ?: return@launch
+                val ids = c.keys.toList()
+                    .filter { it.startsWith("track:") }
+                    .map { it.removePrefix("track:") }
+                    .filter { isFullyCached(it) }
+                    .toSet()
+                _cachedIds.value = ids
+            }
+        }
+    }
 
     fun keyFor(videoId: String) = "track:$videoId"
 
@@ -221,12 +256,14 @@ object SongCache {
         }
 
         override fun onSpanAdded(cache: Cache, span: CacheSpan) {
+            scheduleRefresh()
             spans.add(span)
             size += span.length
             evict(cache, 0)
         }
 
         override fun onSpanRemoved(cache: Cache, span: CacheSpan) {
+            scheduleRefresh()
             if (spans.remove(span)) size -= span.length
         }
 

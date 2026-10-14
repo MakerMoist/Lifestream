@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lifestream.player.data.AppSettings
 import com.lifestream.player.data.Catalog
 import com.lifestream.player.data.Game
 import com.lifestream.player.data.Matching
@@ -160,14 +161,24 @@ class HomeViewModel : ViewModel() {
 }
 
 class GameViewModel(game: Game) : ViewModel() {
-    // One version of each song: the original soundtrack loads first, so its version wins.
+    /** Settings → Interface → Song List Order, as it was when this page opened. */
+    private val random = AppSettings.randomSongOrder.value
+
+    // One version of each song: the original soundtrack loads first, so its version wins
+    // (versions are picked before shuffling, so random order doesn't change which one plays).
     val tracks = PagedList(
         viewModelScope,
-        SoundtrackIndex.tracksFor(game.id)?.let { cached ->
+        SoundtrackIndex.songsFor(game.id)?.let { cached ->
+            val list = if (random) cached.shuffled() else cached
             object : PagedSource<Track> {
-                override suspend fun load(page: Any?) = Paged(cached, null)
+                override suspend fun load(page: Any?) = Paged(list, null)
             }
-        } ?: MusicRepository.gameTracks(game),
+        } ?: MusicRepository.gameTracks(game).let { source ->
+            if (!random) source else object : PagedSource<Track> {
+                // Not indexed yet: each page arrives shuffled.
+                override suspend fun load(page: Any?) = source.load(page).let { Paged(it.items.shuffled(), it.next) }
+            }
+        },
         // One version of each song, and never the same recording twice.
         alsoUnique = { it.id },
     ) { Matching.songKey(it.title) }

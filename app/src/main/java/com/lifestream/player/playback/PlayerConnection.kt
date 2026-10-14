@@ -127,7 +127,12 @@ object PlayerConnection {
 
     // ---- Commands ----
 
-    fun playTracks(tracks: List<Track>, startIndex: Int = 0, shuffle: Boolean = false) {
+    /** The playlist the current queue was started from, if any (see [onAddedToPlaylist]). */
+    var playingPlaylistId: String? = null
+        private set
+
+    fun playTracks(tracks: List<Track>, startIndex: Int = 0, shuffle: Boolean = false, fromPlaylist: String? = null) {
+        playingPlaylistId = fromPlaylist
         // Drop anything without a valid video id (e.g. a corrupted saved favourite).
         val chosen = tracks.getOrNull(startIndex)
         val valid = tracks.filter { SafeInput.isVideoId(it.id) }
@@ -138,6 +143,20 @@ object PlayerConnection {
             c.setMediaItems(valid.map { it.toMediaItem() }, start, 0L)
             c.prepare()
             c.play()
+        }
+    }
+
+    /**
+     * A song was just added to [playlistId]. If that playlist is what's playing, the song joins the
+     * queue too, at a random spot after the current song.
+     */
+    fun onAddedToPlaylist(playlistId: String, track: Track) {
+        if (playlistId != playingPlaylistId || !SafeInput.isVideoId(track.id)) return
+        withController { c ->
+            if (c.mediaItemCount == 0) return@withController
+            if ((0 until c.mediaItemCount).any { c.getMediaItemAt(it).mediaId == track.id }) return@withController
+            val position = ((c.currentMediaItemIndex + 1)..c.mediaItemCount).random()
+            c.addMediaItem(position, track.toMediaItem())
         }
     }
 

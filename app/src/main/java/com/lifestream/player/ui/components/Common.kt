@@ -1,5 +1,7 @@
 package com.lifestream.player.ui.components
 
+import androidx.compose.material.icons.rounded.Check
+import com.lifestream.player.playback.SongCache
 import androidx.compose.ui.platform.LocalDensity
 import com.lifestream.player.data.hiResArtwork
 import com.lifestream.player.playback.SafeInput
@@ -165,6 +167,16 @@ fun TrackRow(
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        // Saved on the phone in full: plays without streaming.
+        val savedIds by SongCache.cachedIds.collectAsStateWithLifecycle()
+        if (track.id in savedIds) {
+            Icon(
+                Icons.Rounded.Check,
+                "Saved on this phone",
+                tint = Color.Gray,
+                modifier = Modifier.size(18.dp),
             )
         }
         Box {

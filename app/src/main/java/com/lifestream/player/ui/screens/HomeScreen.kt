@@ -123,8 +123,6 @@ object HomeReselect {
 @Composable
 fun HomeScreen(onOpenGame: (Game) -> Unit) {
     val recents by Library.recents.collectAsStateWithLifecycle()
-    val playlists by Library.playlists.collectAsStateWithLifecycle()
-    val playlistSongs = remember(playlists) { playlists.flatMap { it.tracks }.distinctBy { it.id } }
     val vm: HomeViewModel = viewModel()
     val selecting = vm.selected.isNotEmpty()
     val index by SoundtrackIndex.tracks.collectAsStateWithLifecycle()
@@ -226,14 +224,7 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                                 Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(18.dp))
                             }
                             Spacer(Modifier.width(8.dp))
-                            Text("Surprise me")
-                        }
-                        if (playlistSongs.isNotEmpty()) {
-                            FilledTonalButton(onClick = { PlayerConnection.playTracks(playlistSongs, shuffle = true) }) {
-                                Icon(Icons.AutoMirrored.Rounded.QueueMusic, null, Modifier.size(18.dp))
-                                Spacer(Modifier.width(8.dp))
-                                Text("Shuffle playlists")
-                            }
+                            Text("Instant Playlist")
                         }
                     }
                     vm.surpriseNote?.let { note ->
