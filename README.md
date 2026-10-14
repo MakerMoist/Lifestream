@@ -9,7 +9,7 @@ A standalone Android music player for Final Fantasy soundtracks. Audio is stream
 - **One version per song**: remasters, piano/orchestral takes and duplicates collapse to a single entry (the original soundtrack's version wins).
 - **Search** with an optional "Final Fantasy only" filter, songs and albums tabs, and quick-pick suggestions.
 - **Own player** built on Media3 ExoPlayer: background playback, media notification, lock-screen and headset controls, audio focus, pause on headphone unplug.
-- **Now Playing** screen with seek bar, shuffle, repeat (all / one), favorite, and an editable queue.
+- **Now Playing** screen: swipe the album art left or right to skip or go back, plus seek bar, shuffle, repeat (all / one), favorite, and an editable queue.
 - **Queue tools** on every track: play next, add to queue, add to favorites.
 - **Library**: favorites and listening history, saved on the device.
 - **Recovery**: expired or rejected stream URLs are re-resolved and retried automatically.

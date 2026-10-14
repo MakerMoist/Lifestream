@@ -1,6 +1,19 @@
 package com.lifestream.player.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.layout.onSizeChanged
+import kotlin.math.abs
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -147,14 +160,7 @@ fun NowPlayingScreen(onClose: () -> Unit) {
 
                 Spacer(Modifier.weight(1f))
 
-                Artwork(
-                    track?.thumbnail,
-                    Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
-                        .shadow(24.dp, RoundedCornerShape(16.dp)),
-                    corner = 16.dp,
-                )
+                SwipeableArtwork(state)
 
                 Spacer(Modifier.weight(1f))
 
@@ -342,4 +348,80 @@ private fun QueueList(state: PlayerUiState) {
             }
         }
     }
+}
+
+/**
+ * Album art you can swipe: left for the next song, right for the previous one. The art follows
+ * your finger, slides away when you pass the threshold (or flick), and the new art slides in
+ * from the other side. At either end of the queue it just stretches a little and springs back.
+ */
+@Composable
+private fun SwipeableArtwork(state: PlayerUiState) {
+    val scope = rememberCoroutineScope()
+    val offsetX = remember { Animatable(0f) }
+    var widthPx by remember { mutableFloatStateOf(1f) }
+    val current by rememberUpdatedState(state)
+
+    fun canNext(s: PlayerUiState) =
+        s.currentIndex < s.queue.size - 1 || (s.repeatMode == Player.REPEAT_MODE_ALL && s.queue.size > 1)
+
+    fun canPrevious(s: PlayerUiState) =
+        s.currentIndex > 0 || (s.repeatMode == Player.REPEAT_MODE_ALL && s.queue.size > 1)
+
+    Artwork(
+        state.current?.thumbnail,
+        Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .onSizeChanged { widthPx = it.width.toFloat().coerceAtLeast(1f) }
+            .graphicsLayer {
+                val f = offsetX.value / widthPx
+                translationX = offsetX.value
+                rotationZ = f * 8f
+                alpha = 1f - (abs(f) * 0.6f).coerceAtMost(0.6f)
+            }
+            .pointerInput(Unit) {
+                val tracker = VelocityTracker()
+                detectHorizontalDragGestures(
+                    onDragStart = { tracker.resetTracking() },
+                    onHorizontalDrag = { change, dragAmount ->
+                        change.consume()
+                        tracker.addPosition(change.uptimeMillis, change.position)
+                        val s = current
+                        val blocked = (dragAmount < 0 && offsetX.value <= 0f && !canNext(s)) ||
+                            (dragAmount > 0 && offsetX.value >= 0f && !canPrevious(s))
+                        // Rubber-band when there's nothing to swipe to.
+                        val delta = if (blocked) dragAmount * 0.25f else dragAmount
+                        scope.launch { offsetX.snapTo(offsetX.value + delta) }
+                    },
+                    onDragCancel = { scope.launch { offsetX.animateTo(0f, spring()) } },
+                    onDragEnd = {
+                        val velocity = tracker.calculateVelocity().x
+                        val threshold = widthPx * 0.28f
+                        val s = current
+                        val goNext = (offsetX.value < -threshold || velocity < -1500f) && canNext(s)
+                        val goPrevious = (offsetX.value > threshold || velocity > 1500f) && canPrevious(s)
+                        scope.launch {
+                            when {
+                                goNext -> {
+                                    offsetX.animateTo(-widthPx * 1.3f, tween(170))
+                                    PlayerConnection.nextTrack()
+                                    offsetX.snapTo(widthPx * 1.3f)
+                                    offsetX.animateTo(0f, spring(dampingRatio = 0.8f, stiffness = 400f))
+                                }
+                                goPrevious -> {
+                                    offsetX.animateTo(widthPx * 1.3f, tween(170))
+                                    PlayerConnection.previousTrack()
+                                    offsetX.snapTo(-widthPx * 1.3f)
+                                    offsetX.animateTo(0f, spring(dampingRatio = 0.8f, stiffness = 400f))
+                                }
+                                else -> offsetX.animateTo(0f, spring(dampingRatio = 0.6f, stiffness = 500f))
+                            }
+                        }
+                    },
+                )
+            }
+            .shadow(24.dp, RoundedCornerShape(16.dp)),
+        corner = 16.dp,
+    )
 }

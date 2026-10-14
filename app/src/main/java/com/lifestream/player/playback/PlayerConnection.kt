@@ -121,6 +121,13 @@ object PlayerConnection {
     fun next() = withController { it.seekToNext() }
     fun previous() = withController { it.seekToPrevious() }
 
+    /** Always changes track (used by swipes); the buttons keep "restart, then go back" behaviour. */
+    fun nextTrack() = withController { if (it.hasNextMediaItem()) it.seekToNextMediaItem() }
+
+    fun previousTrack() = withController {
+        if (it.hasPreviousMediaItem()) it.seekToPreviousMediaItem() else it.seekTo(0)
+    }
+
     fun seekTo(positionMs: Long) = withController {
         it.seekTo(positionMs)
         _state.update { s -> s.copy(positionMs = positionMs) }
