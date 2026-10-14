@@ -126,6 +126,27 @@ object Matching {
     fun looksLikeFinalFantasy(album: Album): Boolean =
         !isJunk(album.title) && mentionsFinalFantasy(normalize(album.title))
 
+    private val versionWords = Regex(
+        "\\b(final fantasy|ost|soundtrack|version|ver|remaster|remastered|piano|orchestra|orchestral|" +
+            "arrange|arranged|arrangement|instrumental|extended|cover|live|acoustic|remix|edit|mix)\\b"
+    )
+
+    /**
+     * A key that is the same for every version of a song, so lists keep just one:
+     * "One-Winged Angel (Remastered)", "01. One-Winged Angel" and
+     * "FINAL FANTASY VII - One-Winged Angel [Piano Ver.]" all become "one winged angel".
+     */
+    fun songKey(title: String): String {
+        var t = Normalizer.normalize(title, Normalizer.Form.NFKC).lowercase(Locale.ROOT)
+        t = Regex("[(\\[【〔{「].*?[)\\]】〕}」]").replace(t, " ")
+        t = Regex("[~〜].*?[~〜]").replace(t, " ")
+        val segments = t.split(Regex("\\s+[-–—|/]\\s+|\\s*[:：]\\s+")).map { it.trim() }.filter { it.isNotEmpty() }
+        t = segments.firstOrNull { !versionWords.containsMatchIn(it) } ?: segments.firstOrNull() ?: t
+        t = Regex("^(disc\\s*\\d+\\s*)?(track\\s*)?\\d{1,3}(?=[.\\s_-])[.\\s_-]+").replace(t, "")
+        t = Regex("[^\\p{L}\\p{N}]+").replace(t, " ").trim()
+        return t.ifEmpty { title.lowercase(Locale.ROOT).trim() }
+    }
+
     /** Higher is better: official soundtracks by the real composers first. */
     fun score(album: Album, game: Game): Int {
         val t = normalize(album.title)

@@ -1,5 +1,6 @@
 package com.lifestream.player.data
 
+import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
 import org.json.JSONObject
 
@@ -48,12 +49,13 @@ data class Game(
     val series: Series = Series.MAINLINE,
     /** Which album titles count as this game's music. */
     val match: MatchSpec = MatchSpec(),
+    /** Original card illustration (tools/art renders these). */
+    @DrawableRes val art: Int = 0,
 )
 
 enum class Series(val label: String) {
     MAINLINE("Main series"),
-    REMAKE("VII Remake series"),
-    SPINOFF("Spin-offs, collections & more"),
+    SPINOFF("Spin-offs & more"),
 }
 
 fun formatDuration(seconds: Long): String {

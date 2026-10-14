@@ -1,6 +1,12 @@
 package com.lifestream.player.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -56,16 +62,39 @@ fun GameScreen(game: Game, onBack: () -> Unit, onOpenAlbum: (Album) -> Unit) {
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .background(Brush.verticalGradient(listOf(game.colorA, LsColors.Night)))
-                    .statusBarsPadding(),
+                    .background(Brush.verticalGradient(listOf(game.colorA, LsColors.Night))),
             ) {
-                CrystalMotif(
-                    game.colorB,
+                if (game.art != 0) {
+                    Image(
+                        painter = painterResource(game.art),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize(),
+                    )
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    0f to Color(0x660A0E1C),
+                                    0.5f to Color(0x990A0E1C),
+                                    1f to LsColors.Night,
+                                )
+                            )
+                    )
+                } else {
+                    CrystalMotif(
+                        game.colorB,
+                        Modifier
+                            .fillMaxWidth()
+                            .height(220.dp),
+                    )
+                }
+                Column(
                     Modifier
-                        .fillMaxWidth()
-                        .height(220.dp),
-                )
-                Column(Modifier.padding(bottom = 16.dp)) {
+                        .statusBarsPadding()
+                        .padding(bottom = 16.dp),
+                ) {
                     IconButton(onClick = onBack, modifier = Modifier.padding(4.dp)) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back")
                     }
@@ -76,8 +105,9 @@ fun GameScreen(game: Game, onBack: () -> Unit, onOpenAlbum: (Album) -> Unit) {
                             fontWeight = FontWeight.Bold,
                             fontSize = 56.sp,
                             color = game.colorB,
+                            style = TextStyle(shadow = Shadow(Color.Black.copy(alpha = 0.7f), Offset(0f, 2f), 12f)),
                         )
-                        Text(game.title, style = MaterialTheme.typography.headlineSmall)
+                        Text(game.title, style = MaterialTheme.typography.headlineSmall, color = Color.White)
                         Text(
                             "${game.year} · ${game.composer}",
                             style = MaterialTheme.typography.bodyMedium,

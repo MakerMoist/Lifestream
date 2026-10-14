@@ -8,3 +8,5 @@
 /captures
 .externalNativeBuild
 .cxx
+tools/art/out/
+__pycache__/

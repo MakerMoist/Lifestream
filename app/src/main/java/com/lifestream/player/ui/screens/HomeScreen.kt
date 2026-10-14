@@ -1,6 +1,11 @@
 package com.lifestream.player.ui.screens
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -140,7 +145,7 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                 }
             }
 
-            listOf(Series.MAINLINE, Series.REMAKE, Series.SPINOFF).forEach { series ->
+            listOf(Series.MAINLINE, Series.SPINOFF).forEach { series ->
                 val games = Catalog.bySeries(series)
                 item(key = "label-${series.name}", span = { GridItemSpan(maxLineSpan) }) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -274,7 +279,27 @@ fun GameCard(
             )
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
-        CrystalMotif(game.colorB, Modifier.fillMaxSize())
+        if (game.art != 0) {
+            Image(
+                painter = painterResource(game.art),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+            // Extra shade at the bottom so the title always reads cleanly over the art.
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0.45f to Color.Transparent,
+                            1f to Color(0xE60A0E1C),
+                        )
+                    )
+            )
+        } else {
+            CrystalMotif(game.colorB, Modifier.fillMaxSize())
+        }
         if (selecting) {
             Icon(
                 if (selected) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
@@ -295,6 +320,7 @@ fun GameCard(
             fontWeight = FontWeight.Bold,
             fontSize = if (game.numeral.length > 4) 24.sp else 34.sp,
             color = game.colorB,
+            style = TextStyle(shadow = Shadow(Color.Black.copy(alpha = 0.7f), Offset(0f, 2f), 10f)),
         )
         Column(
             Modifier
@@ -305,6 +331,7 @@ fun GameCard(
                 game.title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
+                color = Color.White,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )

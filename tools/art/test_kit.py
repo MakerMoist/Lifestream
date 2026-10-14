@@ -1,0 +1,13 @@
+import sys; sys.path.insert(0, '.')
+from kit import Scene
+s = Scene(7)
+s.vgrad([(0,'#0b1030'),(0.5,'#2b1b5a'),(0.72,'#ff8a5c'),(1,'#120a1c')])
+s.stars(250, 0, 0.5)
+s.disc(0.7,0.25,0.08,'#fff1d0',glow_color='#ffcf8a',glow_r=60,glow_s=0.9)
+s.mountains(0.66,0.12,'#1b1440',seed=3)
+s.crystal(0.3,0.45,0.12,0.3,'#5ad1ff')
+s.water(0.72)
+s.bottom_shade()
+s.vignette()
+s.save('out/_test.webp')
+print('ok')

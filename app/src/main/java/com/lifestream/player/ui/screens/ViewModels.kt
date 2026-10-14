@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.lifestream.player.data.Album
 import com.lifestream.player.data.Catalog
 import com.lifestream.player.data.Game
+import com.lifestream.player.data.Matching
 import com.lifestream.player.data.MusicRepository
 import com.lifestream.player.data.Track
 import com.lifestream.player.playback.PlayerConnection
@@ -82,8 +83,8 @@ class HomeViewModel : ViewModel() {
             out += page.items
             next = page.next
             loads++
-        } while (next != null && out.size < 40 && loads < 6)
-        out.take(60)
+        } while (next != null && out.distinctBy { Matching.songKey(it.title) }.size < 40 && loads < 6)
+        out.distinctBy { Matching.songKey(it.title) }.take(60)
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
@@ -92,7 +93,8 @@ class HomeViewModel : ViewModel() {
 }
 
 class GameViewModel(game: Game) : ViewModel() {
-    val tracks = PagedList(viewModelScope, MusicRepository.gameTracks(game)) { it.id }
+    // One version of each song: the original soundtrack loads first, so its version wins.
+    val tracks = PagedList(viewModelScope, MusicRepository.gameTracks(game)) { Matching.songKey(it.title) }
     val albums = PagedList(viewModelScope, MusicRepository.gameAlbumsSource(game)) { it.url }
     var tab by mutableStateOf(0)
 }
@@ -118,7 +120,9 @@ class SearchViewModel : ViewModel() {
         input = q
         val full = if (ffOnly && !q.contains("final fantasy", ignoreCase = true)) "final fantasy $q" else q
         submitted = full
-        songs = PagedList(viewModelScope, MusicRepository.songSearch(full, finalFantasyOnly = ffOnly)) { it.id }
+        songs = PagedList(viewModelScope, MusicRepository.songSearch(full, finalFantasyOnly = ffOnly)) {
+            Matching.songKey(it.title)
+        }
         albums = PagedList(viewModelScope, MusicRepository.albumSearch(full, finalFantasyOnly = ffOnly)) { it.url }
     }
 }
