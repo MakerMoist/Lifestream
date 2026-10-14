@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.components
 
+import com.lifestream.player.playback.SafeInput
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -74,10 +75,11 @@ fun Artwork(
         // The placeholder sits underneath; artwork fades in over it the first time and appears
         // straight away when it's already in memory, so screens don't flash as you come back.
         placeholder()
-        if (url != null) {
+        val safeUrl = remember(url) { SafeInput.safeArtwork(url) }
+        if (safeUrl != null) {
             val context = LocalContext.current
-            val request = remember(url) {
-                ImageRequest.Builder(context).data(url).crossfade(200).build()
+            val request = remember(safeUrl) {
+                ImageRequest.Builder(context).data(safeUrl).crossfade(200).build()
             }
             AsyncImage(
                 model = request,

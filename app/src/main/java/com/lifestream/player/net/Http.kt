@@ -1,5 +1,7 @@
 package com.lifestream.player.net
 
+import java.io.IOException
+import okhttp3.ResponseBody
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.schabi.newpipe.extractor.downloader.Downloader
@@ -11,6 +13,28 @@ import java.util.concurrent.TimeUnit
 object Http {
     const val DESKTOP_USER_AGENT =
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0"
+
+    /** Metadata pages (search results, the YouTube player script) are a few MB at most. */
+    const val MAX_METADATA_BYTES = 24L * 1024 * 1024
+
+    /** Reads a text body, refusing anything larger than [max] bytes instead of exhausting memory. */
+    fun readLimited(body: ResponseBody, max: Long): String {
+        if (body.contentLength() > max) throw IOException("Response too large")
+        val out = java.io.ByteArrayOutputStream()
+        body.byteStream().use { input ->
+            val buf = ByteArray(32 * 1024)
+            var total = 0L
+            while (true) {
+                val n = input.read(buf)
+                if (n < 0) break
+                total += n
+                if (total > max) throw IOException("Response too large")
+                out.write(buf, 0, n)
+            }
+        }
+        val charset = body.contentType()?.charset() ?: Charsets.UTF_8
+        return String(out.toByteArray(), charset)
+    }
 
     val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
@@ -53,7 +77,7 @@ class OkHttpDownloader(private val client: OkHttpClient) : Downloader() {
                 response.code,
                 response.message,
                 response.headers.toMultimap(),
-                response.body?.string(),
+                response.body?.let { Http.readLimited(it, Http.MAX_METADATA_BYTES) },
                 response.request.url.toString(),
             )
         }

@@ -18,6 +18,20 @@ object SafeInput {
 
     fun isHttps(uri: Uri?): Boolean = uri?.scheme.equals("https", ignoreCase = true)
 
-    /** Artwork must be a plain HTTPS image URL — never file://, content:// or anything local. */
-    fun safeArtwork(uri: Uri?): Uri? = uri?.takeIf { isHttps(it) && !it.host.isNullOrBlank() }
+    /** YouTube's image CDNs, where every song's artwork comes from. */
+    private val imageDomains = listOf("ytimg.com", "ggpht.com", "googleusercontent.com")
+
+    fun isImageHost(host: String?): Boolean {
+        val h = host?.lowercase() ?: return false
+        return imageDomains.any { h == it || h.endsWith(".$it") }
+    }
+
+    /**
+     * Artwork must be an HTTPS image on YouTube's image servers — never file://, content://,
+     * a local address or some other site.
+     */
+    fun safeArtwork(uri: Uri?): Uri? = uri?.takeIf { isHttps(it) && isImageHost(it.host) }
+
+    fun safeArtwork(url: String?): String? =
+        url?.takeIf { it.length <= 2048 }?.let { safeArtwork(Uri.parse(it))?.toString() }
 }

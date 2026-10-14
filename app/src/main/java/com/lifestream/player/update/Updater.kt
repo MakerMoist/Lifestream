@@ -36,6 +36,24 @@ object Updater {
     )
 
     private const val MAX_APK_BYTES = 300L * 1024 * 1024
+    private const val MAX_JSON_BYTES = 2L * 1024 * 1024
+
+    /**
+     * Every hop of every update request — including redirects, which OkHttp would otherwise
+     * follow anywhere — must stay on GitHub over HTTPS.
+     */
+    private val client by lazy {
+        Http.client.newBuilder()
+            .addNetworkInterceptor { chain ->
+                requireGitHub(chain.request().url.toString())
+                chain.proceed(chain.request())
+            }
+            .build()
+    }
+
+    /** Release text shown in the app: short, plain characters only. */
+    private fun cleanVersionName(raw: String): String =
+        raw.filter { it.isLetterOrDigit() || it in ".-+ " }.trim().take(32).ifBlank { "?" }
 
     val currentVersionCode: Int get() = BuildConfig.VERSION_CODE
     val currentVersionName: String get() = BuildConfig.VERSION_NAME
@@ -62,9 +80,11 @@ object Updater {
         val info = JSONObject(getText(versionUrl!!))
         val sha = info.optString("sha256").lowercase()
         if (!sha.matches(Regex("^[0-9a-f]{64}$"))) throw IOException("The release's checksum is missing or invalid.")
+        val code = info.optInt("versionCode", -1)
+        if (code <= 0) throw IOException("The release's version is missing or invalid.")
         Release(
-            versionCode = info.getInt("versionCode"),
-            versionName = info.optString("versionName", "?"),
+            versionCode = code,
+            versionName = cleanVersionName(info.optString("versionName", "?")),
             sha256 = sha,
             apkUrl = apkUrl!!,
             apkSize = apkSize,
@@ -82,7 +102,7 @@ object Updater {
             val target = File(dir, "Lifestream-${release.versionCode}.apk")
             val partial = File(dir, "${target.name}.part")
 
-            Http.client.newCall(Request.Builder().url(release.apkUrl).header("User-Agent", "Lifestream").build())
+            client.newCall(Request.Builder().url(release.apkUrl).header("User-Agent", "Lifestream").build())
                 .execute().use { response ->
                     if (!response.isSuccessful) throw IOException("Download failed (HTTP ${response.code}).")
                     requireGitHub(response.request.url.toString()) // where redirects actually landed
@@ -116,6 +136,12 @@ object Updater {
                 target.delete()
                 throw IOException("This build isn't signed with Lifestream's key, so it can't update the installed app.")
             }
+            // The APK itself must be the version the release says it is, and newer than this one.
+            val apkVersion = archiveVersionCode(context, target)
+            if (apkVersion != release.versionCode.toLong() || apkVersion <= currentVersionCode) {
+                target.delete()
+                throw IOException("This build's version doesn't match the release, so it was discarded.")
+            }
             target
         }
 
@@ -146,16 +172,19 @@ object Updater {
         val request = Request.Builder().url(url).header("User-Agent", "Lifestream")
             .apply { if (accept != null) header("Accept", accept) }
             .build()
-        Http.client.newCall(request).execute().use { response ->
+        client.newCall(request).execute().use { response ->
             requireGitHub(response.request.url.toString())
             when {
                 response.code == 404 -> throw IOException("No published release found. Is the repository public?")
                 response.code == 403 -> throw IOException("GitHub is rate-limiting update checks. Try again later.")
                 !response.isSuccessful -> throw IOException("Update check failed (HTTP ${response.code}).")
             }
-            val text = response.body?.string() ?: throw IOException("Update check failed (empty response).")
-            if (text.length > 2_000_000) throw IOException("Unexpected response from GitHub.")
-            return text
+            val body = response.body ?: throw IOException("Update check failed (empty response).")
+            return try {
+                Http.readLimited(body, MAX_JSON_BYTES)
+            } catch (e: IOException) {
+                throw IOException("Unexpected response from GitHub.")
+            }
         }
     }
 
@@ -168,6 +197,13 @@ object Updater {
                 host == "githubusercontent.com" || host.endsWith(".githubusercontent.com")
             )
         if (!ok) throw IOException("Refusing to download from $host")
+    }
+
+    @Suppress("DEPRECATION")
+    private fun archiveVersionCode(context: Context, apk: File): Long {
+        val info = context.packageManager.getPackageArchiveInfo(apk.absolutePath, 0) ?: return -1
+        if (info.packageName != context.packageName) return -1
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) info.longVersionCode else info.versionCode.toLong()
     }
 
     @Suppress("DEPRECATION")

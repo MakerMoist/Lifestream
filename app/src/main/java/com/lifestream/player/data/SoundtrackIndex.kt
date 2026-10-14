@@ -185,9 +185,12 @@ object SoundtrackIndex {
             val map = mutableMapOf<String, List<Track>>()
             val stamps = mutableMapOf<String, Long>()
             for (id in games.keys()) {
+                if (Catalog.game(id) == null) continue // only the app's own soundtracks
                 val g = games.getJSONObject(id)
                 val arr = g.getJSONArray("tracks")
-                map[id] = (0 until arr.length()).map { Track.fromJson(arr.getJSONObject(it)).copy(gameId = id) }
+                map[id] = (0 until arr.length()).mapNotNull { i ->
+                    arr.optJSONObject(i)?.let(Track::fromJson)?.copy(gameId = id)
+                }
                 stamps[id] = g.optLong("built")
             }
             builtAt.clear()

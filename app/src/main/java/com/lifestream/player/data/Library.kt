@@ -110,8 +110,8 @@ object Library {
             val o = arr.getJSONObject(i)
             Playlist(
                 id = o.getString("id"),
-                name = o.optString("name").ifBlank { "Playlist ${i + 1}" },
-                tracks = readTracks(o.optJSONArray("tracks")?.toString() ?: "[]"),
+                name = cleanName(o.optString("name"), "Playlist ${i + 1}"),
+                tracks = readTracks(o.optJSONArray("tracks")?.toString() ?: "[]").take(MAX_TRACKS_PER_PLAYLIST),
             )
         }.take(MAX_PLAYLISTS)
     }.getOrDefault(emptyList())
@@ -126,7 +126,7 @@ object Library {
 
     private fun readTracks(json: String?): List<Track> = runCatching {
         val arr = JSONArray(json ?: "[]")
-        (0 until arr.length()).map { Track.fromJson(arr.getJSONObject(it)) }
+        (0 until arr.length()).mapNotNull { arr.optJSONObject(it)?.let(Track::fromJson) }
     }.getOrDefault(emptyList())
 
     private fun writeTracks(tracks: List<Track>): String {

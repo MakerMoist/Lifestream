@@ -7,7 +7,10 @@ pluginManagement {
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
-        maven("https://jitpack.io")
+        exclusiveContent {
+            forRepository { maven("https://jitpack.io") }
+            filter { includeGroupAndSubgroups("com.github.TeamNewPipe") }
+        }
     }
 }
 rootProject.name = "probe"

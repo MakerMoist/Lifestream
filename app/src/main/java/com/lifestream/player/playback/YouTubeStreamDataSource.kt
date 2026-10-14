@@ -7,7 +7,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.BaseDataSource
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
-import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.ResolvingDataSource
 import com.lifestream.player.net.Http
 import okhttp3.OkHttpClient
@@ -39,7 +38,6 @@ class YouTubeStreamDataSource(private val client: OkHttpClient) : BaseDataSource
     }
 
     private var dataSpec: DataSpec? = null
-    private var delegate: DataSource? = null
 
     private var baseUrl = ""
     private var userAgent = Http.DESKTOP_USER_AGENT
@@ -60,15 +58,8 @@ class YouTubeStreamDataSource(private val client: OkHttpClient) : BaseDataSource
         // Only ever fetch over HTTPS.
         if (!SafeInput.isHttps(uri)) throw IOException("Refusing non-HTTPS stream URL")
 
-        // Anything that isn't a YouTube media server goes through a plain HTTPS source.
-        if (!SafeInput.isGoogleVideoHost(uri.host)) {
-            val plain = DefaultHttpDataSource.Factory()
-                .setUserAgent(Http.DESKTOP_USER_AGENT)
-                .setAllowCrossProtocolRedirects(false)
-                .createDataSource()
-            delegate = plain
-            return plain.open(dataSpec)
-        }
+        // Audio only ever comes from YouTube's media servers.
+        if (!SafeInput.isGoogleVideoHost(uri.host)) throw IOException("Refusing stream from an unexpected host")
 
         transferInitializing(dataSpec)
         baseUrl = uri.toString()
@@ -164,7 +155,6 @@ class YouTubeStreamDataSource(private val client: OkHttpClient) : BaseDataSource
     }
 
     override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
-        delegate?.let { return it.read(buffer, offset, length) }
         if (length == 0) return 0
         if (end != UNKNOWN && position >= end) return C.RESULT_END_OF_INPUT
 
@@ -186,17 +176,12 @@ class YouTubeStreamDataSource(private val client: OkHttpClient) : BaseDataSource
         return read
     }
 
-    override fun getUri(): Uri? = delegate?.uri ?: dataSpec?.uri
+    override fun getUri(): Uri? = dataSpec?.uri
 
     override fun getResponseHeaders(): Map<String, List<String>> =
-        delegate?.responseHeaders ?: response?.headers?.toMultimap() ?: emptyMap()
+        response?.headers?.toMultimap() ?: emptyMap()
 
     override fun close() {
-        delegate?.let {
-            delegate = null
-            it.close()
-            return
-        }
         closeChunk()
         if (opened) {
             opened = false

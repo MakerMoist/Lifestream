@@ -11,8 +11,13 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // NewPipeExtractor (and its nanojson dependency) are published on JitPack
-        maven("https://jitpack.io")
+        // NewPipeExtractor (and its nanojson dependency) are published on JitPack. JitPack builds
+        // anyone's GitHub repo on demand, so it may only supply TeamNewPipe's packages — nothing
+        // else can be substituted from there.
+        exclusiveContent {
+            forRepository { maven("https://jitpack.io") }
+            filter { includeGroupAndSubgroups("com.github.TeamNewPipe") }
+        }
     }
 }
 

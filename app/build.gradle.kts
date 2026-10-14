@@ -18,7 +18,8 @@ android {
         // the in-app updater compares against it.
         val buildNumber = System.getenv("LIFESTREAM_VERSION_CODE")?.toIntOrNull() ?: 1
         versionCode = buildNumber
-        versionName = "1.0.$buildNumber"
+        versionName = System.getenv("LIFESTREAM_VERSION_NAME")
+            ?.takeIf { it.matches(Regex("^\\d+\\.\\d+\\.\\d+$")) } ?: "1.1.0-dev"
         buildConfigField("String", "UPDATE_REPO", "\"MakerMoist/Lifestream\"")
     }
 

@@ -39,14 +39,23 @@ data class Track(
     val youTubeUrl: String get() = "https://www.youtube.com/watch?v=$id"
 
     companion object {
-        fun fromJson(o: JSONObject) = Track(
-            id = o.getString("id"),
-            title = tidySongTitle(o.optString("title")),
-            artist = o.optString("artist"),
-            durationSec = o.optLong("duration", -1),
-            thumbnail = o.optString("thumb").ifBlank { null },
-            gameId = o.optString("game").ifBlank { null },
-        )
+        /** YouTube video ids are exactly 11 characters of [A-Za-z0-9_-]. */
+        private val videoId = Regex("^[A-Za-z0-9_-]{11}$")
+        private const val MAX_TEXT = 300
+
+        /** Reads a stored song, or null if the entry isn't a valid one (e.g. a corrupted file). */
+        fun fromJson(o: JSONObject): Track? {
+            val id = o.optString("id")
+            if (!videoId.matches(id)) return null
+            return Track(
+                id = id,
+                title = tidySongTitle(o.optString("title")).take(MAX_TEXT).ifBlank { "Unknown track" },
+                artist = o.optString("artist").take(MAX_TEXT),
+                durationSec = o.optLong("duration", -1).coerceIn(-1L, 24L * 3600),
+                thumbnail = o.optString("thumb").takeIf { it.startsWith("https://") && it.length <= 2048 },
+                gameId = o.optString("game").ifBlank { null }?.take(32),
+            )
+        }
     }
 }
 
