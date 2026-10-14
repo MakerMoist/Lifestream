@@ -9,7 +9,7 @@ import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import java.io.File
 import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQueryHandlerFactory as F
 
-private data class Song(val id: String, val title: String, val artist: String, val sec: Long)
+internal data class Song(val id: String, val title: String, val artist: String, val sec: Long)
 
 /**
  * Checks each game's soundtrack against a song list (data/tfbl.tsv: Theatrhythm Final Bar Line)
@@ -113,7 +113,7 @@ private fun sameSong(wanted: String, title: String): Boolean {
 }
 
 /** What the app plays for [game]: its soundtrack album(s) (same rules as the app) plus extras. */
-private fun gameSongs(game: Game, log: StringBuilder): List<Song> {
+internal fun gameSongs(game: Game, log: StringBuilder): List<Song> {
     val sources = sourcesFor(game, StringBuilder())
     val songs = LinkedHashMap<String, Song>()
     for (album in sources.take(game.maxAlbums)) {

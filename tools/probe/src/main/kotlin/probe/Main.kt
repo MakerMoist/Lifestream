@@ -26,6 +26,10 @@ import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQu
  */
 fun main(args: Array<String>) {
     NewPipe.init(OkHttpDownloader(Http.client), Localization("en", "US"), ContentCountry("US"))
+    if ("--artists" in args) {
+        runArtists(args.filter { it != "--artists" }.toSet())
+        return
+    }
     if ("--tfbl" in args) {
         runChecklist(args.filter { it != "--tfbl" }.toSet())
         return
