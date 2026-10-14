@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -44,7 +45,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.SubcomposeAsyncImage
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.lifestream.player.data.Track
 import com.lifestream.player.data.formatDuration
 import com.lifestream.player.playback.PlayerConnection
@@ -69,16 +71,19 @@ fun Artwork(
         }
     }
     Box(modifier.clip(shape)) {
-        if (url == null) {
-            placeholder()
-        } else {
-            SubcomposeAsyncImage(
-                model = url,
+        // The placeholder sits underneath; artwork fades in over it the first time and appears
+        // straight away when it's already in memory, so screens don't flash as you come back.
+        placeholder()
+        if (url != null) {
+            val context = LocalContext.current
+            val request = remember(url) {
+                ImageRequest.Builder(context).data(url).crossfade(200).build()
+            }
+            AsyncImage(
+                model = request,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
-                loading = { placeholder() },
-                error = { placeholder() },
             )
         }
     }

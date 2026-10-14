@@ -1,5 +1,20 @@
 package com.lifestream.player.ui.screens
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.togetherWith
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.sp
+import com.lifestream.player.data.Recommendations
+import com.lifestream.player.data.SoundtrackIndex
+import com.lifestream.player.ui.components.ArtCache
+import com.lifestream.player.ui.components.rememberArt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.Shadow
@@ -77,7 +92,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lifestream.player.data.Catalog
 import com.lifestream.player.data.Game
@@ -99,6 +113,20 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
     val playlistSongs = remember(playlists) { playlists.flatMap { it.tracks }.distinctBy { it.id } }
     val vm: HomeViewModel = viewModel()
     val selecting = vm.selected.isNotEmpty()
+    val index by SoundtrackIndex.tracks.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    // New picks each time Home is shown; they stay put while you're here.
+    val visitSeed = remember { System.nanoTime() }
+    var recommended by remember { mutableStateOf<List<Track>>(emptyList()) }
+    // Worked out once per visit (and again as more soundtracks finish indexing), not on every
+    // song change, so the row doesn't shuffle under your finger.
+    LaunchedEffect(recents.isNotEmpty(), index.size) {
+        recommended = withContext(Dispatchers.Default) {
+            Recommendations.recommend(recents, index, visitSeed) { t -> SoundtrackIndex.gameOf(t)?.id }
+        }
+    }
+    LaunchedEffect(Unit) { ArtCache.warm(context, Catalog.games.map { it.art }) }
 
     // Back leaves selection mode instead of the app.
     BackHandler(enabled = selecting) { vm.clear() }
@@ -120,8 +148,11 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                     // A new villain line every time Home is shown; tap it for another.
                     var quoteIndex by remember { mutableIntStateOf(VillainQuotes.next()) }
                     val quote = villainQuotes[quoteIndex]
-                    Column(
-                        Modifier
+                    AnimatedContent(
+                        targetState = quote,
+                        transitionSpec = { fadeIn(tween(260)) togetherWith fadeOut(tween(160)) using SizeTransform(clip = false) },
+                        label = "quote",
+                        modifier = Modifier
                             .fillMaxWidth()
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
@@ -129,17 +160,23 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                             ) {
                                 quoteIndex = VillainQuotes.next()
                             },
-                    ) {
-                        Text(
-                            "\u201C${quote.text}\u201D",
-                            style = MaterialTheme.typography.headlineSmall.copy(fontStyle = FontStyle.Italic),
-                        )
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            "\u2014 ${quote.who}, ${quote.game}",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = LsColors.Gold,
-                        )
+                    ) { q ->
+                        Column(Modifier.fillMaxWidth()) {
+                            Text(
+                                "\u201C${q.text}\u201D",
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    fontStyle = FontStyle.Italic,
+                                    fontSize = 19.sp,
+                                    lineHeight = 25.sp,
+                                ),
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                "\u2014 ${q.who}, ${q.game}",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = LsColors.Gold,
+                            )
+                        }
                     }
                     Spacer(Modifier.height(16.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -167,11 +204,11 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                 }
             }
 
-            if (recents.isNotEmpty()) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
+            if (recommended.isNotEmpty()) {
+                item(key = "recommended", span = { GridItemSpan(maxLineSpan) }) {
                     Column {
-                        SectionLabel("Jump back in", Modifier.padding(top = 8.dp))
-                        RecentsRow(recents)
+                        SectionLabel("Recommended for you", Modifier.padding(top = 8.dp))
+                        RecommendedRow(recommended)
                     }
                 }
             }
@@ -258,20 +295,21 @@ private fun SelectionBar(vm: HomeViewModel) {
     }
 }
 
+/** Songs picked from your history's soundtracks; tapping one plays the whole mix from there. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun RecentsRow(recents: List<Track>) {
+private fun RecommendedRow(songs: List<Track>) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(horizontal = 0.dp),
     ) {
-        itemsIndexed(recents.take(20), key = { _, t -> t.id }) { index, track ->
+        itemsIndexed(songs, key = { _, t -> t.id }) { index, track ->
             Column(
                 Modifier
                     .width(120.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .combinedClickable(
-                        onClick = { PlayerConnection.playTracks(recents, index) },
+                        onClick = { PlayerConnection.playTracks(songs, index) },
                         onLongClick = { TrackActions.show(track) },
                     ),
             ) {
@@ -283,6 +321,15 @@ private fun RecentsRow(recents: List<Track>) {
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodySmall,
                 )
+                track.gameId?.let { Catalog.game(it) }?.let { game ->
+                    Text(
+                        game.title,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }
@@ -315,12 +362,16 @@ fun GameCard(
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
         if (game.art != 0) {
-            Image(
-                painter = painterResource(game.art),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-            )
+            val art = rememberArt(game.art)
+            val artAlpha by animateFloatAsState(if (art != null) 1f else 0f, tween(220), label = "art")
+            if (art != null) {
+                Image(
+                    bitmap = art,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize().alpha(artAlpha),
+                )
+            }
             // Extra shade at the bottom so the title always reads cleanly over the art.
             Box(
                 Modifier

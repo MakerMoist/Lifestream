@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -124,6 +125,11 @@ private fun LifestreamRoot() {
                 navController = nav,
                 startDestination = "home",
                 modifier = Modifier.padding(padding),
+                // Quick cross-fades between screens instead of the long default.
+                enterTransition = { fadeIn(tween(220, delayMillis = 60)) },
+                exitTransition = { fadeOut(tween(140)) },
+                popEnterTransition = { fadeIn(tween(220, delayMillis = 60)) },
+                popExitTransition = { fadeOut(tween(140)) },
             ) {
                 composable("home") {
                     HomeScreen(onOpenGame = { nav.navigate("game/${it.id}") })
