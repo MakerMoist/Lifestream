@@ -55,7 +55,6 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.lifestream.player.BuildConfig
 import com.lifestream.player.data.AppSettings
 import com.lifestream.player.playback.SongCache
 import com.lifestream.player.ui.components.SectionLabel
@@ -273,16 +272,11 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
         SectionLabel("App updates", Modifier.padding(top = 8.dp))
         SettingsCard {
             Text("Lifestream ${Updater.currentVersionName}", style = MaterialTheme.typography.titleMedium)
-            Text(
-                "Updates come from the Lifestream releases on GitHub (${BuildConfig.UPDATE_REPO}). Each one is " +
-                    "downloaded over HTTPS, checked against its published SHA-256 checksum, and must be signed " +
-                    "with Lifestream's own key; Android asks you to confirm before installing.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(16.dp))
-            UpdateSection(vm, context)
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
+            if (vm.state != UpdateState.Idle) {
+                UpdateSection(vm, context)
+                Spacer(Modifier.height(16.dp))
+            }
             val busy = vm.state is UpdateState.Checking || vm.state is UpdateState.Downloading
             Button(onClick = { vm.check() }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Rounded.SystemUpdate, null, Modifier.size(18.dp))
@@ -296,11 +290,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
 @Composable
 private fun UpdateSection(vm: SettingsViewModel, context: Context) {
     when (val s = vm.state) {
-        UpdateState.Idle -> Text(
-            "Tap Check for updates to see if a newer version is out.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        UpdateState.Idle -> Unit
 
         UpdateState.Checking -> Row(verticalAlignment = Alignment.CenterVertically) {
             CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)

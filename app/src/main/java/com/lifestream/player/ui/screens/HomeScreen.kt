@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -60,6 +61,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,6 +74,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -84,6 +89,7 @@ import com.lifestream.player.playback.PlayerConnection
 import com.lifestream.player.ui.components.Artwork
 import com.lifestream.player.ui.components.TrackActions
 import com.lifestream.player.ui.components.SectionLabel
+import com.lifestream.player.ui.components.villainQuotes
 import com.lifestream.player.ui.theme.LsColors
 
 @Composable
@@ -111,7 +117,30 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                         .statusBarsPadding()
                         .padding(top = 20.dp, bottom = 4.dp),
                 ) {
-                    Text("Lifestream", style = MaterialTheme.typography.headlineMedium)
+                    // A random villain line each visit; tap it for another.
+                    var quoteIndex by rememberSaveable { mutableIntStateOf(villainQuotes.indices.random()) }
+                    val quote = villainQuotes[quoteIndex]
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) {
+                                quoteIndex = (villainQuotes.indices - quoteIndex).random()
+                            },
+                    ) {
+                        Text(
+                            "\u201C${quote.text}\u201D",
+                            style = MaterialTheme.typography.headlineSmall.copy(fontStyle = FontStyle.Italic),
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            "\u2014 ${quote.who}, ${quote.game}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = LsColors.Gold,
+                        )
+                    }
                     Spacer(Modifier.height(16.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilledTonalButton(onClick = { vm.surprise() }, enabled = !vm.surprising) {
