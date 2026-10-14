@@ -19,6 +19,7 @@ object AppSettings {
     private const val KEY_RANDOM_SONG_ORDER = "random_song_order"
     private const val KEY_SHOW_QUOTES = "show_quotes"
     private const val KEY_LEVEL_VOLUME = "level_volume"
+    private const val KEY_AUTO_PLAY_AT_END = "auto_play_at_end"
 
     /** Size choices for saved songs, in MB (0 = don't save songs). */
     val CACHE_LIMIT_CHOICES = listOf(0, 2048, 4096, 6144, 8192)
@@ -66,6 +67,11 @@ object AppSettings {
     /** Show the villain quotes at the top of Home. */
     val showQuotes: StateFlow<Boolean> = _showQuotes.asStateFlow()
 
+    private val _autoPlayAtEnd = MutableStateFlow(true)
+
+    /** When the queue runs out, keep going with random songs from any soundtrack. */
+    val autoPlayAtEnd: StateFlow<Boolean> = _autoPlayAtEnd.asStateFlow()
+
     private val _levelVolume = MutableStateFlow(true)
 
     /** Even out loudness between songs (see VolumeLeveler). */
@@ -80,6 +86,7 @@ object AppSettings {
         _randomSongOrder.value = prefs.getBoolean(KEY_RANDOM_SONG_ORDER, false)
         _showQuotes.value = prefs.getBoolean(KEY_SHOW_QUOTES, true)
         _levelVolume.value = prefs.getBoolean(KEY_LEVEL_VOLUME, true)
+        _autoPlayAtEnd.value = prefs.getBoolean(KEY_AUTO_PLAY_AT_END, true)
         // A size from an older version (e.g. 5 or 10 GB) becomes the largest choice that fits in it.
         val stored = prefs.getInt(KEY_CACHE_LIMIT_MB, DEFAULT_CACHE_LIMIT_MB)
         _cacheLimitMb.value = if (stored in CACHE_LIMIT_CHOICES) stored
@@ -110,6 +117,11 @@ object AppSettings {
     fun setShowQuotes(on: Boolean) {
         _showQuotes.value = on
         prefs.edit().putBoolean(KEY_SHOW_QUOTES, on).apply()
+    }
+
+    fun setAutoPlayAtEnd(on: Boolean) {
+        _autoPlayAtEnd.value = on
+        prefs.edit().putBoolean(KEY_AUTO_PLAY_AT_END, on).apply()
     }
 
     fun setLevelVolume(on: Boolean) {

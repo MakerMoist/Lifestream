@@ -129,7 +129,7 @@ object HomeReselect {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onOpenGame: (Game) -> Unit) {
+fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
     val recents by Library.recents.collectAsStateWithLifecycle()
     val vm: HomeViewModel = viewModel()
     val selecting = vm.selected.isNotEmpty()
@@ -219,7 +219,8 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                                 fadeIn(tween(600, delayMillis = 250)) togetherWith fadeOut(tween(350)) using
                                     SizeTransform(clip = false) { _, _ -> tween(400) }
                             },
-                            contentAlignment = Alignment.CenterStart,
+                            // Short quotes sit at the bottom, right above the buttons.
+                            contentAlignment = Alignment.BottomStart,
                             label = "quote",
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -231,7 +232,7 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                                     quoteIndex = VillainQuotes.next()
                                 },
                         ) { q ->
-                            Column(Modifier.fillMaxWidth().heightIn(min = minQuoteHeight), verticalArrangement = Arrangement.Center) {
+                            Column(Modifier.fillMaxWidth().heightIn(min = minQuoteHeight), verticalArrangement = Arrangement.Bottom) {
                                 Text(
                                     "\u201C${q.text}\u201D",
                                     style = MaterialTheme.typography.headlineSmall.copy(
@@ -248,9 +249,13 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                                 )
                             }
                         }
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(10.dp))
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val lastPlaylistId by Library.lastPlaylistId.collectAsStateWithLifecycle()
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                    ) {
                         FilledTonalButton(onClick = { vm.surprise() }, enabled = !vm.surprising) {
                             if (vm.surprising) {
                                 CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
@@ -260,10 +265,25 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                             Spacer(Modifier.width(8.dp))
                             Text("Instant Playlist")
                         }
+                        // Opens the playlist you last played from.
+                        FilledTonalButton(
+                            onClick = { lastPlaylistId?.let(onOpenPlaylist) },
+                            enabled = lastPlaylistId != null,
+                        ) {
+                            Icon(Icons.AutoMirrored.Rounded.QueueMusic, null, Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Last Playlist")
+                        }
                     }
                     vm.surpriseNote?.let { note ->
                         Spacer(Modifier.height(8.dp))
-                        Text(note, style = MaterialTheme.typography.bodySmall, color = LsColors.Mako)
+                        Text(
+                            note,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = LsColors.Mako,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                     }
                 }
             }

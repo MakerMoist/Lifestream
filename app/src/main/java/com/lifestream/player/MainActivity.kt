@@ -137,7 +137,10 @@ private fun LifestreamRoot() {
                 popExitTransition = { fadeOut(tween(140)) },
             ) {
                 composable("home") {
-                    HomeScreen(onOpenGame = { nav.navigate("game/${it.id}") })
+                    HomeScreen(
+                        onOpenGame = { nav.navigate("game/${it.id}") },
+                        onOpenPlaylist = { id -> nav.navigate("playlist/$id") },
+                    )
                 }
                 composable("search") {
                     SearchScreen(onOpenGame = { nav.navigate("game/${it.id}") })
@@ -202,7 +205,10 @@ private fun BottomBar(nav: NavHostController) {
             NavigationBarItem(
                 selected = section == item.route,
                 onClick = {
-                    if (item.route == "search") SearchFocus.requested = true
+                    if (item.route == "search") {
+                        SearchFocus.requested = true
+                        SearchFocus.clearRequested = true
+                    }
                     if (item.route == section) {
                         if (entry?.destination?.route == item.route) {
                             // Already on this section's first screen: nothing to navigate; Home

@@ -67,7 +67,7 @@ class HomeViewModel : ViewModel() {
                 if (tracks.isEmpty()) {
                     message = "Couldn't load tracks. Check your connection."
                 } else {
-                    PlayerConnection.playTracks(tracks, shuffle = shuffle)
+                    PlayerConnection.playTracks(tracks, randomStart = shuffle)
                     selected = emptySet()
                 }
             } finally {
@@ -116,7 +116,7 @@ class HomeViewModel : ViewModel() {
                     val tracks = SoundtrackIndex.songsFor(game.id) ?: tracksFor(game)
                     if (tracks.isNotEmpty()) {
                         lastSurprise = game.id
-                        PlayerConnection.playTracks(tracks, shuffle = true)
+                        PlayerConnection.playTracks(tracks, randomStart = true)
                         surpriseNote = "Shuffling ${game.title}"
                         clearNoteLater("Shuffling ${game.title}")
                         return@launch

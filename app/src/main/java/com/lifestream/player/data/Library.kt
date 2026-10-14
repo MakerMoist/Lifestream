@@ -22,6 +22,7 @@ object Library {
     private const val KEY_PLAYLISTS = "playlists"
     private const val KEY_RECENTS = "recents"
     private const val KEY_OLD_FAVORITES = "favorites"
+    private const val KEY_LAST_PLAYLIST = "last_playlist"
 
     private lateinit var prefs: SharedPreferences
 
@@ -31,11 +32,16 @@ object Library {
     private val _recents = MutableStateFlow<List<Track>>(emptyList())
     val recents: StateFlow<List<Track>> = _recents.asStateFlow()
 
+    private val _lastPlaylistId = MutableStateFlow<String?>(null)
+    /** The playlist most recently played from (Home's "Last Playlist"). */
+    val lastPlaylistId: StateFlow<String?> = _lastPlaylistId.asStateFlow()
+
     fun init(context: Context) {
         prefs = context.getSharedPreferences("library", Context.MODE_PRIVATE)
         _recents.value = readTracks(prefs.getString(KEY_RECENTS, "[]"))
         _playlists.value = readPlaylists()
         migrateFavorites()
+        _lastPlaylistId.value = prefs.getString(KEY_LAST_PLAYLIST, null)?.takeIf { id -> playlist(id) != null }
     }
 
     /** Favorites from before playlists existed become a playlist called "Favorites". */
@@ -50,6 +56,15 @@ object Library {
     }
 
     fun canCreatePlaylist() = _playlists.value.size < MAX_PLAYLISTS
+
+    fun setLastPlaylist(id: String) {
+        if (playlist(id) == null || _lastPlaylistId.value == id) return
+        _lastPlaylistId.value = id
+        prefs.edit().putString(KEY_LAST_PLAYLIST, id).apply()
+    }
+
+    /** Playlists that contain the song (for "Remove from playlist"). */
+    fun playlistsWith(trackId: String): List<Playlist> = _playlists.value.filter { p -> p.tracks.any { it.id == trackId } }
 
     fun playlist(id: String): Playlist? = _playlists.value.firstOrNull { it.id == id }
 
@@ -69,6 +84,10 @@ object Library {
     fun deletePlaylist(id: String) {
         _playlists.value = _playlists.value.filterNot { it.id == id }
         savePlaylists()
+        if (_lastPlaylistId.value == id) {
+            _lastPlaylistId.value = null
+            prefs.edit().remove(KEY_LAST_PLAYLIST).apply()
+        }
     }
 
     /** Adds [track] to the playlist; returns false if it's already there. */

@@ -60,11 +60,8 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Mo
         modifier = modifier
             .fillMaxWidth()
             .onSizeChanged { widthPx = it.width.toFloat().coerceAtLeast(1f) }
-            // Slide right to close: stops the song and clears the queue.
-            .graphicsLayer {
-                translationX = offsetX.value
-                alpha = 1f - (offsetX.value / widthPx).coerceIn(0f, 1f) * 0.8f
-            }
+            // Slide right to close: stops the song and clears the queue. Touches are measured
+            // before the sliding layer, so the bar moving under your finger doesn't skew them.
             .pointerInput(Unit) {
                 val tracker = VelocityTracker()
                 detectHorizontalDragGestures(
@@ -91,6 +88,10 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Mo
                         }
                     },
                 )
+            }
+            .graphicsLayer {
+                translationX = offsetX.value
+                alpha = 1f - (offsetX.value / widthPx).coerceIn(0f, 1f) * 0.8f
             }
             .clickable(onClick = onOpen),
     ) {

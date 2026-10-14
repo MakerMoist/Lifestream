@@ -1,5 +1,8 @@
 package com.lifestream.player.ui.components
 
+import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Check
 import com.lifestream.player.playback.SongCache
 import androidx.compose.ui.platform.LocalDensity
@@ -209,5 +212,69 @@ fun EmptyState(title: String, body: String, modifier: Modifier = Modifier) {
         Icon(Icons.Rounded.MusicNote, null, tint = LsColors.Faint, modifier = Modifier.size(40.dp))
         Text(title, style = MaterialTheme.typography.titleMedium)
         Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/**
+ * A slimmer search box than Material's standard text field (44 dp tall instead of 56), used on
+ * the Search tab and each title's page.
+ */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun SlimSearchField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    onSearch: () -> Unit = {},
+) {
+    val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors()
+    val shape = RoundedCornerShape(22.dp)
+    androidx.compose.foundation.text.BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier.height(44.dp),
+        singleLine = true,
+        textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
+        cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+            imeAction = androidx.compose.ui.text.input.ImeAction.Search,
+        ),
+        keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = { onSearch() }),
+        interactionSource = interaction,
+    ) { inner ->
+        androidx.compose.material3.OutlinedTextFieldDefaults.DecorationBox(
+            value = value,
+            innerTextField = inner,
+            enabled = true,
+            singleLine = true,
+            visualTransformation = androidx.compose.ui.text.input.VisualTransformation.None,
+            interactionSource = interaction,
+            placeholder = {
+                Text(placeholder, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            },
+            leadingIcon = { Icon(Icons.Rounded.Search, null, Modifier.size(20.dp)) },
+            trailingIcon = if (value.isNotEmpty()) {
+                {
+                    androidx.compose.material3.IconButton(onClick = { onValueChange("") }) {
+                        Icon(Icons.Rounded.Close, "Clear", Modifier.size(20.dp))
+                    }
+                }
+            } else {
+                null
+            },
+            colors = colors,
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+            container = {
+                androidx.compose.material3.OutlinedTextFieldDefaults.ContainerBox(
+                    enabled = true,
+                    isError = false,
+                    interactionSource = interaction,
+                    colors = colors,
+                    shape = shape,
+                )
+            },
+        )
     }
 }

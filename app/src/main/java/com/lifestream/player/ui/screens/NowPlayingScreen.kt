@@ -7,6 +7,8 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -103,12 +105,40 @@ fun NowPlayingScreen(onClose: () -> Unit) {
     // Back closes the player and returns to the page underneath (e.g. the soundtrack).
     BackHandler { onClose() }
 
+    // Drag down to minimize: the screen follows your finger and closes past a quarter of the way
+    // (or with a downward flick); otherwise it springs back.
+    val scope = rememberCoroutineScope()
+    val dragY = remember { Animatable(0f) }
+    var heightPx by remember { mutableFloatStateOf(1f) }
+    val closeFlingPx = with(LocalDensity.current) { 1000.dp.toPx() }
+    val close by rememberUpdatedState(onClose)
+
     // This screen floats above the app's Scaffold, so it must set its own text/icon colour;
     // otherwise everything falls back to black.
     CompositionLocalProvider(LocalContentColor provides Color.White) {
         Box(
             Modifier
                 .fillMaxSize()
+                .onSizeChanged { heightPx = it.height.toFloat().coerceAtLeast(1f) }
+                .pointerInput(Unit) {
+                    val tracker = VelocityTracker()
+                    detectVerticalDragGestures(
+                        onDragStart = { tracker.resetTracking() },
+                        onVerticalDrag = { change, dragAmount ->
+                            change.consume()
+                            tracker.addPosition(change.uptimeMillis, change.position)
+                            scope.launch { dragY.snapTo((dragY.value + dragAmount).coerceAtLeast(0f)) }
+                        },
+                        onDragCancel = { scope.launch { dragY.animateTo(0f, spring()) } },
+                        onDragEnd = {
+                            val velocity = tracker.calculateVelocity().y
+                            val shouldClose = dragY.value > heightPx * 0.25f ||
+                                (velocity > closeFlingPx && dragY.value > heightPx * 0.05f)
+                            if (shouldClose) close() else scope.launch { dragY.animateTo(0f, spring(dampingRatio = 0.8f)) }
+                        },
+                    )
+                }
+                .graphicsLayer { translationY = dragY.value }
                 .background(LsColors.Night)
                 // Swallow taps so they don't fall through to the screen underneath.
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
@@ -377,6 +407,7 @@ private fun SwipeableArtwork(state: PlayerUiState) {
 
     fun canPrevious(s: PlayerUiState) = s.hasPrevious
 
+    val flingPx = with(LocalDensity.current) { 900.dp.toPx() } // per second
     Artwork(
         state.current?.thumbnail,
         size = 400.dp,
@@ -384,12 +415,8 @@ private fun SwipeableArtwork(state: PlayerUiState) {
             .fillMaxWidth()
             .aspectRatio(1f)
             .onSizeChanged { widthPx = it.width.toFloat().coerceAtLeast(1f) }
-            .graphicsLayer {
-                val f = offsetX.value / widthPx
-                translationX = offsetX.value
-                rotationZ = f * 8f
-                alpha = 1f - (abs(f) * 0.6f).coerceAtMost(0.6f)
-            }
+            // Touches are measured here, outside the layer that moves and tilts the art, so the
+            // art following your finger can't skew the distance or the fling direction.
             .pointerInput(Unit) {
                 val tracker = VelocityTracker()
                 detectHorizontalDragGestures(
@@ -407,10 +434,16 @@ private fun SwipeableArtwork(state: PlayerUiState) {
                     onDragCancel = { scope.launch { offsetX.animateTo(0f, spring()) } },
                     onDragEnd = {
                         val velocity = tracker.calculateVelocity().x
-                        val threshold = widthPx * 0.28f
+                        val offset = offsetX.value
+                        val threshold = widthPx * 0.3f
+                        // A quick flick counts only in the direction the art was actually dragged
+                        // (and at least a little way), so a stray flick can't go the wrong way.
+                        val nudge = widthPx * 0.08f
+                        val flickNext = velocity < -flingPx && offset < -nudge
+                        val flickPrevious = velocity > flingPx && offset > nudge
                         val s = current
-                        val goNext = (offsetX.value < -threshold || velocity < -1500f) && canNext(s)
-                        val goPrevious = (offsetX.value > threshold || velocity > 1500f) && canPrevious(s)
+                        val goNext = (offset < -threshold || flickNext) && canNext(s)
+                        val goPrevious = (offset > threshold || flickPrevious) && canPrevious(s)
                         scope.launch {
                             when {
                                 goNext -> {
@@ -430,6 +463,12 @@ private fun SwipeableArtwork(state: PlayerUiState) {
                         }
                     },
                 )
+            }
+            .graphicsLayer {
+                val f = offsetX.value / widthPx
+                translationX = offsetX.value
+                rotationZ = f * 6f
+                alpha = 1f - (abs(f) * 0.6f).coerceAtMost(0.6f)
             }
             .shadow(24.dp, RoundedCornerShape(16.dp)),
         corner = 16.dp,

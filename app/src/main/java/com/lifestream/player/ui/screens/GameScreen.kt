@@ -67,6 +67,7 @@ import com.lifestream.player.data.Game
 import com.lifestream.player.playback.PlayerConnection
 import com.lifestream.player.ui.components.Artwork
 import com.lifestream.player.ui.components.TrackRow
+import com.lifestream.player.ui.components.SlimSearchField
 import com.lifestream.player.ui.components.pagedItems
 import com.lifestream.player.ui.theme.LsColors
 
@@ -156,7 +157,8 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                         Spacer(Modifier.height(16.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Button(
-                                onClick = { PlayerConnection.playTracks(tracks) },
+                                // A title's own page plays in soundtrack order.
+                                onClick = { PlayerConnection.playTracks(tracks, shuffle = false) },
                                 enabled = tracks.isNotEmpty(),
                             ) {
                                 Icon(Icons.Rounded.PlayArrow, null, Modifier.size(18.dp))
@@ -164,7 +166,7 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                                 Text("Play all")
                             }
                             OutlinedButton(
-                                onClick = { PlayerConnection.playTracks(tracks, shuffle = true) },
+                                onClick = { PlayerConnection.playTracks(tracks, randomStart = true) },
                                 enabled = tracks.isNotEmpty(),
                             ) {
                                 Icon(Icons.Rounded.Shuffle, null, Modifier.size(18.dp))
@@ -187,23 +189,14 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
         }
 
         item(key = "filter") {
-            OutlinedTextField(
+            SlimSearchField(
                 value = vm.filter,
                 onValueChange = { vm.filter = it.take(100) },
+                placeholder = "Search ${game.title}",
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 32.dp, vertical = 4.dp),
-                placeholder = { Text("Search ${game.title}") },
-                leadingIcon = { Icon(Icons.Rounded.Search, null) },
-                trailingIcon = {
-                    if (vm.filter.isNotEmpty()) {
-                        IconButton(onClick = { vm.filter = "" }) { Icon(Icons.Rounded.Close, "Clear") }
-                    }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(28.dp),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
+                onSearch = { focus.clearFocus() },
             )
         }
 
@@ -219,7 +212,7 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                 }
             }
             itemsIndexed(matches, key = { _, t -> "f-${t.id}-${Matching.songKey(t.title)}" }) { index, track ->
-                TrackRow(track, onClick = { PlayerConnection.playTracks(matches, index) })
+                TrackRow(track, onClick = { PlayerConnection.playTracks(matches, index, shuffle = false) })
             }
             if (!vm.tracks.endReached) {
                 item(key = "filter-loading") {
@@ -235,7 +228,7 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                 key = { "t-${it.id}-${Matching.songKey(it.title)}" },
                 emptyText = "No official soundtrack for this game on YouTube Music yet.",
             ) { index, track ->
-                TrackRow(track, onClick = { PlayerConnection.playTracks(vm.tracks.items, index) })
+                TrackRow(track, onClick = { PlayerConnection.playTracks(vm.tracks.items, index, shuffle = false) })
             }
         }
     }

@@ -64,6 +64,7 @@ import com.lifestream.player.playback.PlayerConnection
 import com.lifestream.player.ui.components.EmptyState
 import com.lifestream.player.ui.components.SectionLabel
 import com.lifestream.player.ui.components.TrackRow
+import com.lifestream.player.ui.components.SlimSearchField
 import com.lifestream.player.ui.theme.LsColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -72,6 +73,9 @@ import kotlinx.coroutines.withContext
 /** Set when the Search tab is tapped, so the search box can take focus once. */
 object SearchFocus {
     var requested by mutableStateOf(false)
+
+    /** Set when the Search tab is tapped (switching to it or while on it): start a fresh search. */
+    var clearRequested by mutableStateOf(false)
 }
 
 
@@ -107,6 +111,12 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
         }
     }
 
+    LaunchedEffect(SearchFocus.clearRequested) {
+        if (!SearchFocus.clearRequested) return@LaunchedEffect
+        SearchFocus.clearRequested = false
+        vm.input = ""
+    }
+
     LaunchedEffect(Unit) { SoundtrackIndex.ensureBuilt() }
 
     // Search as you type, re-running as more soundtracks finish indexing.
@@ -125,27 +135,18 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
             .fillMaxSize()
             .statusBarsPadding(),
     ) {
-        OutlinedTextField(
+        SlimSearchField(
             value = vm.input,
             onValueChange = { vm.input = it.take(100) }, // song names are short; keeps matching cheap
+            placeholder = "Songs or games, e.g. \"Prelude\" or \"FF7\"",
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp)
                 .focusRequester(focusRequester),
-            placeholder = { Text("Songs or games, e.g. \"Prelude\" or \"FF7\"") },
-            leadingIcon = { Icon(Icons.Rounded.Search, null) },
-            trailingIcon = {
-                if (vm.input.isNotEmpty()) {
-                    IconButton(onClick = { vm.input = "" }) { Icon(Icons.Rounded.Close, "Clear") }
-                }
-            },
-            singleLine = true,
-            shape = RoundedCornerShape(28.dp),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = {
+            onSearch = {
                 SearchHistory.add(vm.input)
                 focus.clearFocus()
-            }),
+            },
         )
 
         if (progress.running) {

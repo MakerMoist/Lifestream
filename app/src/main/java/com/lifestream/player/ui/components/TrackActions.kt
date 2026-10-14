@@ -87,6 +87,8 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
     val context = LocalContext.current
     var choosingFor by remember { mutableStateOf<Track?>(null) }
     var namingFor by remember { mutableStateOf<Track?>(null) }
+    var removingFor by remember { mutableStateOf<Track?>(null) }
+    val playlists by Library.playlists.collectAsStateWithLifecycle()
 
     target?.let { t ->
         val track = t.track
@@ -132,9 +134,23 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
                 choosingFor = track
                 TrackActions.dismiss()
             }
-            t.playlistId?.let { pid ->
-                ActionRow(Icons.Rounded.RemoveCircleOutline, "Remove from this playlist") {
-                    Library.removeFromPlaylist(pid, track.id)
+            // Offered wherever the song is shown (Search, Now Playing, a title's songs…) once
+            // it's in a playlist; inside a playlist it removes it from that one.
+            val containing = remember(track, playlists) { Library.playlistsWith(track.id) }
+            val here = t.playlistId?.takeIf { pid -> containing.any { it.id == pid } }
+            when {
+                here != null -> ActionRow(Icons.Rounded.RemoveCircleOutline, "Remove from this playlist") {
+                    Library.removeFromPlaylist(here, track.id)
+                    TrackActions.dismiss()
+                }
+                containing.size == 1 -> ActionRow(Icons.Rounded.RemoveCircleOutline, "Remove from playlist") {
+                    val p = containing.first()
+                    Library.removeFromPlaylist(p.id, track.id)
+                    toast(context, "Removed from ${p.name}")
+                    TrackActions.dismiss()
+                }
+                containing.size > 1 -> ActionRow(Icons.Rounded.RemoveCircleOutline, "Remove from playlist") {
+                    removingFor = track
                     TrackActions.dismiss()
                 }
             }
@@ -161,6 +177,10 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
                 namingFor = track
             },
         )
+    }
+
+    removingFor?.let { track ->
+        RemoveFromPlaylistDialog(track = track, onDismiss = { removingFor = null })
     }
 
     namingFor?.let { track ->
@@ -248,6 +268,46 @@ private fun AddToPlaylistDialog(track: Track, onDismiss: () -> Unit, onNewPlayli
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 8.dp),
                     )
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+/** Picks which playlist to take a song out of, when it's in more than one. */
+@Composable
+private fun RemoveFromPlaylistDialog(track: Track, onDismiss: () -> Unit) {
+    val playlists by Library.playlists.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val containing = playlists.filter { p -> p.tracks.any { it.id == track.id } }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Remove from playlist") },
+        text = {
+            Column {
+                containing.forEach { p ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                Library.removeFromPlaylist(p.id, track.id)
+                                toast(context, "Removed from ${p.name}")
+                                onDismiss()
+                            }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(p.name, style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                if (p.tracks.size == 1) "1 song" else "${p.tracks.size} songs",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Icon(Icons.Rounded.RemoveCircleOutline, "Remove", tint = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
         },

@@ -274,6 +274,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
     val randomSongOrder by AppSettings.randomSongOrder.collectAsStateWithLifecycle()
     val showQuotes by AppSettings.showQuotes.collectAsStateWithLifecycle()
     val levelVolume by AppSettings.levelVolume.collectAsStateWithLifecycle()
+    val autoPlayAtEnd by AppSettings.autoPlayAtEnd.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
     val themeId by AppSettings.themeId.collectAsStateWithLifecycle()
@@ -317,7 +318,8 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
                 Column(Modifier.weight(1f)) {
                     Text("Pause On Zero Volume", style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "When lowering the volume, if it reaches 0; the currently playing song will be paused.",
+                        "When lowering the volume, if it reaches 0; the currently playing song will be paused. " +
+                            "Unpauses after turning the volume back up.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -337,6 +339,19 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
                 }
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = levelVolume, onCheckedChange = { AppSettings.setLevelVolume(it) })
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Auto-Play When Playlist Ends", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "When the last song finishes, keep going with random songs from any title.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = autoPlayAtEnd, onCheckedChange = { AppSettings.setAutoPlayAtEnd(it) })
             }
         }
 
@@ -390,11 +405,9 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
         SettingsCard {
             Text("Saved Songs", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
-            Text("Keep Recently Played Songs", style = MaterialTheme.typography.bodyLarge)
             Text(
                 "Cache recently streamed songs locally instead of using data. Speeds up listening but uses more storage.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
             )
             Spacer(Modifier.height(12.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

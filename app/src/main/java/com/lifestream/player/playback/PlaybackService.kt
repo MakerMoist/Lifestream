@@ -25,6 +25,11 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import android.os.Bundle
+import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionResult
+import com.lifestream.player.data.Matching
+import com.lifestream.player.data.SoundtrackIndex
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.lifestream.player.MainActivity
@@ -88,7 +93,13 @@ class PlaybackService : MediaSessionService() {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 VolumeLeveler.songChanges++ // measure the new song's loudness from scratch
             }
+
+            // Shuffled play always continues from the song that's playing.
+            override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+                if (shuffleModeEnabled) QueueCommands.shuffleFromCurrent(player)
+            }
         })
+        player.addListener(AutoPlayListener(player))
 
         setMediaNotificationProvider(
             DefaultMediaNotificationProvider.Builder(this).build().apply {
@@ -143,11 +154,37 @@ class PlaybackService : MediaSessionService() {
             controller: MediaSession.ControllerInfo,
         ): MediaSession.ConnectionResult {
             val ours = controller.packageName == packageName
-            return if (ours || controller.isTrusted) {
-                MediaSession.ConnectionResult.AcceptedResultBuilder(session).build()
-            } else {
-                MediaSession.ConnectionResult.reject()
+            return when {
+                // LifeStream's own UI may also place songs in the shuffle order.
+                ours -> MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+                    .setAvailableSessionCommands(
+                        MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
+                            .add(QueueCommands.placeCommand)
+                            .build()
+                    )
+                    .build()
+                controller.isTrusted -> MediaSession.ConnectionResult.AcceptedResultBuilder(session).build()
+                else -> MediaSession.ConnectionResult.reject()
             }
+        }
+
+        override fun onCustomCommand(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            customCommand: SessionCommand,
+            args: Bundle,
+        ): ListenableFuture<SessionResult> {
+            if (customCommand.customAction == QueueCommands.PLACE && controller.packageName == packageName) {
+                (session.player as? ExoPlayer)?.let { player ->
+                    QueueCommands.place(
+                        player,
+                        args.getInt(QueueCommands.ARG_INDEX, -1),
+                        args.getInt(QueueCommands.ARG_WHERE, QueueCommands.END),
+                    )
+                }
+                return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+            }
+            return super.onCustomCommand(session, controller, customCommand, args)
         }
 
         override fun onAddMediaItems(
@@ -156,6 +193,60 @@ class PlaybackService : MediaSessionService() {
             mediaItems: MutableList<MediaItem>,
         ): ListenableFuture<MutableList<MediaItem>> =
             Futures.immediateFuture(mediaItems.mapNotNull { it.withPlayableUri() }.toMutableList())
+    }
+
+    /**
+     * "Auto-Play When Playlist Ends": as the last song in the queue starts, a batch of random
+     * songs from across every soundtrack is added after it, so music carries on without a gap.
+     * If the queue already ended (e.g. the song index wasn't ready yet), it picks up from there.
+     */
+    private class AutoPlayListener(private val player: ExoPlayer) : Player.Listener {
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = extend(resume = false)
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            if (playbackState == Player.STATE_ENDED) extend(resume = true)
+        }
+
+        private fun extend(resume: Boolean) {
+            if (!AppSettings.autoPlayAtEnd.value) return
+            if (player.repeatMode != Player.REPEAT_MODE_OFF || player.mediaItemCount == 0) return
+            if (player.hasNextMediaItem()) return
+            val queued = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toHashSet()
+            val picks = randomSongs(BATCH, queued)
+            if (picks.isEmpty()) return
+            val before = QueueCommands.playOrder(player)
+            val first = player.mediaItemCount
+            player.addMediaItems(picks.map { it.toMediaItem() })
+            val added = (first until player.mediaItemCount).toList()
+            QueueCommands.appendShuffled(player, before, added)
+            if (resume) {
+                // The queue had already finished: start the first of the new songs.
+                val next = QueueCommands.playOrder(player).firstOrNull { it in added } ?: first
+                player.seekToDefaultPosition(next)
+                player.prepare()
+                player.play()
+            }
+        }
+
+        /** A spread across titles: pick a random soundtrack, then a random song from it. */
+        private fun randomSongs(count: Int, exclude: Set<String>): List<com.lifestream.player.data.Track> {
+            val byGame = SoundtrackIndex.tracks.value.values
+                .map { list -> list.filter { SafeInput.isVideoId(it.id) && it.id !in exclude && !Matching.isFillerTrack(it.title) && it.durationSec !in 1L..44L } }
+                .filter { it.isNotEmpty() }
+            if (byGame.isEmpty()) return emptyList()
+            val out = LinkedHashMap<String, com.lifestream.player.data.Track>()
+            var attempts = 0
+            while (out.size < count && attempts < count * 6) {
+                val song = byGame.random().random()
+                out.putIfAbsent(song.id, song)
+                attempts++
+            }
+            return out.values.toList()
+        }
+
+        private companion object {
+            const val BATCH = 25
+        }
     }
 
     /**

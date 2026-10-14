@@ -136,19 +136,41 @@ object PlayerConnection {
     var playingPlaylistId: String? = null
         private set
 
-    fun playTracks(tracks: List<Track>, startIndex: Int = 0, shuffle: Boolean = false, fromPlaylist: String? = null) {
+    /**
+     * Plays [tracks] from [startIndex]. Shuffle is on unless the caller says otherwise (a title's
+     * own page plays in soundtrack order); shuffled play always continues from the starting song.
+     * [randomStart] starts on a random song instead (the Shuffle buttons).
+     */
+    fun playTracks(
+        tracks: List<Track>,
+        startIndex: Int = 0,
+        shuffle: Boolean = true,
+        randomStart: Boolean = false,
+        fromPlaylist: String? = null,
+    ) {
         // Drop anything without a valid video id (e.g. a corrupted saved favourite).
         val chosen = tracks.getOrNull(startIndex)
         val valid = tracks.filter { SafeInput.isVideoId(it.id) }
         if (valid.isEmpty()) return
         playingPlaylistId = fromPlaylist
+        fromPlaylist?.let { Library.setLastPlaylist(it) }
         withController { c ->
-            c.shuffleModeEnabled = shuffle
-            val start = if (shuffle) valid.indices.random() else valid.indexOf(chosen).coerceAtLeast(0)
+            // Off first, then on after the new queue is in: the player service builds the shuffle
+            // order from the starting song when shuffle switches on.
+            c.shuffleModeEnabled = false
+            val start = if (randomStart) valid.indices.random() else valid.indexOf(chosen).coerceAtLeast(0)
             c.setMediaItems(valid.map { it.toMediaItem() }, start, 0L)
+            c.shuffleModeEnabled = shuffle
             c.prepare()
             c.play()
         }
+    }
+
+    /** Asks the player service to put queue item [index] at [where] in the shuffled play order. */
+    private fun place(c: MediaController, index: Int, where: Int) {
+        if (!c.shuffleModeEnabled) return
+        if (!c.isSessionCommandAvailable(QueueCommands.placeCommand)) return
+        c.sendCustomCommand(QueueCommands.placeCommand, QueueCommands.args(index, where))
     }
 
     /**
@@ -162,6 +184,7 @@ object PlayerConnection {
             if ((0 until c.mediaItemCount).any { c.getMediaItemAt(it).mediaId == track.id }) return@withController
             val position = ((c.currentMediaItemIndex + 1)..c.mediaItemCount).random()
             c.addMediaItem(position, track.toMediaItem())
+            place(c, position, QueueCommands.RANDOM_LATER)
         }
     }
 
@@ -170,13 +193,20 @@ object PlayerConnection {
         if (c.mediaItemCount == 0) {
             playTracks(listOf(track))
         } else {
-            c.addMediaItem(c.currentMediaItemIndex + 1, track.toMediaItem())
+            val position = c.currentMediaItemIndex + 1
+            c.addMediaItem(position, track.toMediaItem())
+            place(c, position, QueueCommands.NEXT)
         }
     }
 
     fun addToQueue(track: Track) = withController { c ->
         if (!SafeInput.isVideoId(track.id)) return@withController
-        if (c.mediaItemCount == 0) playTracks(listOf(track)) else c.addMediaItem(track.toMediaItem())
+        if (c.mediaItemCount == 0) {
+            playTracks(listOf(track))
+        } else {
+            c.addMediaItem(track.toMediaItem())
+            place(c, c.mediaItemCount - 1, QueueCommands.END)
+        }
     }
 
     fun togglePlay() = withController { c ->

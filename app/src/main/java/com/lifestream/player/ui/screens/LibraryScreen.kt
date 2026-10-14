@@ -79,36 +79,30 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
         }
 
         if (tab == 0) {
-            LazyColumn(Modifier.fillMaxSize()) {
-                item(key = "new") {
-                    Row(
-                        Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        FilledTonalButton(onClick = { creating = true }, enabled = Library.canCreatePlaylist()) {
-                            Icon(Icons.Rounded.Add, null, Modifier.size(18.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text("New playlist")
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Text(
-                            "${playlists.size} of ${Library.MAX_PLAYLISTS}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
+            LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
                 if (playlists.isEmpty()) {
                     item(key = "empty") {
                         EmptyState(
                             "No playlists yet",
-                            "Make one here, or press and hold any song and choose Add to playlist.",
+                            "Make one with the button below, or press and hold any song and choose Add to playlist.",
                         )
                     }
                 }
                 items(playlists, key = { it.id }) { p ->
                     PlaylistRow(p, onClick = { onOpenPlaylist(p) })
                 }
+            }
+            // Across the bottom of the screen, just above the player bar and tabs.
+            FilledTonalButton(
+                onClick = { creating = true },
+                enabled = Library.canCreatePlaylist(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+            ) {
+                Icon(Icons.Rounded.Add, null, Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("New playlist")
             }
         } else {
             if (recents.isEmpty()) {
@@ -199,7 +193,7 @@ private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null, extr
             Spacer(Modifier.width(6.dp))
             Text("Play")
         }
-        OutlinedButton(onClick = { PlayerConnection.playTracks(tracks, shuffle = true, fromPlaylist = playlistId) }, enabled = tracks.isNotEmpty()) {
+        OutlinedButton(onClick = { PlayerConnection.playTracks(tracks, randomStart = true, fromPlaylist = playlistId) }, enabled = tracks.isNotEmpty()) {
             Icon(Icons.Rounded.Shuffle, null, Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
             Text("Shuffle")
