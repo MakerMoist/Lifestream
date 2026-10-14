@@ -32,41 +32,33 @@ jobs:
       # Also validates gradle-wrapper.jar against Gradle's published checksums.
       - uses: gradle/actions/setup-gradle@v4
 
-      # The release key lives only in repository secrets (never in the repo). Without it — e.g. on
+      # The release key is committed only in encrypted form (app/signing/release.jks.enc) and is
+      # decrypted here with the LIFESTREAM_KEYSTORE_PASSWORD secret. Without that secret — e.g. on
       # pull requests — the release APK is signed with a throwaway debug key and not published.
       - name: Prepare signing key
         id: signing
         env:
-          KEYSTORE_BASE64: ${{ secrets.LIFESTREAM_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.LIFESTREAM_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.LIFESTREAM_KEY_ALIAS }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            # Copying a long value on a phone often adds spaces or line breaks; drop them.
-            CLEAN=$(printf '%s' "$KEYSTORE_BASE64" | tr -d ' \t\r\n')
-            echo "Keystore secret: ${#CLEAN} base64 characters (never printed)."
-            if ! printf '%s' "$CLEAN" | base64 -d > "$RUNNER_TEMP/release.jks" 2>/dev/null; then
-              echo "::error::LIFESTREAM_KEYSTORE_BASE64 isn't valid base64 (${#CLEAN} characters). It may be cut short or contain extra text — paste the whole line again."
-              exit 1
-            fi
-            PW=$(printf '%s' "$KEYSTORE_PASSWORD" | tr -d ' \t\r\n')
-            ALIAS=$(printf '%s' "$KEY_ALIAS" | tr -d ' \t\r\n')
-            if ! keytool -list -keystore "$RUNNER_TEMP/release.jks" -storepass "$PW" >/dev/null 2>&1; then
-              KS_HASH=$(sha256sum "$RUNNER_TEMP/release.jks" | cut -c1-12)
-              PW_HASH=$(printf '%s' "$PW" | sha256sum | cut -c1-8)
-              echo "::error::LIFESTREAM_KEYSTORE_PASSWORD doesn't open the keystore. Fingerprints (safe to share): keystore ${#CLEAN} chars / sha ${KS_HASH}, password ${#PW} chars / sha ${PW_HASH}."
-              exit 1
-            fi
-            if ! keytool -list -keystore "$RUNNER_TEMP/release.jks" -storepass "$PW" -alias "$ALIAS" >/dev/null 2>&1; then
-              echo "::error::LIFESTREAM_KEY_ALIAS isn't in the keystore (${#ALIAS} characters; it should be the word lifestream)."
-              exit 1
-            fi
-            echo "LIFESTREAM_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
-            echo "signed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "::warning::LIFESTREAM_KEYSTORE_BASE64 secret not set; APK will be signed with a temporary key."
+          PW=$(printf '%s' "$KEYSTORE_PASSWORD" | tr -d ' \t\r\n')
+          ALIAS=$(printf '%s' "${KEY_ALIAS:-lifestream}" | tr -d ' \t\r\n')
+          if [ -z "$PW" ] || [ ! -f app/signing/release.jks.enc ]; then
+            echo "::warning::Signing password secret not set; APK will be signed with a temporary key."
             echo "signed=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          if ! PW="$PW" openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 \
+               -in app/signing/release.jks.enc -out "$RUNNER_TEMP/release.jks" -pass env:PW 2>/dev/null; then
+            echo "::error::LIFESTREAM_KEYSTORE_PASSWORD can't decrypt the signing key (${#PW} characters; it should be 32)."
+            exit 1
+          fi
+          if ! keytool -list -keystore "$RUNNER_TEMP/release.jks" -storepass "$PW" -alias "$ALIAS" >/dev/null 2>&1; then
+            echo "::error::LIFESTREAM_KEY_ALIAS isn't in the keystore (${#ALIAS} characters; it should be the word lifestream)."
+            exit 1
+          fi
+          echo "LIFESTREAM_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          echo "signed=true" >> "$GITHUB_OUTPUT"
 
       - name: Build release APK (not debuggable)
         env:

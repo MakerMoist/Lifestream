@@ -27,7 +27,7 @@ A standalone Android music player for Final Fantasy soundtracks. Audio is stream
 
 **Option A — GitHub (no tools needed):** push this folder to a GitHub repository. The included workflow (`.github/workflows/build.yml`) builds a non-debuggable release `Lifestream.apk` (plus its SHA-256 checksum) on every push to `main` and attaches it to a release called `latest`. Download it on your phone and install it (allow "install unknown apps" when asked).
 
-To sign releases with your own key (so each update installs over the last), add the repository secrets `LIFESTREAM_KEYSTORE_BASE64`, `LIFESTREAM_KEYSTORE_PASSWORD`, `LIFESTREAM_KEY_ALIAS` and `LIFESTREAM_KEY_PASSWORD`. The key is only ever read from secrets; key files are git-ignored.
+Releases are signed with Lifestream's own key, so each update installs over the last. The key is committed only encrypted (`app/signing/release.jks.enc`, AES-256) and is decrypted in CI with the repository secrets `LIFESTREAM_KEYSTORE_PASSWORD`, `LIFESTREAM_KEY_PASSWORD` and `LIFESTREAM_KEY_ALIAS`. Plain key files are git-ignored.
 
 **Option B — Android Studio:** open this folder, let Gradle sync, then Run, or use Build › Build APK(s).
 
