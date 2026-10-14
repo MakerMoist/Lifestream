@@ -45,7 +45,14 @@ data class Game(
     val query: String,
     val colorA: Color,
     val colorB: Color,
+    val series: Series = Series.MAINLINE,
 )
+
+enum class Series(val label: String) {
+    MAINLINE("Main series"),
+    REMAKE("VII Remake series"),
+    SPINOFF("Spin-offs & collections"),
+}
 
 fun formatDuration(seconds: Long): String {
     if (seconds <= 0) return ""

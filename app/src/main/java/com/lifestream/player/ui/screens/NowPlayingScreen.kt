@@ -39,6 +39,7 @@ import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -47,6 +48,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,112 +83,117 @@ fun NowPlayingScreen(onClose: () -> Unit) {
     val track = state.current
     var showQueue by remember { mutableStateOf(false) }
 
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(LsColors.Night)
-            // Swallow taps so they don't fall through to the screen underneath.
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
-    ) {
-        // Blurred artwork wash behind everything (blur is a no-op before Android 12).
-        if (track?.thumbnail != null) {
-            AsyncImage(
-                model = track.thumbnail,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .blur(60.dp),
-                alpha = 0.45f,
-            )
-        }
+    // This screen floats above the app's Scaffold, so it must set its own text/icon colour;
+    // otherwise everything falls back to black.
+    CompositionLocalProvider(LocalContentColor provides Color.White) {
         Box(
             Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(LsColors.Night.copy(alpha = 0.55f), LsColors.Night.copy(alpha = 0.92f), LsColors.Night)
-                    )
-                ),
-        )
-
-        Column(
-            Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .background(LsColors.Night)
+                // Swallow taps so they don't fall through to the screen underneath.
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
         ) {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onClose) { Icon(Icons.Rounded.KeyboardArrowDown, "Close player") }
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("NOW PLAYING", style = MaterialTheme.typography.labelSmall, color = LsColors.Gold)
-                    if (state.queue.size > 1) {
-                        Text(
-                            "${state.currentIndex + 1} of ${state.queue.size}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                IconButton(onClick = { showQueue = true }) {
-                    Icon(Icons.AutoMirrored.Rounded.QueueMusic, "Queue")
-                }
+            // Blurred artwork wash behind everything (blur is a no-op before Android 12).
+            if (track?.thumbnail != null) {
+                AsyncImage(
+                    model = track.thumbnail,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .blur(60.dp),
+                    alpha = 0.45f,
+                )
             }
-
-            Spacer(Modifier.weight(1f))
-
-            Artwork(
-                track?.thumbnail,
+            Box(
                 Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .shadow(24.dp, RoundedCornerShape(16.dp)),
-                corner = 16.dp,
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(LsColors.Night.copy(alpha = 0.55f), LsColors.Night.copy(alpha = 0.92f), LsColors.Night)
+                        )
+                    ),
             )
 
-            Spacer(Modifier.weight(1f))
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        track?.title ?: "",
-                        style = MaterialTheme.typography.titleLarge,
-                        maxLines = 1,
-                        modifier = Modifier.basicMarquee(),
-                    )
-                    Text(
-                        track?.artist ?: "",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                if (track != null) {
-                    val fav = favorites.any { it.id == track.id }
-                    IconButton(onClick = { Library.toggleFavorite(track) }) {
-                        Icon(
-                            if (fav) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                            if (fav) "Remove from favorites" else "Add to favorites",
-                            tint = if (fav) LsColors.Gold else MaterialTheme.colorScheme.onSurface,
-                        )
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(onClick = onClose) { Icon(Icons.Rounded.KeyboardArrowDown, "Close player") }
+                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("NOW PLAYING", style = MaterialTheme.typography.labelSmall, color = LsColors.Gold)
+                        if (state.queue.size > 1) {
+                            Text(
+                                "${state.currentIndex + 1} of ${state.queue.size}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.8f),
+                            )
+                        }
+                    }
+                    IconButton(onClick = { showQueue = true }) {
+                        Icon(Icons.AutoMirrored.Rounded.QueueMusic, "Queue")
                     }
                 }
-            }
 
-            Spacer(Modifier.height(12.dp))
-            SeekBar(state)
-            Spacer(Modifier.height(8.dp))
-            Controls(state)
-            Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.weight(1f))
+
+                Artwork(
+                    track?.thumbnail,
+                    Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .shadow(24.dp, RoundedCornerShape(16.dp)),
+                    corner = 16.dp,
+                )
+
+                Spacer(Modifier.weight(1f))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            track?.title ?: "",
+                            style = MaterialTheme.typography.titleLarge,
+                            maxLines = 1,
+                            modifier = Modifier.basicMarquee(),
+                        )
+                        Text(
+                            track?.artist ?: "",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.White.copy(alpha = 0.8f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    if (track != null) {
+                        val fav = favorites.any { it.id == track.id }
+                        IconButton(onClick = { Library.toggleFavorite(track) }) {
+                            Icon(
+                                if (fav) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                                if (fav) "Remove from favorites" else "Add to favorites",
+                                tint = if (fav) LsColors.Gold else Color.White,
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+                SeekBar(state)
+                Spacer(Modifier.height(8.dp))
+                Controls(state)
+                Spacer(Modifier.height(24.dp))
+            }
         }
+
     }
 
     if (showQueue) {
@@ -226,13 +233,13 @@ private fun SeekBar(state: PlayerUiState) {
             Text(
                 formatDuration(shownPos / 1000).ifEmpty { "0:00" },
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.8f),
             )
             Spacer(Modifier.weight(1f))
             Text(
                 formatDuration(state.durationMs / 1000).ifEmpty { "--:--" },
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.8f),
             )
         }
     }
@@ -249,7 +256,7 @@ private fun Controls(state: PlayerUiState) {
             Icon(
                 Icons.Rounded.Shuffle,
                 "Shuffle",
-                tint = if (state.shuffle) LsColors.Mako else MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (state.shuffle) LsColors.Mako else Color.White.copy(alpha = 0.8f),
             )
         }
         IconButton(onClick = { PlayerConnection.previous() }, modifier = Modifier.size(56.dp)) {
@@ -283,7 +290,7 @@ private fun Controls(state: PlayerUiState) {
                 if (state.repeatMode == Player.REPEAT_MODE_ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
                 "Repeat",
                 tint = if (state.repeatMode != Player.REPEAT_MODE_OFF) LsColors.Mako
-                else MaterialTheme.colorScheme.onSurfaceVariant,
+                else Color.White.copy(alpha = 0.8f),
             )
         }
     }
@@ -322,7 +329,7 @@ private fun QueueList(state: PlayerUiState) {
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.8f),
                     )
                 }
                 if (isCurrent) {

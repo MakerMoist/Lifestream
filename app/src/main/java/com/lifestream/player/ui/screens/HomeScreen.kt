@@ -50,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lifestream.player.data.Catalog
 import com.lifestream.player.data.Game
 import com.lifestream.player.data.Library
+import com.lifestream.player.data.Series
 import com.lifestream.player.data.Track
 import com.lifestream.player.playback.PlayerConnection
 import com.lifestream.player.ui.components.Artwork
@@ -110,12 +111,14 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
             }
         }
 
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            SectionLabel("Soundtracks", Modifier.padding(top = 8.dp))
-        }
-
-        items(Catalog.games, key = { it.id }) { game ->
-            GameCard(game, onClick = { onOpenGame(game) })
+        // The Remake series leads so it isn't buried under the 17 mainline games.
+        listOf(Series.REMAKE, Series.MAINLINE, Series.SPINOFF).forEach { series ->
+            item(key = "label-${series.name}", span = { GridItemSpan(maxLineSpan) }) {
+                SectionLabel(series.label, Modifier.padding(top = 8.dp))
+            }
+            items(Catalog.bySeries(series), key = { it.id }) { game ->
+                GameCard(game, onClick = { onOpenGame(game) })
+            }
         }
     }
 }

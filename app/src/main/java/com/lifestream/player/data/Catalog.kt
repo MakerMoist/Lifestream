@@ -42,19 +42,28 @@ object Catalog {
             "Final Fantasy XV original soundtrack", c(0xFF0A0A0A), c(0xFFA3A3A3)),
         Game("ff16", "XVI", "Final Fantasy XVI", 2023, "Masayoshi Soken",
             "Final Fantasy XVI original soundtrack", c(0xFF450A0A), c(0xFFFB923C)),
+        // VII Remake series
         Game("ff7r", "VII·R", "Final Fantasy VII Remake", 2020, "Hamauzu · Suzuki · Uematsu",
-            "Final Fantasy VII Remake original soundtrack", c(0xFF022C22), c(0xFF34D399)),
+            "Final Fantasy VII Remake original soundtrack", c(0xFF022C22), c(0xFF34D399), Series.REMAKE),
+        Game("ff7int", "INT", "VII Remake Intergrade: INTERmission", 2021, "Mitsuto Suzuki · various",
+            "Final Fantasy VII Remake Intergrade INTERmission soundtrack", c(0xFF3B0764), c(0xFFD8B4FE), Series.REMAKE),
         Game("ff7rb", "VII·RB", "Final Fantasy VII Rebirth", 2024, "Mitsuto Suzuki · various",
-            "Final Fantasy VII Rebirth original soundtrack", c(0xFF0F172A), c(0xFF67E8F9)),
+            "Final Fantasy VII Rebirth original soundtrack", c(0xFF0F172A), c(0xFF67E8F9), Series.REMAKE),
+
+        // Spin-offs & collections
         Game("fft", "T", "Final Fantasy Tactics", 1997, "Hitoshi Sakimoto · Masaharu Iwata",
-            "Final Fantasy Tactics original soundtrack", c(0xFF3F2A14), c(0xFFE7C78A)),
+            "Final Fantasy Tactics original soundtrack", c(0xFF3F2A14), c(0xFFE7C78A), Series.SPINOFF),
         Game("cc", "CC", "Crisis Core", 2007, "Takeharu Ishimoto",
-            "Crisis Core Final Fantasy VII soundtrack", c(0xFF1E1B4B), c(0xFF818CF8)),
+            "Crisis Core Final Fantasy VII soundtrack", c(0xFF1E1B4B), c(0xFF818CF8), Series.SPINOFF),
+        Game("ccr", "CC·R", "Crisis Core –Reunion–", 2022, "Takeharu Ishimoto",
+            "Crisis Core Final Fantasy VII Reunion original soundtrack", c(0xFF172554), c(0xFF93C5FD), Series.SPINOFF),
         Game("distant", "♪", "Distant Worlds (Orchestral)", 2007, "Arnie Roth · Nobuo Uematsu",
-            "Distant Worlds music from Final Fantasy", c(0xFF172554), c(0xFFE8C46A)),
+            "Distant Worlds music from Final Fantasy", c(0xFF172554), c(0xFFE8C46A), Series.SPINOFF),
         Game("piano", "♫", "Piano Collections", 1992, "Various arrangers",
-            "Final Fantasy piano collections", c(0xFF18181B), c(0xFFF4F4F5)),
+            "Final Fantasy piano collections", c(0xFF18181B), c(0xFFF4F4F5), Series.SPINOFF),
     )
 
     fun game(id: String): Game? = games.firstOrNull { it.id == id }
+
+    fun bySeries(series: Series): List<Game> = games.filter { it.series == series }
 }
