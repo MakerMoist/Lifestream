@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Original crystal mark: an elongated octahedral crystal with a flowing stream through it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- crystal: left facet -->
+    <path
+        android:fillColor="#FF4FB8F0"
+        android:pathData="M54,22 L38,52 L54,86 Z" />
+    <!-- crystal: right facet -->
+    <path
+        android:fillColor="#FF9FE3FF"
+        android:pathData="M54,22 L70,52 L54,86 Z" />
+    <!-- crystal: highlight -->
+    <path
+        android:fillColor="#CCFFFFFF"
+        android:pathData="M54,22 L60,48 L54,52 Z" />
+    <!-- lifestream ribbon -->
+    <path
+        android:strokeColor="#FF6EF2B5"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M30,70 C42,58 50,74 62,62 C70,54 76,58 80,52" />
+</vector>

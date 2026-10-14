@@ -1,0 +1,117 @@
+package com.lifestream.player.ui.components
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import com.lifestream.player.data.PagedSource
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import org.schabi.newpipe.extractor.Page
+
+/** Observable, incrementally-loaded list backed by a [PagedSource]. */
+class PagedList<T>(
+    private val scope: CoroutineScope,
+    private val source: PagedSource<T>,
+    private val key: (T) -> String,
+) {
+    var items by mutableStateOf<List<T>>(emptyList())
+        private set
+    var loading by mutableStateOf(false)
+        private set
+    var error by mutableStateOf<String?>(null)
+        private set
+    var endReached by mutableStateOf(false)
+        private set
+
+    private var next: Page? = null
+
+    fun loadMore() {
+        if (loading || endReached) return
+        loading = true
+        error = null
+        scope.launch {
+            try {
+                val page = source.load(next)
+                val seen = items.mapTo(HashSet<String>(), key)
+                items = items + page.items.filter { seen.add(key(it)) }
+                next = page.next
+                endReached = page.next == null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                error = e.message?.take(160) ?: e.javaClass.simpleName
+            } finally {
+                loading = false
+            }
+        }
+    }
+}
+
+/** Adds the list's items followed by a footer that loads the next page when scrolled into view. */
+fun <T> LazyListScope.pagedItems(
+    list: PagedList<T>,
+    footerKey: String,
+    key: (T) -> String,
+    emptyText: String = "Nothing found.",
+    itemContent: @Composable LazyItemScope.(index: Int, item: T) -> Unit,
+) {
+    itemsIndexed(list.items, key = { _, item -> key(item) }) { index, item -> itemContent(index, item) }
+    item(key = footerKey) { PagedFooter(list, emptyText) }
+}
+
+@Composable
+private fun <T> PagedFooter(list: PagedList<T>, emptyText: String) {
+    val error = list.error
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        when {
+            error != null -> Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    "Couldn't reach YouTube: $error",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+                OutlinedButton(onClick = { list.loadMore() }) { Text("Try again") }
+            }
+
+            !list.endReached -> {
+                CircularProgressIndicator(Modifier.size(28.dp), strokeWidth = 2.5.dp)
+                LaunchedEffect(list.items.size) { list.loadMore() }
+            }
+
+            list.items.isEmpty() -> Text(
+                emptyText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
