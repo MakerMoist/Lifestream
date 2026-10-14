@@ -4,6 +4,20 @@ import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
 import org.json.JSONObject
 
+private val uploadTag = Regex(
+    "\\s*[\\[(（【]\\s*(official(\\s+(audio|video|music\\s+video|lyric\\s+video|visualizer|soundtrack\\s+audio))?|basiscape)\\s*[\\])）】]",
+    RegexOption.IGNORE_CASE,
+)
+
+/**
+ * Strips upload tags from song names: "[Official]", "(Official Audio)", "(Basiscape)" and the
+ * like, in any bracket style, wherever they appear.
+ */
+fun tidySongTitle(title: String): String {
+    val cleaned = title.replace(uploadTag, "").replace(Regex("\\s{2,}"), " ").trim().trimEnd('-', '–', '|', ' ')
+    return cleaned.ifBlank { title }
+}
+
 data class Track(
     val id: String,
     val title: String,
@@ -27,7 +41,7 @@ data class Track(
     companion object {
         fun fromJson(o: JSONObject) = Track(
             id = o.getString("id"),
-            title = o.optString("title"),
+            title = tidySongTitle(o.optString("title")),
             artist = o.optString("artist"),
             durationSec = o.optLong("duration", -1),
             thumbnail = o.optString("thumb").ifBlank { null },

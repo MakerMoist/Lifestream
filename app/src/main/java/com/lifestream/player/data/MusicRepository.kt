@@ -278,7 +278,7 @@ object MusicRepository {
         val id = runCatching { yt.streamLHFactory.getId(url) }.getOrNull() ?: return null
         return Track(
             id = id,
-            title = TitleTranslator.toEnglish(name ?: "Unknown track"),
+            title = tidySongTitle(TitleTranslator.toEnglish(name ?: "Unknown track")),
             artist = TitleTranslator.toEnglish(cleanArtist(uploaderName)),
             durationSec = duration,
             thumbnail = bestImage(thumbnails),

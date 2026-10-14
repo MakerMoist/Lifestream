@@ -1,11 +1,14 @@
 package com.lifestream.player.ui.screens
 
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.rounded.History
+import com.lifestream.player.data.SearchHistory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +27,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -68,11 +70,6 @@ object SearchFocus {
     var requested by mutableStateOf(false)
 }
 
-private val suggestions = listOf(
-    "One-Winged Angel", "To Zanarkand", "Liberi Fatali", "Dancing Mad", "Prelude",
-    "Aerith's Theme", "Melodies of Life", "Eyes on Me", "Answers", "Find the Flame",
-    "Battle at the Big Bridge", "Blinded by Light", "Somnus", "Corridors of Time", "Rebirth",
-)
 
 /**
  * Strictly Final Fantasy: searches only the app's own soundtrack index (every song from every
@@ -86,6 +83,8 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
     val index by SoundtrackIndex.tracks.collectAsStateWithLifecycle()
     val progress by SoundtrackIndex.progress.collectAsStateWithLifecycle()
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
+    val recentSearches by SearchHistory.recent.collectAsStateWithLifecycle()
+    var confirmClear by remember { mutableStateOf(false) }
     val searchKeyboard by AppSettings.searchKeyboard.collectAsStateWithLifecycle()
     val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -139,7 +138,10 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
             singleLine = true,
             shape = RoundedCornerShape(28.dp),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
+            keyboardActions = KeyboardActions(onSearch = {
+                SearchHistory.add(vm.input)
+                focus.clearFocus()
+            }),
         )
 
         if (progress.running) {
@@ -161,14 +163,60 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
         }
 
         if (vm.input.isBlank()) {
-            SectionLabel("Try")
-            FlowRow(
-                Modifier.padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                suggestions.forEach { s ->
-                    AssistChip(onClick = { vm.input = s; focus.clearFocus() }, label = { Text(s) })
+            if (recentSearches.isEmpty()) {
+                EmptyState(
+                    title = "Search Final Fantasy music",
+                    body = "Find songs and soundtracks by name. Your recent searches will show up here.",
+                )
+                return@Column
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SectionLabel("Recent searches", Modifier.weight(1f))
+                TextButton(onClick = { confirmClear = true }, modifier = Modifier.padding(end = 8.dp)) {
+                    Text("Clear")
                 }
+            }
+            LazyColumn(Modifier.fillMaxSize()) {
+                items(recentSearches, key = { it }) { query ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                vm.input = query
+                                SearchHistory.add(query)
+                                focus.clearFocus()
+                            }
+                            .padding(start = 20.dp, end = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(Icons.Rounded.History, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.width(16.dp))
+                        Text(
+                            query,
+                            style = MaterialTheme.typography.bodyLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                        IconButton(onClick = { SearchHistory.remove(query) }) {
+                            Icon(Icons.Rounded.Close, "Remove \"$query\"", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+            if (confirmClear) {
+                AlertDialog(
+                    onDismissRequest = { confirmClear = false },
+                    title = { Text("Clear recent searches?") },
+                    text = { Text("This removes all ${recentSearches.size} recent searches.") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            SearchHistory.clear()
+                            confirmClear = false
+                        }) { Text("Clear") }
+                    },
+                    dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("Cancel") } },
+                )
             }
             return@Column
         }
@@ -188,7 +236,10 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
             if (games.isNotEmpty()) {
                 item(key = "games-label") { SectionLabel("Soundtracks") }
                 items(games, key = { "g-${it.id}" }) { game ->
-                    GameRow(game, onClick = { onOpenGame(game) })
+                    GameRow(game, onClick = {
+                        SearchHistory.add(vm.input)
+                        onOpenGame(game)
+                    })
                 }
             }
             if (hits.isNotEmpty()) {
@@ -198,6 +249,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
                         hit.track,
                         subtitle = hit.game.title,
                         onClick = {
+                            SearchHistory.add(vm.input)
                             if (continueFromSearch) {
                                 // This song first, then the rest of its soundtrack in random order.
                                 val rest = (SoundtrackIndex.tracksFor(hit.game.id) ?: emptyList())

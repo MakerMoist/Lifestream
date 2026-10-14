@@ -1,5 +1,6 @@
 package com.lifestream.player
 
+import com.lifestream.player.data.SearchHistory
 import android.app.Application
 import com.lifestream.player.data.AppSettings
 import com.lifestream.player.data.Library
@@ -20,6 +21,7 @@ class LifestreamApp : Application() {
         NewPipe.init(OkHttpDownloader(Http.client), Localization("en", "US"), ContentCountry("US"))
         AppSettings.init(this)
         Library.init(this)
+        SearchHistory.init(this)
         SongCache.init(this)
         SoundtrackIndex.init(this)
         TitleTranslator.prefetch()
