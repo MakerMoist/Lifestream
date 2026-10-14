@@ -21,7 +21,6 @@ object ArtistCredits {
         "ff6" to listOf("Nobuo Uematsu"),
         "ff7" to listOf("Nobuo Uematsu"),
         "ff7r" to listOf("Masashi Hamauzu", "Mitsuto Suzuki"),
-        "ff7int" to listOf("Mitsuto Suzuki"),
         "ff7rb" to listOf("Mitsuto Suzuki", "Masashi Hamauzu"),
         "ff8" to listOf("Nobuo Uematsu"),
         "ff9" to listOf("Nobuo Uematsu"),
@@ -85,7 +84,8 @@ object ArtistCredits {
 
     /** Applies [forSong] to a stored or freshly loaded track. */
     fun fix(track: Track): Track {
-        val artist = forSong(track.gameId, track.artist)
-        return if (artist == track.artist) track else track.copy(artist = artist)
+        val gameId = Catalog.currentId(track.gameId)
+        val artist = forSong(gameId, track.artist)
+        return if (artist == track.artist && gameId == track.gameId) track else track.copy(artist = artist, gameId = gameId)
     }
 }

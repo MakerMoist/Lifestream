@@ -87,6 +87,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
@@ -382,11 +383,12 @@ fun GameCard(
     selected: Boolean = false,
     selecting: Boolean = false,
 ) {
-    val shape = RoundedCornerShape(14.dp)
+    val shape = RoundedCornerShape(16.dp)
+    // A shorter, wider card with rounded corners.
     Box(
         Modifier
             .fillMaxWidth()
-            .aspectRatio(0.9f)
+            .aspectRatio(1.35f)
             .alpha(if (selecting && !selected) 0.55f else 1f)
             .then(if (selected) Modifier.border(3.dp, LsColors.Crystal, shape) else Modifier)
             .clip(shape)
@@ -407,6 +409,8 @@ fun GameCard(
                     bitmap = art,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
+                    // The art is portrait; keep its upper part (where most scenes put their focus).
+                    alignment = BiasAlignment(0f, -0.35f),
                     modifier = Modifier.fillMaxSize().alpha(artAlpha),
                 )
             }
@@ -416,8 +420,8 @@ fun GameCard(
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            0.45f to Color.Transparent,
-                            1f to LsColors.Night.copy(alpha = 0.9f),
+                            0.3f to Color.Transparent,
+                            1f to LsColors.Night.copy(alpha = 0.92f),
                         )
                     )
             )
@@ -439,21 +443,21 @@ fun GameCard(
             game.numeral,
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(14.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             fontFamily = FontFamily.Serif,
             fontWeight = FontWeight.Bold,
-            fontSize = if (game.numeral.length > 4) 24.sp else 34.sp,
+            fontSize = if (game.numeral.length > 4) 20.sp else 26.sp,
             color = game.colorB,
             style = TextStyle(shadow = Shadow(Color.Black.copy(alpha = 0.7f), Offset(0f, 2f), 10f)),
         )
         Column(
             Modifier
                 .align(Alignment.BottomStart)
-                .padding(14.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
         ) {
             Text(
                 game.title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,
                 maxLines = 2,

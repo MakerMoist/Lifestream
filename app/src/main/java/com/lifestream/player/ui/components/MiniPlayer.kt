@@ -1,5 +1,20 @@
 package com.lifestream.player.ui.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.layout.onSizeChanged
+import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -35,10 +50,43 @@ import com.lifestream.player.ui.theme.LsColors
 @Composable
 fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Modifier) {
     val track = state.current ?: return
+    val scope = rememberCoroutineScope()
+    val offsetX = remember { Animatable(0f) }
+    var widthPx by remember { mutableFloatStateOf(1f) }
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         modifier = modifier
             .fillMaxWidth()
+            .onSizeChanged { widthPx = it.width.toFloat().coerceAtLeast(1f) }
+            // Slide right to close: stops the song and clears the queue.
+            .graphicsLayer {
+                translationX = offsetX.value
+                alpha = 1f - (offsetX.value / widthPx).coerceIn(0f, 1f) * 0.8f
+            }
+            .pointerInput(Unit) {
+                val tracker = VelocityTracker()
+                detectHorizontalDragGestures(
+                    onDragStart = { tracker.resetTracking() },
+                    onHorizontalDrag = { change, dragAmount ->
+                        change.consume()
+                        tracker.addPosition(change.uptimeMillis, change.position)
+                        scope.launch { offsetX.snapTo((offsetX.value + dragAmount).coerceAtLeast(0f)) }
+                    },
+                    onDragCancel = { scope.launch { offsetX.animateTo(0f, spring()) } },
+                    onDragEnd = {
+                        val close = offsetX.value > widthPx * 0.35f || tracker.calculateVelocity().x > 1500f
+                        scope.launch {
+                            if (close) {
+                                offsetX.animateTo(widthPx, tween(160))
+                                PlayerConnection.stopAndClear()
+                                offsetX.snapTo(0f)
+                            } else {
+                                offsetX.animateTo(0f, spring(dampingRatio = 0.7f))
+                            }
+                        }
+                    },
+                )
+            }
             .clickable(onClick = onOpen),
     ) {
         Column {
@@ -73,6 +121,9 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Mo
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
+                IconButton(onClick = { PlayerConnection.previous() }) {
+                    Icon(Icons.Rounded.SkipPrevious, "Previous")
                 }
                 Box(contentAlignment = Alignment.Center) {
                     if (state.isBuffering) {

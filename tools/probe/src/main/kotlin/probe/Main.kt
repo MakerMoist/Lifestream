@@ -30,6 +30,10 @@ fun main(args: Array<String>) {
         runCovers()
         return
     }
+    if ("--art" in args) {
+        runArt()
+        return
+    }
     if ("--titles" in args) {
         runTitles(args.filter { it != "--titles" }.toSet())
         return

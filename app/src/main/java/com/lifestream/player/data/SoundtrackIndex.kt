@@ -30,7 +30,7 @@ import java.io.File
 object SoundtrackIndex {
 
     /** Bump when the way soundtracks are sourced changes, so old indexes are rebuilt. */
-    private const val VERSION = 11
+    private const val VERSION = 12
     private const val FILE_NAME = "soundtrack-index.json"
     // Soundtracks rarely change; refreshing weekly keeps background network use low.
     private const val MAX_AGE_MS = 7L * 24 * 60 * 60 * 1000
@@ -161,7 +161,7 @@ object SoundtrackIndex {
             val game = byId[gameId] ?: continue
             val gameTokens = Matching.titleTokens(game)
             for (track in list) {
-                val score = Matching.searchScore(query, track.title, gameTokens) ?: continue
+                val score = Matching.songScore(track, query, gameTokens) ?: continue
                 hits += score to Hit(track, game)
             }
         }
@@ -192,7 +192,7 @@ object SoundtrackIndex {
             val map = mutableMapOf<String, List<Track>>()
             val stamps = mutableMapOf<String, Long>()
             for (id in games.keys()) {
-                if (Catalog.game(id) == null) continue // only the app's own soundtracks
+                if (Catalog.games.none { it.id == id }) continue // only the app's current soundtracks
                 val g = games.getJSONObject(id)
                 val arr = g.getJSONArray("tracks")
                 map[id] = (0 until arr.length()).mapNotNull { i ->

@@ -703,7 +703,7 @@ def lo(s):
 SCENES = {
     "ff1": ff1, "ff2": ff2, "ff3": ff3, "ff4": ff4, "ff5": ff5, "ff6": ff6, "ff7": ff7, "ff8": ff8,
     "ff9": ff9, "ff10": ff10, "ff10_2": ff10_2, "ff11": ff11, "ff12": ff12, "ff13": ff13, "ff13_2": ff13_2, "ff14": ff14,
-    "ff15": ff15, "ff16": ff16, "ff7r": ff7r, "ff7int": ff7int, "ff7rb": ff7rb, "fft": fft, "ccr": ccr,
+    "ff15": ff15, "ff16": ff16, "ff7r": ff7r, "ff7rb": ff7rb, "fft": fft, "ccr": ccr,
     "ct": ct, "cx": cx, "lo": lo,
 }
 

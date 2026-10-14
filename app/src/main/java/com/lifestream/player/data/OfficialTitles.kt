@@ -42,6 +42,8 @@ object OfficialTitles {
     /** Uses the official English name for a stored or loaded song when there is one. */
     fun fix(track: Track): Track {
         val official = forId(track.id) ?: return track
-        return if (official == track.title) track else track.copy(title = official)
+        if (official == track.title) return track
+        val alt = track.altTitle ?: track.title.takeIf { japanese.containsMatchIn(it) }
+        return track.copy(title = official, altTitle = alt)
     }
 }

@@ -143,6 +143,17 @@ object Matching {
     }
 
     /** True if [query] matches [title] (see [searchScore]). Used by each game's search box. */
+    /**
+     * How well [query] matches a song by any of its names: the English title, the original
+     * Japanese title, or (for English letters) how the Japanese title sounds. Null if none.
+     */
+    fun songScore(track: Track, query: String, extraTokens: List<String> = emptyList()): Int? {
+        searchScore(query, track.title, extraTokens)?.let { return it }
+        val alt = track.altTitle ?: track.title.takeIf { Romaji.hasKana(it) } ?: return null
+        searchScore(query, alt, extraTokens)?.let { return it }
+        return if (Romaji.soundsLike(query, alt)) 1 else null
+    }
+
     fun titleMatches(title: String, query: String): Boolean =
         queryTokens(query).isEmpty() || searchScore(query, title) != null
 
@@ -186,6 +197,18 @@ object Matching {
     }
 
     /** True if some slice of [text] is within a typo or two of [needle] (spacing already removed). */
+    /** True if [needle] is within [allowed] edits of [text] or of some stretch of it. */
+    fun withinEdits(needle: String, text: String, allowed: Int): Boolean {
+        if (editDistance(needle, text, allowed) <= allowed) return true
+        for (len in (needle.length - allowed)..(needle.length + allowed)) {
+            if (len <= 0 || len >= text.length) continue
+            for (start in 0..(text.length - len)) {
+                if (editDistance(needle, text.substring(start, start + len), allowed) <= allowed) return true
+            }
+        }
+        return false
+    }
+
     private fun fuzzyContains(text: String, needle: String): Boolean {
         val allowed = if (needle.length >= 10) 2 else 1
         for (len in (needle.length - allowed)..(needle.length + allowed)) {

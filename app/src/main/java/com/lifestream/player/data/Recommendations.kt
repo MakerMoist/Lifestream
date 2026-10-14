@@ -11,7 +11,7 @@ object Recommendations {
 
     /** Soundtracks that belong together, so a VII fan also hears Remake, Rebirth and Crisis Core. */
     private val families = listOf(
-        setOf("ff7", "ff7r", "ff7int", "ff7rb", "ccr"),
+        setOf("ff7", "ff7r", "ff7rb", "ccr"),
         setOf("ff10", "ff10-2"),
         setOf("ff13", "ff13-2"),
         setOf("ct", "cx"),

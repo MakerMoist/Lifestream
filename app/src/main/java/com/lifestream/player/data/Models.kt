@@ -47,6 +47,8 @@ data class Track(
     val thumbnail: String?,
     /** Catalog id of the soundtrack this song came from (for "Open title"). */
     val gameId: String? = null,
+    /** The original Japanese name when [title] is its English name, so either can be searched. */
+    val altTitle: String? = null,
 ) {
     fun toJson(): JSONObject = JSONObject()
         .put("id", id)
@@ -55,6 +57,7 @@ data class Track(
         .put("duration", durationSec)
         .put("thumb", thumbnail ?: "")
         .put("game", gameId ?: "")
+        .put("alt", altTitle ?: "")
 
     /** A link anyone can open, for sharing. */
     val youTubeUrl: String get() = "https://www.youtube.com/watch?v=$id"
@@ -75,6 +78,7 @@ data class Track(
                 durationSec = o.optLong("duration", -1).coerceIn(-1L, 24L * 3600),
                 thumbnail = o.optString("thumb").takeIf { it.startsWith("https://") && it.length <= 2048 },
                 gameId = o.optString("game").ifBlank { null }?.take(32),
+                altTitle = o.optString("alt").ifBlank { null }?.take(MAX_TEXT),
             )
         }
     }

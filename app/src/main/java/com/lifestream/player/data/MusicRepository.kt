@@ -279,10 +279,14 @@ object MusicRepository {
     private fun StreamInfoItem.toTrack(): Track? {
         if (streamType.name.contains("LIVE")) return null
         val id = runCatching { yt.streamLHFactory.getId(url) }.getOrNull() ?: return null
+        val raw = tidySongTitle(name ?: "Unknown track")
+        // Square Enix's own English name when there is one, otherwise translated on the device.
+        val title = OfficialTitles.forId(id) ?: tidySongTitle(TitleTranslator.toEnglish(raw))
         return Track(
             id = id,
-            // Square Enix's own English name when there is one, otherwise translated on the device.
-            title = OfficialTitles.forId(id) ?: tidySongTitle(TitleTranslator.toEnglish(name ?: "Unknown track")),
+            title = title,
+            // The Japanese name stays searchable alongside the English one.
+            altTitle = raw.takeIf { it != title && TitleTranslator.hasJapanese(it) }?.take(300),
             // Known names first, so e.g. Uematsu's channel name never goes through machine translation.
             artist = ArtistCredits.canonical(TitleTranslator.toEnglish(ArtistCredits.canonical(cleanArtist(uploaderName)))),
             durationSec = duration,

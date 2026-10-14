@@ -40,16 +40,15 @@ object Catalog {
         Game("ff7", "VII", "Final Fantasy VII", 1997, "Nobuo Uematsu",
             "Final Fantasy VII original soundtrack", c(0xFF052E16), c(0xFF6EF2B5),
             match = num("VII", exclude = notOriginalVII), art = R.drawable.art_ff7),
+        // Includes Intergrade's INTERmission episode (DLC): its soundtrack is part of Remake's.
         Game("ff7r", "VII·R", "Final Fantasy VII Remake", 2020, "Hamauzu · Suzuki · Uematsu",
             "Final Fantasy VII Remake original soundtrack", c(0xFF022C22), c(0xFF34D399),
             match = MatchSpec(
                 numerals = setOf("VII"),
                 allOf = listOf("REMAKE"),
-                exclude = listOf("REBIRTH", "INTERGRADE", "INTERMISSION"),
-            ), art = R.drawable.art_ff7r),
-        Game("ff7int", "INT", "VII Remake Intergrade: INTERmission", 2021, "Mitsuto Suzuki · various",
-            "Final Fantasy VII Remake Intergrade original soundtrack", c(0xFF3B0764), c(0xFFD8B4FE),
-            match = MatchSpec(numerals = setOf("VII"), anyOf = listOf("INTERGRADE", "INTERMISSION")), art = R.drawable.art_ff7int),
+                exclude = listOf("REBIRTH"),
+            ), art = R.drawable.art_ff7r,
+            albumQueries = listOf("Final Fantasy VII Remake Intergrade original soundtrack")),
         Game("ff7rb", "VII·RB", "Final Fantasy VII Rebirth", 2024, "Mitsuto Suzuki · various",
             "Final Fantasy VII Rebirth original soundtrack", c(0xFF0F172A), c(0xFF67E8F9),
             match = MatchSpec(numerals = setOf("VII"), allOf = listOf("REBIRTH")), art = R.drawable.art_ff7rb),
@@ -117,7 +116,13 @@ object Catalog {
             match = MatchSpec(allOf = listOf("LOST ODYSSEY"), requireFinalFantasy = false), art = R.drawable.art_lo),
     )
 
-    fun game(id: String): Game? = games.firstOrNull { it.id == id }
+    /** Soundtracks that were folded into another (saved songs and playlists still use the old id). */
+    private val merged = mapOf("ff7int" to "ff7r")
+
+    fun game(id: String): Game? = games.firstOrNull { it.id == id } ?: merged[id]?.let { m -> games.firstOrNull { it.id == m } }
+
+    /** The current id for a soundtrack id that may have been merged into another. */
+    fun currentId(id: String?): String? = id?.let { merged[it] ?: it }
 
     fun bySeries(series: Series): List<Game> = games.filter { it.series == series }
 }

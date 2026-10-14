@@ -22,7 +22,7 @@ val genDir = layout.buildDirectory.dir("gen")
 // Pull the pure-Kotlin parts of the app in verbatim so the probe tests exactly what ships.
 val copyAppSources by tasks.registering(Copy::class) {
     from(appRoot.resolve("java/com/lifestream/player/data")) {
-        include("Catalog.kt", "Matching.kt", "Models.kt", "ArtistCredits.kt")
+        include("Catalog.kt", "Matching.kt", "Models.kt", "ArtistCredits.kt", "Romaji.kt")
         into("data")
     }
     from(appRoot.resolve("java/com/lifestream/player/net")) {

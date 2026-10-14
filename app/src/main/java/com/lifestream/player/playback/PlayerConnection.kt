@@ -200,6 +200,12 @@ object PlayerConnection {
         if (index in 0 until it.mediaItemCount) it.removeMediaItem(index)
     }
 
+    /** Stops playback and empties the queue (swiping the mini player away). */
+    fun stopAndClear() = withController {
+        it.stop()
+        it.clearMediaItems()
+    }
+
     fun clearError() = _state.update { it.copy(error = null) }
 
     // ---- State sync ----

@@ -1,5 +1,7 @@
 package com.lifestream.player.ui.screens
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -80,6 +82,7 @@ class HomeViewModel : ViewModel() {
     var surpriseNote by mutableStateOf<String?>(null)
         private set
     private var lastSurprise: String? = null
+    private val SURPRISE_SIZE = 150
 
     fun surprise() {
         if (surprising) return
@@ -87,6 +90,25 @@ class HomeViewModel : ViewModel() {
         surpriseNote = null
         viewModelScope.launch {
             try {
+                // A random mix of songs from every soundtrack, once the song index has them.
+                val mix = withContext(Dispatchers.Default) {
+                    Catalog.games
+                        .mapNotNull { SoundtrackIndex.songsFor(it.id) }
+                        .flatten()
+                        .filterNot { Matching.isFillerTrack(it.title) || it.durationSec in 1L..44L }
+                        .shuffled()
+                        .distinctBy { it.id }
+                        .take(SURPRISE_SIZE)
+                }
+                val titles = mix.mapNotNull { it.gameId }.distinct().size
+                if (mix.size >= 20 && titles >= 3) {
+                    PlayerConnection.playTracks(mix)
+                    val note = "Shuffling ${mix.size} songs from $titles soundtracks"
+                    surpriseNote = note
+                    clearNoteLater(note)
+                    return@launch
+                }
+                // Index not built yet: shuffle one random soundtrack instead.
                 // A few attempts in case a soundtrack can't be loaded right now.
                 val candidates = Catalog.games.filter { it.id != lastSurprise }.shuffled().take(4)
                 for (game in candidates) {
