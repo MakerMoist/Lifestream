@@ -1,5 +1,10 @@
 package com.lifestream.player.ui.screens
 
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.activity.ComponentActivity
+import android.content.ContextWrapper
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -83,6 +88,37 @@ class SettingsViewModel : ViewModel() {
     var state by mutableStateOf<UpdateState>(UpdateState.Idle)
         private set
 
+    private var autoChecked = false
+
+    /** Set when an automatic check finds a new version, until the user answers the prompt. */
+    var prompt by mutableStateOf<Updater.Release?>(null)
+        private set
+
+    /**
+     * The check that runs when the app opens (once per launch). Quiet: nothing is shown unless
+     * there's a new version, and a failed check is simply forgotten.
+     */
+    fun autoCheck() {
+        if (autoChecked || state !is UpdateState.Idle) return
+        autoChecked = true
+        viewModelScope.launch {
+            try {
+                val latest = Updater.fetchLatest()
+                if (Updater.isNewer(latest) && state is UpdateState.Idle) {
+                    state = UpdateState.Available(latest)
+                    prompt = latest
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    fun dismissPrompt() {
+        prompt = null
+    }
+
     fun check() {
         if (state is UpdateState.Checking || state is UpdateState.Downloading) return
         state = UpdateState.Checking
@@ -163,10 +199,76 @@ class SettingsViewModel : ViewModel() {
     }
 }
 
+/** One update checker for the whole app, shared by Settings and the update prompt. */
+@Composable
+fun rememberUpdateViewModel(): SettingsViewModel {
+    val owner = LocalContext.current.findActivity() ?: error("No activity")
+    return viewModel(viewModelStoreOwner = owner)
+}
+
+private tailrec fun Context.findActivity(): ComponentActivity? = when (this) {
+    is ComponentActivity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
+/**
+ * Shown over the app when the automatic check finds a new version: asks first, then downloads,
+ * verifies and hands it to Android's installer from right here.
+ */
+@Composable
+fun UpdatePrompt() {
+    val vm = rememberUpdateViewModel()
+    val context = LocalContext.current
+    val auto by AppSettings.autoUpdate.collectAsStateWithLifecycle()
+    LaunchedEffect(auto) { if (auto) vm.autoCheck() }
+    LifecycleResumeEffect(Unit) {
+        vm.onResume(context)
+        onPauseOrDispose { }
+    }
+    val release = vm.prompt ?: return
+    val asking = vm.state is UpdateState.Available
+    AlertDialog(
+        onDismissRequest = { if (vm.state !is UpdateState.Downloading) vm.dismissPrompt() },
+        icon = { Icon(Icons.Rounded.SystemUpdate, null) },
+        title = { Text("Update available") },
+        text = {
+            Column {
+                if (asking) {
+                    val size = if (release.apkSize > 0) " (${release.apkSize / (1024 * 1024)} MB)" else ""
+                    Text(
+                        "Lifestream ${release.versionName}$size is ready. You have ${Updater.currentVersionName}. " +
+                            "Would you like to update now?",
+                    )
+                } else {
+                    UpdateSection(vm, context, showActions = false)
+                }
+            }
+        },
+        confirmButton = {
+            when (val s = vm.state) {
+                is UpdateState.Available -> TextButton(onClick = { vm.download(context, s.release) }) { Text("Update") }
+                is UpdateState.NeedsPermission ->
+                    TextButton(onClick = { Updater.openInstallPermission(context) }) { Text("Allow") }
+                is UpdateState.ReadyToInstall ->
+                    TextButton(onClick = { Updater.launchInstaller(context, s.apk) }) { Text("Install") }
+                is UpdateState.Downloading -> Unit
+                else -> TextButton(onClick = { vm.dismissPrompt() }) { Text("OK") }
+            }
+        },
+        dismissButton = {
+            if (vm.state !is UpdateState.Downloading) {
+                TextButton(onClick = { vm.dismissPrompt() }) { Text(if (asking) "Not now" else "Close") }
+            }
+        },
+    )
+}
+
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(onOpenThemes: () -> Unit) {
-    val vm: SettingsViewModel = viewModel()
+    val vm = rememberUpdateViewModel()
+    val autoUpdate by AppSettings.autoUpdate.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
     val themeId by AppSettings.themeId.collectAsStateWithLifecycle()
@@ -272,6 +374,19 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
         SectionLabel("App updates", Modifier.padding(top = 8.dp))
         SettingsCard {
             Text("Lifestream ${Updater.currentVersionName}", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Check automatically", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "When the app opens, look for a new version and ask if you'd like to update.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = autoUpdate, onCheckedChange = { AppSettings.setAutoUpdate(it) })
+            }
             Spacer(Modifier.height(12.dp))
             if (vm.state != UpdateState.Idle) {
                 UpdateSection(vm, context)
@@ -288,7 +403,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
 }
 
 @Composable
-private fun UpdateSection(vm: SettingsViewModel, context: Context) {
+private fun UpdateSection(vm: SettingsViewModel, context: Context, showActions: Boolean = true) {
     when (val s = vm.state) {
         UpdateState.Idle -> Unit
 
@@ -313,10 +428,12 @@ private fun UpdateSection(vm: SettingsViewModel, context: Context) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = LsColors.Gold,
             )
-            Button(onClick = { vm.download(context, s.release) }) {
-                Icon(Icons.Rounded.Download, null, Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Download and install")
+            if (showActions) {
+                Button(onClick = { vm.download(context, s.release) }) {
+                    Icon(Icons.Rounded.Download, null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Download and install")
+                }
             }
         }
 
@@ -338,7 +455,9 @@ private fun UpdateSection(vm: SettingsViewModel, context: Context) {
                     "turn on \"Allow from this source\", then come back.",
                 style = MaterialTheme.typography.bodyMedium,
             )
-            Button(onClick = { Updater.openInstallPermission(context) }) { Text("Allow installing updates") }
+            if (showActions) {
+                Button(onClick = { Updater.openInstallPermission(context) }) { Text("Allow installing updates") }
+            }
         }
 
         is UpdateState.ReadyToInstall -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -346,7 +465,7 @@ private fun UpdateSection(vm: SettingsViewModel, context: Context) {
                 "Version ${s.release.versionName} is ready. Confirm the install when Android asks.",
                 style = MaterialTheme.typography.bodyMedium,
             )
-            Button(onClick = { Updater.launchInstaller(context, s.apk) }) { Text("Install") }
+            if (showActions) Button(onClick = { Updater.launchInstaller(context, s.apk) }) { Text("Install") }
         }
 
         is UpdateState.Failed -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

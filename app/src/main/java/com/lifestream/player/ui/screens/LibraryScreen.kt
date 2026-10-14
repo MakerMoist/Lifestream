@@ -115,10 +115,25 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
                 EmptyState("Nothing played yet", "Songs you play will show up here.")
                 return@Column
             }
+            var confirmClear by remember { mutableStateOf(false) }
+            if (confirmClear) {
+                AlertDialog(
+                    onDismissRequest = { confirmClear = false },
+                    title = { Text("Clear history?") },
+                    text = { Text("This removes all ${recents.size} songs from your history. Your playlists and saved songs aren't affected.") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            Library.clearRecents()
+                            confirmClear = false
+                        }) { Text("Clear") }
+                    },
+                    dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("Cancel") } },
+                )
+            }
             LazyColumn(Modifier.fillMaxSize()) {
                 item(key = "actions") {
                     PlayShuffleRow(recents) {
-                        TextButton(onClick = { Library.clearRecents() }) { Text("Clear") }
+                        TextButton(onClick = { confirmClear = true }) { Text("Clear") }
                     }
                 }
                 itemsIndexed(recents, key = { _, t: Track -> t.id }) { index, track ->

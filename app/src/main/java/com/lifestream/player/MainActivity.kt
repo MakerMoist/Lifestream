@@ -64,6 +64,7 @@ import com.lifestream.player.ui.screens.SearchScreen
 import com.lifestream.player.ui.screens.SearchFocus
 import com.lifestream.player.ui.screens.SettingsScreen
 import com.lifestream.player.ui.screens.ThemesScreen
+import com.lifestream.player.ui.screens.UpdatePrompt
 import com.lifestream.player.ui.theme.LifestreamTheme
 import com.lifestream.player.ui.theme.LsColors
 
@@ -163,6 +164,9 @@ private fun LifestreamRoot() {
         ) {
             NowPlayingScreen(onClose = { showPlayer = false })
         }
+
+        // Asks before installing a new version found by the automatic check.
+        UpdatePrompt()
 
         // The song options menu (long-press / ⋮ on any song, and ⋮ on Now Playing).
         TrackActionsHost(onOpenGame = { game ->

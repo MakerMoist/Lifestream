@@ -14,6 +14,7 @@ object AppSettings {
     private const val KEY_THEME = "theme"
     private const val KEY_SEARCH_KEYBOARD = "search_keyboard"
     private const val KEY_CACHE_LIMIT_MB = "cache_limit_mb"
+    private const val KEY_AUTO_UPDATE = "auto_update"
 
     /** Size choices for saved songs, in MB (0 = don't save songs). */
     val CACHE_LIMIT_CHOICES = listOf(0, 2048, 5120, 10240)
@@ -41,10 +42,16 @@ object AppSettings {
     /** How much space recently played songs may use on the phone, in MB (0 = off). */
     val cacheLimitMb: StateFlow<Int> = _cacheLimitMb.asStateFlow()
 
+    private val _autoUpdate = MutableStateFlow(true)
+
+    /** Check GitHub for a new version when the app opens, and ask before updating. */
+    val autoUpdate: StateFlow<Boolean> = _autoUpdate.asStateFlow()
+
     fun init(context: Context) {
         prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
         _continueFromSearch.value = prefs.getBoolean(KEY_CONTINUE_FROM_SEARCH, true)
         _searchKeyboard.value = prefs.getBoolean(KEY_SEARCH_KEYBOARD, true)
+        _autoUpdate.value = prefs.getBoolean(KEY_AUTO_UPDATE, true)
         _cacheLimitMb.value = prefs.getInt(KEY_CACHE_LIMIT_MB, DEFAULT_CACHE_LIMIT_MB)
             .takeIf { it in CACHE_LIMIT_CHOICES } ?: DEFAULT_CACHE_LIMIT_MB
         // byId falls back to the default for unknown or tampered values.
@@ -63,6 +70,11 @@ object AppSettings {
         _themeId.value = palette.id
         ThemeState.current = palette
         prefs.edit().putString(KEY_THEME, palette.id).apply()
+    }
+
+    fun setAutoUpdate(on: Boolean) {
+        _autoUpdate.value = on
+        prefs.edit().putBoolean(KEY_AUTO_UPDATE, on).apply()
     }
 
     fun setSearchKeyboard(on: Boolean) {

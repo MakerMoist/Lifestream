@@ -61,7 +61,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * The options menu for a song, shared by every song row (long-press or ⋮) and Now Playing:
- * Play next · Add to queue · Add to playlist · Open title · Share.
+ * Play next (not for the song already playing) · Add to queue · Add to playlist · Open title · Share.
  */
 object TrackActions {
     /** [playlistId] is set when the song is shown inside a playlist, to offer "Remove". */
@@ -115,10 +115,13 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
             }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            ActionRow(Icons.Rounded.QueuePlayNext, "Play next") {
-                PlayerConnection.playNext(track)
-                toast(context, "Playing next")
-                TrackActions.dismiss()
+            // The song that's playing can't also play next.
+            if (PlayerConnection.state.value.current?.id != track.id) {
+                ActionRow(Icons.Rounded.QueuePlayNext, "Play next") {
+                    PlayerConnection.playNext(track)
+                    toast(context, "Playing next")
+                    TrackActions.dismiss()
+                }
             }
             ActionRow(Icons.AutoMirrored.Rounded.QueueMusic, "Add to queue") {
                 PlayerConnection.addToQueue(track)
