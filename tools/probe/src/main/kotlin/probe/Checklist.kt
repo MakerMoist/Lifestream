@@ -44,7 +44,7 @@ fun runChecklist(only: Set<String>) {
 
         var found = 0
         val missingDetail = StringBuilder()
-        val jpTitles = songs.map { norm(it.title.substringBefore(" - ")) }.toSet()
+        val jpTitles = songs.map { raw(it.title.substringBefore(" - ")) }.filter { it.length >= 2 }.toSet()
         for (title in titles.distinct()) {
             val byTitle = songs.firstOrNull { sameSong(title, it.title) }
             if (byTitle != null) {
@@ -60,7 +60,7 @@ fun runChecklist(only: Set<String>) {
             val named = candidates.values.filter { sameSong(title, it.title) }
             // The same recording, or the same song under its Japanese title, is already there.
             val hit = named.firstOrNull { it.id in ids }
-                ?: named.firstOrNull { it.title.contains(" - ") && norm(it.title.substringBefore(" - ")) in jpTitles }
+                ?: named.firstOrNull { it.title.contains(" - ") && raw(it.title.substringBefore(" - ")) in jpTitles }
             if (hit != null) {
                 found++
                 out.append("| $title | ok (search) | ${hit.title} |\n")
@@ -90,6 +90,11 @@ fun runChecklist(only: Set<String>) {
 }
 
 private val stop = setOf("the", "a", "an", "of", "theme", "version", "ver", "from", "ff", "final", "fantasy")
+
+/** Title with spacing, punctuation and width variants removed (works for Japanese titles). */
+private fun raw(t: String): String =
+    java.text.Normalizer.normalize(t, java.text.Normalizer.Form.NFKC).lowercase()
+        .filter { it.isLetterOrDigit() }
 
 /** Lower-case words only (Latin letters / digits), without filler words. */
 private fun norm(raw: String): String =
