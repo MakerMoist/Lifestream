@@ -1,0 +1,53 @@
+name: Smoke test
+
+# Installs a release build (shrunk exactly like the published one) on an Android emulator,
+# launches it and checks it keeps running without crashing. Start it from the Actions tab.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # Same release build, with the x86_64 native libraries the emulator needs. Signed with the
+      # debug key (no secrets are used here).
+      - name: Build release APK
+        env:
+          LIFESTREAM_ALL_ABIS: "1"
+        run: |
+          chmod +x ./gradlew
+          set -o pipefail
+          if ! ./gradlew --no-daemon assembleRelease 2>&1 | tee "$RUNNER_TEMP/gradle.log"; then
+            grep -iE '^e: |error|missing class' "$RUNNER_TEMP/gradle.log" | head -30 | sed 's/^/::error::/' || true
+            exit 1
+          fi
+
+      - name: Launch on an emulator
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash .github/smoke.sh

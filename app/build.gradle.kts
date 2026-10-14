@@ -22,7 +22,10 @@ android {
             ?.takeIf { it.matches(Regex("^\\d+\\.\\d+\\.\\d+$")) } ?: "1.4.0-dev"
         buildConfigField("String", "UPDATE_REPO", "\"MakerMoist/Lifestream\"")
         // Phones run ARM; leaving out the x86 builds of native libraries keeps the APK small.
-        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
+        // (The emulator smoke test sets LIFESTREAM_ALL_ABIS to keep them.)
+        if (System.getenv("LIFESTREAM_ALL_ABIS") == null) {
+            ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
+        }
     }
 
     // The release key comes from CI secrets via environment variables and is never committed.
