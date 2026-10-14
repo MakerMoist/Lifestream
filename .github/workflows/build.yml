@@ -52,7 +52,9 @@ jobs:
             PW=$(printf '%s' "$KEYSTORE_PASSWORD" | tr -d ' \t\r\n')
             ALIAS=$(printf '%s' "$KEY_ALIAS" | tr -d ' \t\r\n')
             if ! keytool -list -keystore "$RUNNER_TEMP/release.jks" -storepass "$PW" >/dev/null 2>&1; then
-              echo "::error::LIFESTREAM_KEYSTORE_PASSWORD doesn't open the keystore (${#PW} characters; it should be 32). Paste it again."
+              KS_HASH=$(sha256sum "$RUNNER_TEMP/release.jks" | cut -c1-12)
+              PW_HASH=$(printf '%s' "$PW" | sha256sum | cut -c1-8)
+              echo "::error::LIFESTREAM_KEYSTORE_PASSWORD doesn't open the keystore. Fingerprints (safe to share): keystore ${#CLEAN} chars / sha ${KS_HASH}, password ${#PW} chars / sha ${PW_HASH}."
               exit 1
             fi
             if ! keytool -list -keystore "$RUNNER_TEMP/release.jks" -storepass "$PW" -alias "$ALIAS" >/dev/null 2>&1; then
