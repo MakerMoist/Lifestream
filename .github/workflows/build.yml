@@ -38,9 +38,21 @@ jobs:
         id: signing
         env:
           KEYSTORE_BASE64: ${{ secrets.LIFESTREAM_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.LIFESTREAM_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.LIFESTREAM_KEY_ALIAS }}
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
-            printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            # Copying a long value on a phone often adds spaces or line breaks; drop them.
+            CLEAN=$(printf '%s' "$KEYSTORE_BASE64" | tr -d ' \t\r\n')
+            echo "Keystore secret: ${#CLEAN} base64 characters (never printed)."
+            if ! printf '%s' "$CLEAN" | base64 -d > "$RUNNER_TEMP/release.jks" 2>/dev/null; then
+              echo "::error::LIFESTREAM_KEYSTORE_BASE64 isn't valid base64 (${#CLEAN} characters). It may be cut short or contain extra text — paste the whole line again."
+              exit 1
+            fi
+            if ! keytool -list -keystore "$RUNNER_TEMP/release.jks" -storepass "$KEYSTORE_PASSWORD" -alias "${KEY_ALIAS:-lifestream}" >/dev/null 2>&1; then
+              echo "::error::The keystore decoded but can't be opened with LIFESTREAM_KEYSTORE_PASSWORD / LIFESTREAM_KEY_ALIAS. Check those two secrets (no extra spaces)."
+              exit 1
+            fi
             echo "LIFESTREAM_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
             echo "signed=true" >> "$GITHUB_OUTPUT"
           else
