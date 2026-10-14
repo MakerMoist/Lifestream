@@ -4,6 +4,8 @@ import com.lifestream.player.data.Album
 import com.lifestream.player.data.Catalog
 import com.lifestream.player.data.Game
 import com.lifestream.player.data.Matching
+import com.lifestream.player.data.Track
+import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import com.lifestream.player.net.Http
 import com.lifestream.player.net.OkHttpDownloader
 import org.schabi.newpipe.extractor.InfoItem
@@ -66,6 +68,24 @@ fun main(args: Array<String>) {
                 // Full listing for playlist sources: these are the ones that can contain stray songs.
                 titles.zip(clean).forEach { (raw, c) -> detail.append("    - `$raw` → **$c**\n") }
             }
+        }
+        for (extra in game.extras) {
+            val results = runCatching {
+                search(extra.query, F.MUSIC_SONGS, pages = 1).mapNotNull { it as? StreamInfoItem }.map {
+                    Track(
+                        id = runCatching { ServiceList.YouTube.streamLHFactory.getId(it.url) }.getOrDefault(""),
+                        title = it.name ?: "",
+                        artist = (it.uploaderName ?: "").removeSuffix(" - Topic").trim(),
+                        durationSec = it.duration,
+                        thumbnail = null,
+                    )
+                }
+            }.getOrDefault(emptyList())
+            val pick = Matching.pickExtra(extra, results)
+            detail.append("- extra \"${extra.title}\" by ${extra.artist}: " +
+                (pick?.let { "**${it.title}** — ${it.artist} — ${it.durationSec}s — id ${it.id}" } ?: "NOT FOUND") + "\n")
+            results.take(6).forEach { detail.append("    - candidate: ${it.title} — ${it.artist} — ${it.durationSec}s\n") }
+            pick?.let { songs.putIfAbsent(Matching.songKey(it.title), it.title) }
         }
         detail.append("\n")
         val source = when {

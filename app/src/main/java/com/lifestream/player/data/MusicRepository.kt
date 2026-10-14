@@ -123,6 +123,7 @@ object MusicRepository {
         private var albums: List<Album>? = null
         private var index = 0
         private var albumPage: Any? = null
+        private var extrasDone = game.extras.isEmpty()
 
         override suspend fun load(page: Any?): Paged<Track> {
             val list = albums ?: gameAlbums(game).also { albums = it }
@@ -159,7 +160,24 @@ object MusicRepository {
                     albumPage = null
                 }
             }
-            return Paged(out, if (index < max) More else null)
+            // After the soundtrack: any extra songs (e.g. a localized theme song).
+            if (out.isEmpty() && index >= max && !extrasDone) {
+                extrasDone = true
+                out += findExtras(game)
+            }
+            return Paged(out, if (index < max || !extrasDone) More else null)
+        }
+    }
+
+    /** Finds each of [game]'s extra songs as its original recording; ones not found are skipped. */
+    private suspend fun findExtras(game: Game): List<Track> = game.extras.mapNotNull { extra ->
+        try {
+            val results = songSearch(extra.query).load(null).items
+            Matching.pickExtra(extra, results)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
         }
     }
 

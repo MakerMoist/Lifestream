@@ -117,6 +117,31 @@ object Matching {
         return out
     }
 
+    private val notTheRecording = listOf(
+        "COVER", "COVERS", "KARAOKE", "LIVE", "INSTRUMENTAL", "ACOUSTIC", "REMIX", "REMIXED", "PIANO",
+        "ORCHESTRAL", "LYRICS", "LYRIC", "SPED UP", "SLOWED", "NIGHTCORE", "8D", "TRIBUTE", "VERSION",
+    )
+
+    /**
+     * The original studio recording of [extra] among search results: the title must be the song
+     * (allowing a trailing "(from …)" note), the artist must match, and covers, live takes,
+     * karaoke, remixes and the like are rejected. Exact titles win over looser ones.
+     */
+    fun pickExtra(extra: ExtraSong, candidates: List<Track>): Track? {
+        val wantTitle = normalize(extra.title)
+        val wantArtist = normalize(extra.artist)
+        val ok = candidates.filter { t ->
+            val title = normalize(t.title)
+            val artist = normalize(t.artist)
+            (hasWord(artist, wantArtist) || hasWord(title, wantArtist)) &&
+                hasWord(title, wantTitle) &&
+                notTheRecording.none { hasWord(title, it) } &&
+                junk.none { hasWord(title, it) }
+        }
+        return ok.firstOrNull { normalize(it.title) == wantTitle }
+            ?: ok.minByOrNull { normalize(it.title).length }
+    }
+
     /** True if every search word starts a word of [title] ("one wing" → "One-Winged Angel"). */
     fun titleMatches(title: String, query: String): Boolean {
         val q = queryTokens(query)

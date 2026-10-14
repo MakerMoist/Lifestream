@@ -53,7 +53,14 @@ data class Game(
     val match: MatchSpec = MatchSpec(),
     /** Original card illustration (tools/art renders these). */
     @DrawableRes val art: Int = 0,
+    /** Songs from the game that aren't on its soundtrack album (e.g. a localized theme song). */
+    val extras: List<ExtraSong> = emptyList(),
 )
+
+/** A specific recording to add to a game's list, found by exact title + artist. */
+data class ExtraSong(val title: String, val artist: String) {
+    val query: String get() = "$artist $title"
+}
 
 enum class Series(val label: String) {
     MAINLINE("Main series"),

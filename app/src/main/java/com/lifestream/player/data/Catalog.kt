@@ -66,7 +66,9 @@ object Catalog {
         Game("ff12", "XII", "Final Fantasy XII", 2006, "Hitoshi Sakimoto",
             "Final Fantasy XII original soundtrack", c(0xFF451A03), c(0xFFFDBA74), match = num("XII"), art = R.drawable.art_ff12),
         Game("ff13", "XIII", "Final Fantasy XIII", 2009, "Masashi Hamauzu",
-            "Final Fantasy XIII original soundtrack", c(0xFF082F49), c(0xFFBAE6FD), match = num("XIII", notWith = setOf("XIII2")), art = R.drawable.art_ff13),
+            "Final Fantasy XIII original soundtrack", c(0xFF082F49), c(0xFFBAE6FD), match = num("XIII", notWith = setOf("XIII2")), art = R.drawable.art_ff13,
+            // The Western release's theme song isn't on the Japanese soundtrack album.
+            extras = listOf(ExtraSong("My Hands", "Leona Lewis"))),
         Game("ff13-2", "XIII-2", "Final Fantasy XIII-2", 2011, "Hamauzu · Mizuta · Suzuki",
             "Final Fantasy XIII-2 original soundtrack", c(0xFF1E0B3A), c(0xFFB9A2FF),
             match = num("XIII2", notWith = setOf("XIII")), art = R.drawable.art_ff13_2),
