@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.components
 
+import com.lifestream.player.data.hiResArtwork
 import com.lifestream.player.playback.SafeInput
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -78,14 +79,18 @@ fun Artwork(
         val safeUrl = remember(url) { SafeInput.safeArtwork(url) }
         if (safeUrl != null) {
             val context = LocalContext.current
-            val request = remember(safeUrl) {
-                ImageRequest.Builder(context).data(safeUrl).crossfade(200).build()
+            // Ask for the full-size artwork; if that doesn't exist, fall back to the original.
+            val hiRes = remember(safeUrl) { SafeInput.safeArtwork(hiResArtwork(safeUrl)) }
+            var useOriginal by remember(safeUrl) { mutableStateOf(hiRes == null) }
+            val request = remember(safeUrl, useOriginal) {
+                ImageRequest.Builder(context).data(if (useOriginal) safeUrl else hiRes).crossfade(200).build()
             }
             AsyncImage(
                 model = request,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
+                onError = { if (!useOriginal) useOriginal = true },
             )
         }
     }

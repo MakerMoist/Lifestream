@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import com.lifestream.player.playback.SafeInput
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.animation.core.Animatable
@@ -110,9 +111,10 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
         ) {
             // Blurred artwork wash behind everything (blur is a no-op before Android 12).
-            if (track?.thumbnail != null) {
+            val wash = remember(track?.thumbnail) { SafeInput.safeArtwork(track?.thumbnail) }
+            if (wash != null) {
                 AsyncImage(
-                    model = track.thumbnail,
+                    model = wash,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier

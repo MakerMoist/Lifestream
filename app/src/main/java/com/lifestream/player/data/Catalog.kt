@@ -24,7 +24,7 @@ object Catalog {
             match = MatchSpec(
                 numerals = setOf("I"),
                 allowBare = true,
-                exclude = listOf("PIANO", "DISTANT WORLDS", "TACTICS", "DISSIDIA", "ORCHESTRA",
+                exclude = listOf("PIANO", "DISTANT WORLDS", "WORLD OF", "TACTICS", "DISSIDIA", "ORCHESTRA",
                     "RECORD KEEPER", "BRAVE EXVIUS", "CRYSTAL CHRONICLES", "THEATRHYTHM", "ORIGINS"),
             ), art = R.drawable.art_ff1),
         Game("ff2", "II", "Final Fantasy II", 1988, "Nobuo Uematsu",

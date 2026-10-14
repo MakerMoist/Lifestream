@@ -1,5 +1,8 @@
 package com.lifestream.player.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import com.lifestream.player.ui.components.rememberArt
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material.icons.rounded.History
@@ -281,14 +284,18 @@ private fun GameRow(game: Game, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (game.art != 0) {
-            Image(
-                painterResource(game.art),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
+            // The card art, already decoded at card size (the files themselves are 1080x1200).
+            val art = rememberArt(game.art)
+            Box(
+                Modifier
                     .size(56.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-            )
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(game.colorA),
+            ) {
+                if (art != null) {
+                    Image(art, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                }
+            }
             Spacer(Modifier.width(14.dp))
         }
         Column(Modifier.weight(1f)) {

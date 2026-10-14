@@ -15,7 +15,7 @@ fun runArtists(only: Set<String>) {
             out.append("- FAILED: ${e.message}\n\n")
             continue
         }
-        songs.groupBy { it.artist }.entries.sortedByDescending { it.value.size }.forEach { (artist, list) ->
+        songs.groupBy { com.lifestream.player.data.ArtistCredits.forSong(game.id, it.artist) }.entries.sortedByDescending { it.value.size }.forEach { (artist, list) ->
             val examples = list.take(4).joinToString(" | ") { it.title }
             out.append("- **${artist.ifBlank { "(blank)" }}** × ${list.size} — $examples\n")
         }

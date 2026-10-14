@@ -315,7 +315,8 @@ object Matching {
         if (ostPhrases.none { hasWord(t, it) }) return false
         if (notTheOriginal.any { hasWord(t, it) }) return false
         if (junk.any { hasWord(t, it) }) return false
-        if (album.trackCount in 1..3) return false
+        // 0 tracks: listed on YouTube Music but empty, so it can't be played (falls back instead).
+        if (album.trackCount in 0..3) return false
         val artist = normalize(album.artist)
         return isOfficialArtist(album.artist) || hasWord(artist, "VARIOUS ARTISTS")
     }

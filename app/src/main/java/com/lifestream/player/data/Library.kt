@@ -126,7 +126,7 @@ object Library {
 
     private fun readTracks(json: String?): List<Track> = runCatching {
         val arr = JSONArray(json ?: "[]")
-        (0 until arr.length()).mapNotNull { arr.optJSONObject(it)?.let(Track::fromJson) }
+        (0 until arr.length()).mapNotNull { arr.optJSONObject(it)?.let(Track::fromJson)?.let(ArtistCredits::fix) }
     }.getOrDefault(emptyList())
 
     private fun writeTracks(tracks: List<Track>): String {

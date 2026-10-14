@@ -160,7 +160,10 @@ object MusicRepository {
                 extrasDone = true
                 out += findExtras(game)
             }
-            return Paged(out.map { it.copy(gameId = game.id) }, if (index < max || !extrasDone) More else null)
+            return Paged(
+                out.map { ArtistCredits.fix(it.copy(gameId = game.id)) },
+                if (index < max || !extrasDone) More else null,
+            )
         }
     }
 
@@ -279,7 +282,8 @@ object MusicRepository {
         return Track(
             id = id,
             title = tidySongTitle(TitleTranslator.toEnglish(name ?: "Unknown track")),
-            artist = tidySongTitle(TitleTranslator.toEnglish(cleanArtist(uploaderName))),
+            // Known names first, so e.g. Uematsu's channel name never goes through machine translation.
+            artist = ArtistCredits.canonical(TitleTranslator.toEnglish(ArtistCredits.canonical(cleanArtist(uploaderName)))),
             durationSec = duration,
             thumbnail = bestImage(thumbnails),
         )

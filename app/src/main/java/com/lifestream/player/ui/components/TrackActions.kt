@@ -115,18 +115,18 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
             }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // The song that's playing can't also play next.
+            // The song that's playing (e.g. Now Playing's ⋮) can't also play next or be queued.
             if (PlayerConnection.state.value.current?.id != track.id) {
                 ActionRow(Icons.Rounded.QueuePlayNext, "Play next") {
                     PlayerConnection.playNext(track)
                     toast(context, "Playing next")
                     TrackActions.dismiss()
                 }
-            }
-            ActionRow(Icons.AutoMirrored.Rounded.QueueMusic, "Add to queue") {
-                PlayerConnection.addToQueue(track)
-                toast(context, "Added to queue")
-                TrackActions.dismiss()
+                ActionRow(Icons.AutoMirrored.Rounded.QueueMusic, "Add to queue") {
+                    PlayerConnection.addToQueue(track)
+                    toast(context, "Added to queue")
+                    TrackActions.dismiss()
+                }
             }
             ActionRow(Icons.AutoMirrored.Rounded.PlaylistAdd, "Add to playlist") {
                 choosingFor = track

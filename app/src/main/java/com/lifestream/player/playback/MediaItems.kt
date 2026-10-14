@@ -1,5 +1,6 @@
 package com.lifestream.player.playback
 
+import com.lifestream.player.data.hiResArtwork
 import android.net.Uri
 import android.os.Bundle
 import androidx.media3.common.MediaItem
@@ -16,7 +17,8 @@ fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
         MediaMetadata.Builder()
             .setTitle(title)
             .setArtist(artist)
-            .setArtworkUri(SafeInput.safeArtwork(thumbnail?.let { Uri.parse(it) }))
+            // Lock screen / notification art: a sharper album image where the server can size it.
+            .setArtworkUri(SafeInput.safeArtwork((hiResArtwork(thumbnail, 544, videoThumbs = false) ?: thumbnail)?.let { Uri.parse(it) }))
             .setIsPlayable(true)
             .setIsBrowsable(false)
             .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)

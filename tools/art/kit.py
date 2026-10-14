@@ -390,6 +390,7 @@ class Scene:
         img = img / (1 + np.maximum(img - 1, 0) * 0.5)  # soft-clip highlights
         img = img + self.np_rng.normal(0, grain, img.shape).astype(np.float32)
         out = Image.fromarray((np.clip(img, 0, 1) * 255).astype(np.uint8))
-        out = out.resize((W, H), Image.LANCZOS)
-        out.save(path, "WEBP", quality=86, method=6)
+        # Saved at the full supersampled size (1080x1200) so cards stay sharp on high-density
+        # screens; the app scales them to the card's size when it loads them.
+        out.save(path, "WEBP", quality=88, method=6)
         return out

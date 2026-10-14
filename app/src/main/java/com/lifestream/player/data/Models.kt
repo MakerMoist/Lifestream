@@ -18,6 +18,22 @@ fun tidySongTitle(title: String): String {
     return cleaned.ifBlank { title }
 }
 
+private val sizedImage = Regex("=(w\\d+-h\\d+|s\\d+)([-a-z0-9]*)$")
+private val ytThumb = Regex("^(https://i\\d?\\.ytimg\\.com/vi(?:_webp)?/[A-Za-z0-9_-]{11}/)(?:default|mqdefault|hqdefault|sddefault|hq720)(?:_live)?\\.(?:jpg|webp)(?:\\?.*)?$")
+
+/**
+ * The full-size version of a song's artwork. YouTube hands out small thumbnails (often 60–120 px),
+ * which look blurry on the big Now Playing art; album art on Google's image servers takes its size
+ * in the URL, and video thumbnails have a full-resolution variant. Returns null when there's no
+ * bigger version to ask for.
+ */
+fun hiResArtwork(url: String?, size: Int = 1200, videoThumbs: Boolean = true): String? {
+    if (url == null) return null
+    if (sizedImage.containsMatchIn(url)) return url.replace(sizedImage, "=w$size-h$size-l90-rj")
+    if (videoThumbs) ytThumb.find(url)?.let { return it.groupValues[1] + "maxresdefault.jpg" }
+    return null
+}
+
 data class Track(
     val id: String,
     val title: String,
