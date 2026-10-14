@@ -1,7 +1,13 @@
 package com.lifestream.player.playback
 
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
+import android.media.AudioPlaybackConfiguration
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -9,8 +15,12 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
@@ -29,12 +39,26 @@ import com.lifestream.player.R
 class PlaybackService : MediaSessionService() {
 
     private var session: MediaSession? = null
+    private var otherAudio: OtherAudioListener? = null
 
     override fun onCreate() {
         super.onCreate()
         SongCache.init(this)
 
-        val player = ExoPlayer.Builder(this)
+        // The audio path gets the VolumeLeveler, which evens out loudness between songs.
+        val renderers = object : DefaultRenderersFactory(this) {
+            override fun buildAudioSink(
+                context: Context,
+                enableFloatOutput: Boolean,
+                enableAudioTrackPlaybackParams: Boolean,
+            ): AudioSink = DefaultAudioSink.Builder(context)
+                .setEnableFloatOutput(enableFloatOutput)
+                .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+                .setAudioProcessors(arrayOf<AudioProcessor>(VolumeLeveler()))
+                .build()
+        }
+
+        val player = ExoPlayer.Builder(this, renderers)
             .setMediaSourceFactory(DefaultMediaSourceFactory(StreamDataSources.factory()))
             // Audio is small, so buffer up to 3 minutes ahead: the phone's radio downloads in a few
             // bursts and can sleep in between, instead of waking every few seconds.
@@ -59,6 +83,12 @@ class PlaybackService : MediaSessionService() {
 
         player.addListener(RecoveryListener(player))
         player.addListener(VolumeListener(player))
+        player.addListener(OtherAudioListener(this, player).also { otherAudio = it })
+        player.addListener(object : Player.Listener {
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                VolumeLeveler.songChanges++ // measure the new song's loudness from scratch
+            }
+        })
 
         setMediaNotificationProvider(
             DefaultMediaNotificationProvider.Builder(this).build().apply {
@@ -89,6 +119,8 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        otherAudio?.release()
+        otherAudio = null
         session?.run {
             player.release()
             release()
@@ -124,11 +156,106 @@ class PlaybackService : MediaSessionService() {
             Futures.immediateFuture(mediaItems.mapNotNull { it.withPlayableUri() }.toMutableList())
     }
 
-    /** Pauses when the media volume is turned all the way down (switchable in Settings). */
+    /**
+     * Pauses when the media volume is turned all the way down, and plays again when it's turned
+     * back up (switchable in Settings). Only a pause made here is undone here: if you pause or
+     * play yourself in the meantime, turning the volume up leaves it alone.
+     */
     private class VolumeListener(private val player: ExoPlayer) : Player.Listener {
+        private var pausedByVolume = false
+
         override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
-            if (!AppSettings.pauseAtZeroVolume.value) return
-            if ((volume <= 0 || muted) && player.playWhenReady) player.pause()
+            if (!AppSettings.pauseAtZeroVolume.value) {
+                pausedByVolume = false
+                return
+            }
+            if (volume <= 0 || muted) {
+                if (player.playWhenReady) {
+                    player.pause()
+                    pausedByVolume = true
+                }
+            } else if (pausedByVolume) {
+                pausedByVolume = false
+                if (!player.playWhenReady && player.mediaItemCount > 0 && player.playbackState != Player.STATE_IDLE) {
+                    player.play()
+                }
+            }
+        }
+
+        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+            if (playWhenReady) pausedByVolume = false
+        }
+    }
+
+    /**
+     * When another app takes over the sound for good (a video, a game, another music app), the
+     * player pauses (short interruptions like calls and navigation are already resumed by the
+     * player itself). This waits for that other audio to finish and then carries on. It listens
+     * for changes in what's playing on the phone instead of polling, and gives up after a while.
+     */
+    private class OtherAudioListener(context: Context, private val player: ExoPlayer) : Player.Listener {
+        private val audio = context.getSystemService(AudioManager::class.java)
+        private val handler = Handler(Looper.getMainLooper())
+        private var pausedAt = 0L // when we were pushed aside; 0 = not waiting
+        private var otherPlayed = false // has the other app actually played anything yet?
+        private var registered = false
+
+        private val check = Runnable { maybeResume() }
+        private val callback = object : AudioManager.AudioPlaybackCallback() {
+            override fun onPlaybackConfigChanged(configs: MutableList<AudioPlaybackConfiguration>?) {
+                if (pausedAt == 0L) return
+                if (audio?.isMusicActive == true) otherPlayed = true
+                // Wait for things to settle (a video buffering, the next clip starting).
+                handler.removeCallbacks(check)
+                handler.postDelayed(check, 3_000)
+            }
+        }
+
+        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+            if (!playWhenReady && reason == Player.PLAY_WHEN_READY_CHANGE_REASON_AUDIO_FOCUS_LOSS) {
+                pausedAt = SystemClock.elapsedRealtime()
+                otherPlayed = audio?.isMusicActive == true
+                if (!registered && audio != null) {
+                    audio.registerAudioPlaybackCallback(callback, handler)
+                    registered = true
+                }
+            } else {
+                stopWaiting()
+            }
+        }
+
+        private fun maybeResume() {
+            if (pausedAt == 0L) return
+            val gone = player.playWhenReady || player.mediaItemCount == 0 || player.playbackState == Player.STATE_IDLE
+            if (gone || SystemClock.elapsedRealtime() - pausedAt > GIVE_UP_AFTER_MS) {
+                stopWaiting()
+                return
+            }
+            if (audio?.isMusicActive == true) {
+                otherPlayed = true
+                return // still playing; the next change brings us back here
+            }
+            // Only once something else actually played and has now stopped (an app that takes the
+            // sound without playing anything, like a camera recording video, doesn't count).
+            if (!otherPlayed) return
+            stopWaiting()
+            player.play()
+        }
+
+        private fun stopWaiting() {
+            pausedAt = 0L
+            otherPlayed = false
+            handler.removeCallbacks(check)
+            if (registered) {
+                audio?.unregisterAudioPlaybackCallback(callback)
+                registered = false
+            }
+        }
+
+        fun release() = stopWaiting()
+
+        private companion object {
+            const val GIVE_UP_AFTER_MS = 2 * 60 * 60 * 1000L // 2 hours
         }
     }
 

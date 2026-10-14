@@ -16,6 +16,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.platform.LocalDensity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import com.lifestream.player.data.AppSettings
 import com.lifestream.player.data.Recommendations
 import com.lifestream.player.data.SoundtrackIndex
 import com.lifestream.player.ui.components.ArtCache
@@ -154,10 +160,27 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
         }
     }
 
-    // Tapping Home while on Home scrolls back to the top.
+    // Tapping Home while on Home refreshes, just like pulling down: back to the top, a new quote
+    // and new picks.
     val reselectAtStart = remember { HomeReselect.count }
     LaunchedEffect(HomeReselect.count) {
-        if (HomeReselect.count != reselectAtStart) gridState.animateScrollToItem(0)
+        if (HomeReselect.count != reselectAtStart) {
+            refresh()
+            gridState.animateScrollToItem(0)
+        }
+    }
+
+    // While Home is on screen, move to another quote every 7.5 seconds. This only runs while the
+    // app is in front (RESUMED) and never holds the screen on, so the phone still dims and sleeps.
+    // Keyed on the quote, so tapping or refreshing restarts the wait.
+    val showQuotes by AppSettings.showQuotes.collectAsStateWithLifecycle()
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(quoteIndex, showQuotes) {
+        if (!showQuotes) return@LaunchedEffect
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            delay(7_500)
+            quoteIndex = VillainQuotes.next()
+        }
     }
     LaunchedEffect(Unit) { ArtCache.warm(context, Catalog.games.map { it.art }) }
 
@@ -183,39 +206,48 @@ fun HomeScreen(onOpenGame: (Game) -> Unit) {
                         .statusBarsPadding()
                         .padding(top = 20.dp, bottom = 4.dp),
                 ) {
-                    // Tap the quote for another one.
-                    val quote = villainQuotes[quoteIndex]
-                    AnimatedContent(
-                        targetState = quote,
-                        transitionSpec = { fadeIn(tween(260)) togetherWith fadeOut(tween(160)) using SizeTransform(clip = false) },
-                        label = "quote",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                            ) {
-                                quoteIndex = VillainQuotes.next()
+                    // Tap the quote for another one. The area keeps room for a long quote, so the
+                    // page below doesn't jump each time the quote changes.
+                    if (showQuotes) {
+                        val quote = villainQuotes[quoteIndex]
+                        val minQuoteHeight = with(LocalDensity.current) { (25 * 4 + 18).sp.toDp() } + 6.dp
+                        AnimatedContent(
+                            targetState = quote,
+                            transitionSpec = {
+                                fadeIn(tween(600, delayMillis = 250)) togetherWith fadeOut(tween(350)) using
+                                    SizeTransform(clip = false) { _, _ -> tween(400) }
                             },
-                    ) { q ->
-                        Column(Modifier.fillMaxWidth()) {
-                            Text(
-                                "\u201C${q.text}\u201D",
-                                style = MaterialTheme.typography.headlineSmall.copy(
-                                    fontStyle = FontStyle.Italic,
-                                    fontSize = 19.sp,
-                                    lineHeight = 25.sp,
-                                ),
-                            )
-                            Spacer(Modifier.height(6.dp))
-                            Text(
-                                "\u2014 ${q.who}, ${q.game}",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = LsColors.Gold,
-                            )
+                            contentAlignment = Alignment.CenterStart,
+                            label = "quote",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = minQuoteHeight)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                ) {
+                                    quoteIndex = VillainQuotes.next()
+                                },
+                        ) { q ->
+                            Column(Modifier.fillMaxWidth().heightIn(min = minQuoteHeight), verticalArrangement = Arrangement.Center) {
+                                Text(
+                                    "\u201C${q.text}\u201D",
+                                    style = MaterialTheme.typography.headlineSmall.copy(
+                                        fontStyle = FontStyle.Italic,
+                                        fontSize = 19.sp,
+                                        lineHeight = 25.sp,
+                                    ),
+                                )
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    "\u2014 ${q.who}, ${q.game}",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = LsColors.Gold,
+                                )
+                            }
                         }
+                        Spacer(Modifier.height(16.dp))
                     }
-                    Spacer(Modifier.height(16.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilledTonalButton(onClick = { vm.surprise() }, enabled = !vm.surprising) {
                             if (vm.surprising) {

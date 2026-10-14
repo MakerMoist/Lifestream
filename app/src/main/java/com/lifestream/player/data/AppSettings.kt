@@ -17,6 +17,8 @@ object AppSettings {
     private const val KEY_AUTO_UPDATE = "auto_update"
     private const val KEY_PAUSE_AT_ZERO_VOLUME = "pause_at_zero_volume"
     private const val KEY_RANDOM_SONG_ORDER = "random_song_order"
+    private const val KEY_SHOW_QUOTES = "show_quotes"
+    private const val KEY_LEVEL_VOLUME = "level_volume"
 
     /** Size choices for saved songs, in MB (0 = don't save songs). */
     val CACHE_LIMIT_CHOICES = listOf(0, 2048, 4096, 6144, 8192)
@@ -54,10 +56,20 @@ object AppSettings {
     /** Pause playback when the phone's media volume is turned all the way down. */
     val pauseAtZeroVolume: StateFlow<Boolean> = _pauseAtZeroVolume.asStateFlow()
 
-    private val _randomSongOrder = MutableStateFlow(true)
+    private val _randomSongOrder = MutableStateFlow(false)
 
     /** A soundtrack's song list opens in random order (true) or in soundtrack order (false). */
     val randomSongOrder: StateFlow<Boolean> = _randomSongOrder.asStateFlow()
+
+    private val _showQuotes = MutableStateFlow(true)
+
+    /** Show the villain quotes at the top of Home. */
+    val showQuotes: StateFlow<Boolean> = _showQuotes.asStateFlow()
+
+    private val _levelVolume = MutableStateFlow(true)
+
+    /** Even out loudness between songs (see VolumeLeveler). */
+    val levelVolume: StateFlow<Boolean> = _levelVolume.asStateFlow()
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
@@ -65,7 +77,9 @@ object AppSettings {
         _searchKeyboard.value = prefs.getBoolean(KEY_SEARCH_KEYBOARD, true)
         _autoUpdate.value = prefs.getBoolean(KEY_AUTO_UPDATE, false)
         _pauseAtZeroVolume.value = prefs.getBoolean(KEY_PAUSE_AT_ZERO_VOLUME, true)
-        _randomSongOrder.value = prefs.getBoolean(KEY_RANDOM_SONG_ORDER, true)
+        _randomSongOrder.value = prefs.getBoolean(KEY_RANDOM_SONG_ORDER, false)
+        _showQuotes.value = prefs.getBoolean(KEY_SHOW_QUOTES, true)
+        _levelVolume.value = prefs.getBoolean(KEY_LEVEL_VOLUME, true)
         // A size from an older version (e.g. 5 or 10 GB) becomes the largest choice that fits in it.
         val stored = prefs.getInt(KEY_CACHE_LIMIT_MB, DEFAULT_CACHE_LIMIT_MB)
         _cacheLimitMb.value = if (stored in CACHE_LIMIT_CHOICES) stored
@@ -91,6 +105,16 @@ object AppSettings {
     fun setRandomSongOrder(on: Boolean) {
         _randomSongOrder.value = on
         prefs.edit().putBoolean(KEY_RANDOM_SONG_ORDER, on).apply()
+    }
+
+    fun setShowQuotes(on: Boolean) {
+        _showQuotes.value = on
+        prefs.edit().putBoolean(KEY_SHOW_QUOTES, on).apply()
+    }
+
+    fun setLevelVolume(on: Boolean) {
+        _levelVolume.value = on
+        prefs.edit().putBoolean(KEY_LEVEL_VOLUME, on).apply()
     }
 
     fun setPauseAtZeroVolume(on: Boolean) {

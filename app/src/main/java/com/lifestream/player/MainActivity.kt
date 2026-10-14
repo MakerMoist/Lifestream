@@ -201,7 +201,7 @@ private fun BottomBar(nav: NavHostController) {
                     if (item.route == section) {
                         if (entry?.destination?.route == item.route) {
                             // Already on this section's first screen: nothing to navigate; Home
-                            // just scrolls back to the top.
+                            // refreshes as if pulled down.
                             if (item.route == "home") HomeReselect.count++
                         } else if (!nav.popBackStack(item.route, inclusive = false)) {
                             // Inside the section: go back to its first screen.

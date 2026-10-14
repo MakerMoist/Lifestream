@@ -272,6 +272,8 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
     val autoUpdate by AppSettings.autoUpdate.collectAsStateWithLifecycle()
     val pauseAtZeroVolume by AppSettings.pauseAtZeroVolume.collectAsStateWithLifecycle()
     val randomSongOrder by AppSettings.randomSongOrder.collectAsStateWithLifecycle()
+    val showQuotes by AppSettings.showQuotes.collectAsStateWithLifecycle()
+    val levelVolume by AppSettings.levelVolume.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
     val themeId by AppSettings.themeId.collectAsStateWithLifecycle()
@@ -323,6 +325,19 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = pauseAtZeroVolume, onCheckedChange = { AppSettings.setPauseAtZeroVolume(it) })
             }
+            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Even Out Volume", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Raises quiet songs and lowers loud ones so every song plays at a similar volume.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = levelVolume, onCheckedChange = { AppSettings.setLevelVolume(it) })
+            }
         }
 
         SectionLabel("Search", Modifier.padding(top = 8.dp))
@@ -345,18 +360,30 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
         ThemeRow(Palettes.byId(themeId), onClick = onOpenThemes)
         SettingsCard {
             Text("Song List Order", style = MaterialTheme.typography.bodyLarge)
+            Text(
+                "Changes how the songs are organized when opening the title.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
-                    selected = randomSongOrder,
-                    onClick = { AppSettings.setRandomSongOrder(true) },
-                    label = { Text("Random") },
-                )
                 FilterChip(
                     selected = !randomSongOrder,
                     onClick = { AppSettings.setRandomSongOrder(false) },
                     label = { Text("Soundtrack Order") },
                 )
+                FilterChip(
+                    selected = randomSongOrder,
+                    onClick = { AppSettings.setRandomSongOrder(true) },
+                    label = { Text("Random") },
+                )
+            }
+        }
+        SettingsCard {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Show Quotes", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = showQuotes, onCheckedChange = { AppSettings.setShowQuotes(it) })
             }
         }
 

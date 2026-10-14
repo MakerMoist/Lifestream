@@ -130,7 +130,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
             onValueChange = { vm.input = it.take(100) }, // song names are short; keeps matching cheap
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 36.dp, end = 36.dp, top = 16.dp)
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp)
                 .focusRequester(focusRequester),
             placeholder = { Text("Songs or games, e.g. \"Prelude\" or \"FF7\"") },
             leadingIcon = { Icon(Icons.Rounded.Search, null) },
