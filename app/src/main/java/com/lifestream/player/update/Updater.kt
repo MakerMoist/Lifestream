@@ -111,6 +111,7 @@ object Updater {
                     if (total > MAX_APK_BYTES) throw IOException("Update is unexpectedly large.")
                     val digest = MessageDigest.getInstance("SHA-256")
                     var read = 0L
+                    var lastPercent = -1
                     partial.outputStream().use { out ->
                         body.byteStream().use { input ->
                             val buf = ByteArray(64 * 1024)
@@ -121,7 +122,13 @@ object Updater {
                                 if (read > MAX_APK_BYTES) throw IOException("Update is unexpectedly large.")
                                 digest.update(buf, 0, n)
                                 out.write(buf, 0, n)
-                                if (total > 0) onProgress((read.toFloat() / total).coerceIn(0f, 1f))
+                                if (total > 0) {
+                                    val percent = (read * 100 / total).toInt().coerceIn(0, 100)
+                                    if (percent != lastPercent) {
+                                        lastPercent = percent
+                                        onProgress(percent / 100f)
+                                    }
+                                }
                             }
                         }
                     }

@@ -47,7 +47,10 @@ object SongCache {
             if (cache != null) return
             evictor.maxBytes = AppSettings.cacheLimitMb.value * MB
             val dir = File(context.applicationContext.cacheDir, "songs")
-            cache = SimpleCache(dir, evictor, StandaloneDatabaseProvider(context.applicationContext))
+            // If the cache can't open (e.g. its database is damaged), songs simply stream.
+            cache = runCatching {
+                SimpleCache(dir, evictor, StandaloneDatabaseProvider(context.applicationContext))
+            }.getOrNull()
         }
     }
 

@@ -1,5 +1,6 @@
 package com.lifestream.player.playback
 
+import kotlinx.coroutines.flow.first
 import android.content.ComponentName
 import android.content.Context
 import androidx.media3.common.MediaItem
@@ -27,7 +28,6 @@ data class PlayerUiState(
     val current: Track? = null,
     val isPlaying: Boolean = false,
     val isBuffering: Boolean = false,
-    val positionMs: Long = 0,
     val durationMs: Long = 0,
     val shuffle: Boolean = false,
     val repeatMode: Int = Player.REPEAT_MODE_OFF,
@@ -48,7 +48,19 @@ object PlayerConnection {
     private var ticker: Job? = null
 
     private val _state = MutableStateFlow(PlayerUiState())
+    /** Everything about playback except the position; changes only when something happens. */
     val state: StateFlow<PlayerUiState> = _state.asStateFlow()
+
+    private val _position = MutableStateFlow(0L)
+    /**
+     * Playback position in ms. Kept separate from [state] because it ticks while playing: only
+     * the progress bars watch it, so screens and song lists don't redraw twice a second.
+     */
+    val position: StateFlow<Long> = _position.asStateFlow()
+
+    private val _currentId = MutableStateFlow<String?>(null)
+    /** The playing song's id; song rows watch this to highlight themselves. */
+    val currentId: StateFlow<String?> = _currentId.asStateFlow()
 
     private val pending = mutableListOf<(MediaController) -> Unit>()
     private var appContext: Context? = null
@@ -164,7 +176,7 @@ object PlayerConnection {
 
     fun seekTo(positionMs: Long) = withController {
         it.seekTo(positionMs)
-        _state.update { s -> s.copy(positionMs = positionMs) }
+        _position.value = positionMs
     }
 
     fun toggleShuffle() = withController { it.shuffleModeEnabled = !it.shuffleModeEnabled }
@@ -215,13 +227,14 @@ object PlayerConnection {
         val duration = c.duration.takeIf { it > 0 }
             ?: c.currentMediaItem?.toTrack()?.durationSec?.takeIf { it > 0 }?.times(1000)
             ?: 0L
+        _position.value = c.currentPosition.coerceAtLeast(0)
+        _currentId.value = c.currentMediaItem?.mediaId
         _state.update {
             it.copy(
                 connected = true,
                 current = c.currentMediaItem?.toTrack(),
                 isPlaying = c.isPlaying,
                 isBuffering = c.playbackState == Player.STATE_BUFFERING,
-                positionMs = c.currentPosition.coerceAtLeast(0),
                 durationMs = duration,
                 shuffle = c.shuffleModeEnabled,
                 repeatMode = c.repeatMode,
@@ -238,11 +251,11 @@ object PlayerConnection {
         ticker?.cancel()
         ticker = scope.launch {
             while (isActive) {
-                controller?.let { c ->
-                    if (c.isPlaying) {
-                        _state.update { it.copy(positionMs = c.currentPosition.coerceAtLeast(0)) }
-                    }
-                }
+                // Sleep (no wake-ups at all) while nothing on screen shows the position — e.g. the
+                // app is in the background — and while nothing is playing.
+                _position.subscriptionCount.first { it > 0 }
+                _state.first { it.isPlaying }
+                controller?.let { c -> _position.value = c.currentPosition.coerceAtLeast(0) }
                 delay(500)
             }
         }

@@ -127,7 +127,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
     ) {
         OutlinedTextField(
             value = vm.input,
-            onValueChange = { vm.input = it },
+            onValueChange = { vm.input = it.take(100) }, // song names are short; keeps matching cheap
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp)

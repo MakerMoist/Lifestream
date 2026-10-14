@@ -351,7 +351,7 @@ private fun RecommendedRow(songs: List<Track>) {
                         onLongClick = { TrackActions.show(track) },
                     ),
             ) {
-                Artwork(track.thumbnail, Modifier.size(120.dp))
+                Artwork(track.thumbnail, Modifier.size(120.dp), size = 120.dp)
                 Spacer(Modifier.height(6.dp))
                 Text(
                     track.title,

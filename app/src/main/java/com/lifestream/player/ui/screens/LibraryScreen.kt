@@ -168,7 +168,7 @@ private fun PlaylistRow(p: Playlist, onClick: () -> Unit) {
         Box(Modifier.size(60.dp)) {
             val art = p.tracks.firstOrNull()?.thumbnail
             if (art != null) {
-                Artwork(art, Modifier.size(60.dp))
+                Artwork(art, Modifier.size(60.dp), size = 60.dp)
             } else {
                 Box(Modifier.size(60.dp), contentAlignment = Alignment.Center) {
                     Icon(Icons.AutoMirrored.Rounded.QueueMusic, null, tint = LsColors.Crystal)

@@ -215,8 +215,10 @@ fun NowPlayingScreen(onClose: () -> Unit) {
 @Composable
 private fun SeekBar(state: PlayerUiState) {
     var dragging by remember { mutableStateOf<Float?>(null) }
+    // Only this small bar watches the ticking position.
+    val positionMs by PlayerConnection.position.collectAsStateWithLifecycle()
     val duration = state.durationMs.coerceAtLeast(1)
-    val fraction = dragging ?: (state.positionMs.toFloat() / duration).coerceIn(0f, 1f)
+    val fraction = dragging ?: (positionMs.toFloat() / duration).coerceIn(0f, 1f)
 
     Column {
         Slider(
@@ -234,7 +236,7 @@ private fun SeekBar(state: PlayerUiState) {
             ),
         )
         Row(Modifier.fillMaxWidth()) {
-            val shownPos = if (dragging != null) (fraction * duration).toLong() else state.positionMs
+            val shownPos = if (dragging != null) (fraction * duration).toLong() else positionMs
             Text(
                 formatDuration(shownPos / 1000).ifEmpty { "0:00" },
                 style = MaterialTheme.typography.bodySmall,
@@ -368,7 +370,8 @@ private fun SwipeableArtwork(state: PlayerUiState) {
 
     Artwork(
         state.current?.thumbnail,
-        Modifier
+        size = 400.dp,
+        modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
             .onSizeChanged { widthPx = it.width.toFloat().coerceAtLeast(1f) }

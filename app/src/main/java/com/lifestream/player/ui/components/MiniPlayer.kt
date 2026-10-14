@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.components
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,11 +42,11 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Mo
             .clickable(onClick = onOpen),
     ) {
         Column {
-            val fraction = if (state.durationMs > 0) {
-                (state.positionMs.toFloat() / state.durationMs).coerceIn(0f, 1f)
-            } else 0f
+            // Read in the drawing step only, so the ticking position never recomposes this bar.
+            val position = PlayerConnection.position.collectAsStateWithLifecycle()
+            val duration = state.durationMs
             LinearProgressIndicator(
-                progress = { fraction },
+                progress = { if (duration > 0) (position.value.toFloat() / duration).coerceIn(0f, 1f) else 0f },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(2.dp),

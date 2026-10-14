@@ -1,5 +1,10 @@
 package com.lifestream.player.ui.screens
 
+import androidx.compose.runtime.getValue
+import com.lifestream.player.data.Track
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import androidx.compose.runtime.produceState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.ui.geometry.Offset
@@ -68,8 +73,10 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
     val tracks = vm.tracks.items
     val focus = LocalFocusManager.current
     val filtering = vm.filter.isNotBlank()
-    val matches = remember(vm.filter, tracks) {
-        if (filtering) tracks.filter { Matching.titleMatches(it.title, vm.filter) } else emptyList()
+    val matches by produceState(emptyList<Track>(), vm.filter, tracks) {
+        val query = vm.filter
+        value = if (query.isBlank()) emptyList()
+        else withContext(Dispatchers.Default) { tracks.filter { Matching.titleMatches(it.title, query) } }
     }
     // A search covers the whole soundtrack, so keep loading pages while one is active.
     LaunchedEffect(filtering, tracks.size, vm.tracks.loading) {
@@ -168,7 +175,7 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
         item(key = "filter") {
             OutlinedTextField(
                 value = vm.filter,
-                onValueChange = { vm.filter = it },
+                onValueChange = { vm.filter = it.take(100) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 32.dp, vertical = 4.dp),

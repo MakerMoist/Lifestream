@@ -30,10 +30,12 @@ import java.io.File
 object SoundtrackIndex {
 
     /** Bump when the way soundtracks are sourced changes, so old indexes are rebuilt. */
-    private const val VERSION = 10
+    private const val VERSION = 11
     private const val FILE_NAME = "soundtrack-index.json"
-    private const val MAX_AGE_MS = 3L * 24 * 60 * 60 * 1000
-    private const val MAX_TRACKS_PER_GAME = 400
+    // Soundtracks rarely change; refreshing weekly keeps background network use low.
+    private const val MAX_AGE_MS = 7L * 24 * 60 * 60 * 1000
+    // XIV alone has ~800 songs across its albums; this only guards against a runaway source.
+    private const val MAX_TRACKS_PER_GAME = 3000
     private const val RETRY_EMPTY_MS = 30L * 60 * 1000
 
     data class Progress(val done: Int, val total: Int, val running: Boolean)
@@ -123,7 +125,7 @@ object SoundtrackIndex {
             page.items.forEach { out.putIfAbsent(Matching.songKey(it.title), it) }
             next = page.next
             pages++
-        } while (next != null && out.size < MAX_TRACKS_PER_GAME && pages < 60)
+        } while (next != null && out.size < MAX_TRACKS_PER_GAME && pages < 300)
         out.values.toList()
     } catch (e: CancellationException) {
         throw e

@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.components
 
+import androidx.compose.ui.platform.LocalDensity
 import com.lifestream.player.data.hiResArtwork
 import com.lifestream.player.playback.SafeInput
 import androidx.compose.foundation.background
@@ -60,6 +61,8 @@ fun Artwork(
     url: String?,
     modifier: Modifier = Modifier,
     corner: Dp = 8.dp,
+    /** About how big it's shown; artwork is fetched at a matching size, not always full size. */
+    size: Dp = 64.dp,
 ) {
     val shape = RoundedCornerShape(corner)
     val placeholder: @Composable () -> Unit = {
@@ -79,8 +82,13 @@ fun Artwork(
         val safeUrl = remember(url) { SafeInput.safeArtwork(url) }
         if (safeUrl != null) {
             val context = LocalContext.current
-            // Ask for the full-size artwork; if that doesn't exist, fall back to the original.
-            val hiRes = remember(safeUrl) { SafeInput.safeArtwork(hiResArtwork(safeUrl)) }
+            // Ask for artwork sized for where it's shown (small rows don't download 1200 px images);
+            // if that size isn't available, fall back to the original.
+            val px = with(LocalDensity.current) { size.roundToPx() }
+            val bucket = listOf(180, 360, 720, 1200).firstOrNull { it >= px } ?: 1200
+            val hiRes = remember(safeUrl, bucket) {
+                SafeInput.safeArtwork(hiResArtwork(safeUrl, bucket, videoThumbs = bucket >= 720))
+            }
             var useOriginal by remember(safeUrl) { mutableStateOf(hiRes == null) }
             val request = remember(safeUrl, useOriginal) {
                 ImageRequest.Builder(context).data(if (useOriginal) safeUrl else hiRes).crossfade(200).build()
@@ -107,8 +115,9 @@ fun TrackRow(
     /** Set when the row is shown inside a playlist, so the menu can offer "Remove". */
     playlistId: String? = null,
 ) {
-    val playerState by PlayerConnection.state.collectAsStateWithLifecycle()
-    val isCurrent = playerState.current?.id == track.id
+    // Only the playing song's id, so rows don't redraw for anything else the player does.
+    val currentId by PlayerConnection.currentId.collectAsStateWithLifecycle()
+    val isCurrent = currentId == track.id
 
     Row(
         modifier

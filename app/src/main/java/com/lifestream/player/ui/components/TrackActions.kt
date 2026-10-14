@@ -210,8 +210,8 @@ private fun AddToPlaylistDialog(track: Track, onDismiss: () -> Unit, onNewPlayli
                         Modifier
                             .fillMaxWidth()
                             .clickable(enabled = !already) {
-                                Library.addToPlaylist(p.id, track)
-                                toast(context, "Added to ${p.name}")
+                                val added = Library.addToPlaylist(p.id, track)
+                                toast(context, if (added) "Added to ${p.name}" else "${p.name} is full")
                                 onDismiss()
                             }
                             .padding(vertical = 12.dp),

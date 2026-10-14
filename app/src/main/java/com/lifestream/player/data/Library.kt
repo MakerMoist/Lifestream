@@ -75,7 +75,8 @@ object Library {
     fun addToPlaylist(id: String, track: Track): Boolean {
         val p = playlist(id) ?: return false
         if (p.tracks.any { it.id == track.id }) return false
-        update(id) { it.copy(tracks = (it.tracks + track).take(MAX_TRACKS_PER_PLAYLIST)) }
+        if (p.tracks.size >= MAX_TRACKS_PER_PLAYLIST) return false // full: say so instead of dropping it
+        update(id) { it.copy(tracks = it.tracks + track) }
         return true
     }
 
