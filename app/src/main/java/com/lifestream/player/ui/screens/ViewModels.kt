@@ -95,8 +95,6 @@ class HomeViewModel : ViewModel() {
 class GameViewModel(game: Game) : ViewModel() {
     // One version of each song: the original soundtrack loads first, so its version wins.
     val tracks = PagedList(viewModelScope, MusicRepository.gameTracks(game)) { Matching.songKey(it.title) }
-    val albums = PagedList(viewModelScope, MusicRepository.gameAlbumsSource(game)) { it.url }
-    var tab by mutableStateOf(0)
 }
 
 class AlbumViewModel(url: String) : ViewModel() {

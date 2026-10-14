@@ -30,8 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -53,7 +51,7 @@ import com.lifestream.player.ui.components.pagedItems
 import com.lifestream.player.ui.theme.LsColors
 
 @Composable
-fun GameScreen(game: Game, onBack: () -> Unit, onOpenAlbum: (Album) -> Unit) {
+fun GameScreen(game: Game, onBack: () -> Unit) {
     val vm: GameViewModel = viewModel(key = "game-${game.id}") { GameViewModel(game) }
     val tracks = vm.tracks.items
 
@@ -137,34 +135,22 @@ fun GameScreen(game: Game, onBack: () -> Unit, onOpenAlbum: (Album) -> Unit) {
             }
         }
 
-        item(key = "tabs") {
-            TabRow(
-                selectedTabIndex = vm.tab,
-                containerColor = LsColors.Night,
-            ) {
-                Tab(selected = vm.tab == 0, onClick = { vm.tab = 0 }, text = { Text("Tracks") })
-                Tab(selected = vm.tab == 1, onClick = { vm.tab = 1 }, text = { Text("Albums") })
-            }
+        item(key = "tracks-label") {
+            Text(
+                "ORIGINAL SOUNDTRACK",
+                style = MaterialTheme.typography.labelSmall,
+                color = LsColors.Gold,
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
+            )
         }
 
-        if (vm.tab == 0) {
-            pagedItems(
-                vm.tracks,
-                footerKey = "tracks-footer",
-                key = { "t-${it.id}" },
-                emptyText = "No official soundtrack for this game on YouTube Music yet.",
-            ) { index, track ->
-                TrackRow(track, onClick = { PlayerConnection.playTracks(vm.tracks.items, index) })
-            }
-        } else {
-            pagedItems(
-                vm.albums,
-                footerKey = "albums-footer",
-                key = { "a-${it.url}" },
-                emptyText = "No official soundtrack for this game on YouTube Music yet.",
-            ) { _, album ->
-                AlbumRow(album, onClick = { onOpenAlbum(album) })
-            }
+        pagedItems(
+            vm.tracks,
+            footerKey = "tracks-footer",
+            key = { "t-${it.id}" },
+            emptyText = "No official soundtrack for this game on YouTube Music yet.",
+        ) { index, track ->
+            TrackRow(track, onClick = { PlayerConnection.playTracks(vm.tracks.items, index) })
         }
     }
 }

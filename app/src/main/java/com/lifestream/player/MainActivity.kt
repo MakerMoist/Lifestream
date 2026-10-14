@@ -135,14 +135,7 @@ private fun LifestreamRoot() {
                 composable("game/{id}") { entry ->
                     val game = entry.arguments?.getString("id")?.let { Catalog.game(it) }
                     if (game != null) {
-                        GameScreen(
-                            game = game,
-                            onBack = { nav.popBackStack() },
-                            onOpenAlbum = { album ->
-                                AlbumHolder.put(album)
-                                nav.navigate("album/${Uri.encode(album.url)}")
-                            },
-                        )
+                        GameScreen(game = game, onBack = { nav.popBackStack() })
                     }
                 }
                 composable("album/{url}") { entry ->
