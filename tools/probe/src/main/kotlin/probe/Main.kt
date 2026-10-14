@@ -26,6 +26,10 @@ import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQu
  */
 fun main(args: Array<String>) {
     NewPipe.init(OkHttpDownloader(Http.client), Localization("en", "US"), ContentCountry("US"))
+    if ("--tfbl" in args) {
+        runChecklist(args.filter { it != "--tfbl" }.toSet())
+        return
+    }
     val only = args.toSet()
     val detail = StringBuilder()
     val summary = StringBuilder(
@@ -103,7 +107,7 @@ fun main(args: Array<String>) {
 }
 
 /** Mirrors MusicRepository.gameAlbums. */
-private fun sourcesFor(game: Game, log: StringBuilder): List<Album> {
+internal fun sourcesFor(game: Game, log: StringBuilder): List<Album> {
     val found = LinkedHashMap<String, Album>()
     for (q in listOf(game.query, "${game.title} soundtrack")) {
         if (found.isNotEmpty()) break
@@ -144,7 +148,7 @@ private fun allTitles(url: String): List<String> {
     return titles
 }
 
-private fun search(query: String, filter: String, pages: Int): List<InfoItem> {
+internal fun search(query: String, filter: String, pages: Int): List<InfoItem> {
     val yt = ServiceList.YouTube
     val handler = yt.searchQHFactory.fromQuery(query, listOf(filter), "")
     val info = SearchInfo.getInfo(yt, handler)
@@ -160,7 +164,7 @@ private fun search(query: String, filter: String, pages: Int): List<InfoItem> {
     return items
 }
 
-private fun PlaylistInfoItem.toAlbum() = Album(
+internal fun PlaylistInfoItem.toAlbum() = Album(
     url = url,
     title = name ?: "",
     artist = (uploaderName ?: "").removeSuffix(" - Topic").trim(),

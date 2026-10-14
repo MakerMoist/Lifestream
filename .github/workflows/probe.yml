@@ -56,6 +56,8 @@ jobs:
           git rm -rf --quiet .
           cp "$RUNNER_TEMP/report.md" report.md
           cp "$RUNNER_TEMP/probe-log.txt" probe-log.txt
+          [ -f "$RUNNER_TEMP/checklist.tsv" ] && cp "$RUNNER_TEMP/checklist.tsv" checklist.tsv
           git add report.md probe-log.txt
+          [ -f checklist.tsv ] && git add checklist.tsv
           git commit -m "Soundtrack probe report"
           git push -f origin probe-report
