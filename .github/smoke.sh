@@ -43,7 +43,7 @@ PY
 # Play a soundtrack: this runs the whole streaming path (the YouTube extractor and its
 # JavaScript engine resolving a stream, the download, decoding and the volume leveler).
 played=0
-if tap_text "Final Fantasy VII"; then
+if tap_text "Final Fantasy" || tap_text "Final Fantasy II"; then
   sleep 20
   if tap_text "Play all"; then
     sleep 45
@@ -59,7 +59,7 @@ if tap_text "Final Fantasy VII"; then
     echo "::warning::Couldn't find the Play all button"
   fi
 else
-  echo "::warning::Couldn't find the Final Fantasy VII card"
+  echo "::warning::Couldn't find a soundtrack card. On screen: $(grep -oE 'text="[^"]+"' ui.xml 2>/dev/null | head -12 | tr '\n' ' ')"
 fi
 
 if ! adb shell pidof "$PKG" >/dev/null; then
