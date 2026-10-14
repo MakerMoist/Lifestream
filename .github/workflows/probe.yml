@@ -10,29 +10,36 @@ on:
         required: false
         default: ""
 
+# Read-only by default; only the small publish job below can write, and it runs no build code.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   probe:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
         with:
           distribution: temurin
           java-version: 17
 
-      - uses: gradle/actions/setup-gradle@v4
+      # Also validates gradle-wrapper.jar against Gradle's published checksums.
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
       - name: Run probe
         continue-on-error: true
         env:
-          PROBE_OUT: ${{ runner.temp }}/report.md
+          PROBE_OUT: ${{ runner.temp }}/out/report.md
           # Passed as data via the environment, never pasted into the script.
           GAMES: ${{ github.event.inputs.games }}
         run: |
+          mkdir -p "$RUNNER_TEMP/out"
           chmod +x ./gradlew
           set -o pipefail
           if ! printf '%s' "$GAMES" | grep -Eq '^[a-z0-9 -]*$'; then
@@ -45,19 +52,51 @@ jobs:
             ./gradlew --no-daemon -p tools/probe run 2>&1 | tee "$RUNNER_TEMP/probe.log"
           fi
 
-      - name: Publish report
+      - name: Collect results
         if: always()
         run: |
-          [ -f "$RUNNER_TEMP/report.md" ] || echo "(no report)" > "$RUNNER_TEMP/report.md"
-          tail -n 400 "$RUNNER_TEMP/probe.log" > "$RUNNER_TEMP/probe-log.txt" || true
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$OUT"
+          [ -f "$OUT/report.md" ] || echo "(no report)" > "$OUT/report.md"
+          tail -n 400 "$RUNNER_TEMP/probe.log" > "$OUT/probe-log.txt" 2>/dev/null || true
+          [ -f "$RUNNER_TEMP/out/checklist.tsv" ] || rm -f "$OUT/checklist.tsv"
+          # Checksum of the Gradle distribution the wrapper uses, for pinning in gradle-wrapper.properties.
+          DIST=$(sed -n 's/^distributionUrl=//p' gradle/wrapper/gradle-wrapper.properties | sed 's/\\//g')
+          {
+            echo "url $DIST"
+            echo "published $(curl -fsSL "$DIST.sha256" || echo unavailable)"
+            echo "computed $(curl -fsSL "$DIST" | sha256sum | cut -d' ' -f1)"
+          } > "$OUT/gradle-dist.txt"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: probe-report
+          path: ${{ runner.temp }}/out/
+
+  publish:
+    needs: probe
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: probe-report
+          path: report
+
+      - name: Publish to the probe-report branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          cd report
+          git init -q
+          git checkout -q --orphan probe-report
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git checkout --orphan probe-report
-          git rm -rf --quiet .
-          cp "$RUNNER_TEMP/report.md" report.md
-          cp "$RUNNER_TEMP/probe-log.txt" probe-log.txt
-          [ -f "$RUNNER_TEMP/checklist.tsv" ] && cp "$RUNNER_TEMP/checklist.tsv" checklist.tsv
-          git add report.md probe-log.txt
-          [ -f checklist.tsv ] && git add checklist.tsv
-          git commit -m "Soundtrack probe report"
-          git push -f origin probe-report
+          git add -A
+          git commit -q -m "Soundtrack probe report"
+          AUTH=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          git -c http.extraheader="AUTHORIZATION: basic $AUTH" push -q -f "https://github.com/$REPO.git" probe-report
