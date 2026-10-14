@@ -532,6 +532,30 @@ def ff13(s):
         s.crystal(x, 0.84, 0.03, 0.09, "#8fe4ff", glow_r=20, glow_s=0.5)
 
 
+def ff13_2(s):
+    """A city of crystal spires adrift in a violet storm of chaos, a time gate open above, the shell-world falling."""
+    s.vgrad([(0, "#0a0418"), (0.45, "#2a1250"), (0.72, "#5a3a9a"), (1, "#08041a")])
+    # the chaos vortex
+    for k in range(5):
+        r = 0.42 - k * 0.07
+        s.ribbon(lambda t, r=r, k=k: (0.5 + r * math.cos(t * 2 * math.pi + k), 0.26 + r * 0.55 * math.sin(t * 2 * math.pi + k)),
+                 "#7a3cff" if k % 2 else "#2fd6c8", width=3, glow_r=18, strength=0.35, steps=120)
+    s.radial(0.5, 0.26, 0.3, "#b48cff", 0.35)
+    # the shell-world falling, trailing fire
+    s.meteor(0.2, 0.13, 0.03, 35, 0.22, "#ff8a4a", core="#ffb07a")
+    shell_world(s, 0.2, 0.13, 0.065, "#1a1430", "#ffd27a")
+    # time gate: concentric rings with a bright core
+    for r, w, c in [(0.12, 3, "#2fd6c8"), (0.09, 2, "#e8d8ff"), (0.05, 3, "#ffffff")]:
+        s.ring(0.5, 0.26, r, w, c, glow_r=12)
+    s.particles(1, 0.5, 0.5, 0.26, 0.26, "#ffffff", 6, 6, glow_r=30, strength=1.5, seed=131)
+    # crystal city: tall shards of different heights
+    for x, w, h, tl in [(0.14, 0.05, 0.3, -0.1), (0.26, 0.06, 0.42, 0.05), (0.38, 0.05, 0.28, -0.05),
+                        (0.62, 0.06, 0.36, 0.08), (0.74, 0.05, 0.46, -0.06), (0.87, 0.05, 0.3, 0.1)]:
+        s.crystal(x, 0.86 - h / 2, w, h, "#9fd8ff", glow_r=24, glow_s=0.5, tilt=tl)
+    s.fill_below(s.ridge_heights(0.86, 0.02, seed=132), "#0c0820")
+    s.particles(120, 0, 1, 0.05, 0.95, "#cdb8ff", 0.6, 2.2, glow_r=5, seed=133)
+
+
 def ff14(s):
     """A cracked red moon breaking apart over the realm, a crystal tower standing below."""
     s.vgrad([(0, "#0a0614"), (0.5, "#2a1650"), (0.75, "#5a3a8a"), (1, "#0a0614")])
@@ -678,7 +702,7 @@ def lo(s):
 
 SCENES = {
     "ff1": ff1, "ff2": ff2, "ff3": ff3, "ff4": ff4, "ff5": ff5, "ff6": ff6, "ff7": ff7, "ff8": ff8,
-    "ff9": ff9, "ff10": ff10, "ff10_2": ff10_2, "ff11": ff11, "ff12": ff12, "ff13": ff13, "ff14": ff14,
+    "ff9": ff9, "ff10": ff10, "ff10_2": ff10_2, "ff11": ff11, "ff12": ff12, "ff13": ff13, "ff13_2": ff13_2, "ff14": ff14,
     "ff15": ff15, "ff16": ff16, "ff7r": ff7r, "ff7int": ff7int, "ff7rb": ff7rb, "fft": fft, "ccr": ccr,
     "ct": ct, "cx": cx, "lo": lo,
 }

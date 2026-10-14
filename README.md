@@ -4,7 +4,7 @@ A standalone Android music player for Final Fantasy soundtracks. Audio is stream
 
 ## Features
 
-- **Soundtrack catalog** — 25 soundtracks, each with its own original card art. Main series: I–XVI with X-2, plus VII Remake, INTERmission and Rebirth right after VII. Spin-offs & more: Tactics, Crisis Core –Reunion–, Chrono Trigger, Chrono Cross, Lost Odyssey. Tapping one opens its original soundtrack track list.
+- **Soundtrack catalog** — 26 soundtracks, each with its own original card art. Main series: I–XVI with X-2 and XIII-2, plus VII Remake, INTERmission and Rebirth right after VII. Spin-offs & more: Tactics, Crisis Core –Reunion–, Chrono Trigger, Chrono Cross, Lost Odyssey. Tapping one opens its original soundtrack track list.
 - **Multi-select**: press and hold a soundtrack, tap more (or "Select all" for a section), then Play or Shuffle them as one queue.
 - **Official soundtracks first**: each game plays its official original soundtrack album(s) — no arrangements, covers or spin-off albums, and originals before remasters/remakes. Where no official album exists on YouTube Music (currently X-2, Crisis Core –Reunion– and Lost Odyssey) it uses the most complete upload of the game's own soundtrack, with track names cleaned up.
 - **Search inside a soundtrack**: every game page has its own search box.
