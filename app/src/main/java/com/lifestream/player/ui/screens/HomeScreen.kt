@@ -82,6 +82,7 @@ import com.lifestream.player.data.Series
 import com.lifestream.player.data.Track
 import com.lifestream.player.playback.PlayerConnection
 import com.lifestream.player.ui.components.Artwork
+import com.lifestream.player.ui.components.TrackActions
 import com.lifestream.player.ui.components.SectionLabel
 import com.lifestream.player.ui.theme.LsColors
 
@@ -237,6 +238,7 @@ private fun SelectionBar(vm: HomeViewModel) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RecentsRow(recents: List<Track>) {
     LazyRow(
@@ -248,7 +250,10 @@ private fun RecentsRow(recents: List<Track>) {
                 Modifier
                     .width(120.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable { PlayerConnection.playTracks(recents, index) },
+                    .combinedClickable(
+                        onClick = { PlayerConnection.playTracks(recents, index) },
+                        onLongClick = { TrackActions.show(track) },
+                    ),
             ) {
                 Artwork(track.thumbnail, Modifier.size(120.dp))
                 Spacer(Modifier.height(6.dp))

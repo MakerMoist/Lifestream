@@ -132,32 +132,29 @@ object SoundtrackIndex {
 
     data class Hit(val track: Track, val game: Game)
 
-    /** Games whose name matches, e.g. "vii", "ff7", "rebirth", "chrono". */
+    /** Games whose name matches, e.g. "vii", "ff7", "rebirth", "chrono", "lightnig returns". */
     fun searchGames(query: String): List<Game> {
         val q = Matching.queryTokens(query)
         if (q.isEmpty()) return emptyList()
-        return Catalog.games.filter { game -> matchesAll(q, Matching.titleTokens(game), exactNumerals = true) }
+        val compactQuery = q.joinToString("")
+        return Catalog.games.filter { game ->
+            val tokens = Matching.titleTokens(game)
+            matchesAll(q, tokens, exactNumerals = true) ||
+                q.all { w -> if (Matching.isNumeralToken(w)) w in tokens else tokens.any { Matching.wordMatches(w, it) } } ||
+                (compactQuery.length >= 4 && tokens.joinToString("").contains(compactQuery))
+        }
     }
 
-    /** Songs whose title (optionally together with their game's name) matches. */
+    /** Songs whose title (optionally together with their game's name) matches, best first. */
     fun searchTracks(query: String, limit: Int = 150): List<Hit> {
-        val q = Matching.queryTokens(query)
-        if (q.isEmpty()) return emptyList()
-        val phrase = Matching.normalize(query)
+        if (Matching.queryTokens(query).isEmpty()) return emptyList()
         val hits = mutableListOf<Pair<Int, Hit>>()
         val byId = Catalog.games.associateBy { it.id }
         for ((gameId, list) in _tracks.value) {
             val game = byId[gameId] ?: continue
             val gameTokens = Matching.titleTokens(game)
             for (track in list) {
-                val titleTokens = Matching.normalize(track.title).split(' ').filter { it.isNotEmpty() }
-                if (!matchesAll(q, titleTokens + gameTokens, exactNumerals = false)) continue
-                val title = Matching.normalize(track.title)
-                var score = 0
-                if (matchesAll(q, titleTokens, exactNumerals = false)) score += 3
-                if (q.all { it in gameTokens || it in titleTokens }) score += 1
-                if (title.contains(phrase)) score += 2
-                if (title == phrase) score += 3
+                val score = Matching.searchScore(query, track.title, gameTokens) ?: continue
                 hits += score to Hit(track, game)
             }
         }

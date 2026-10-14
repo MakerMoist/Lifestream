@@ -45,6 +45,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lifestream.player.data.AppSettings
 import com.lifestream.player.data.Game
 import com.lifestream.player.data.SoundtrackIndex
 import com.lifestream.player.playback.PlayerConnection
@@ -73,6 +74,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
     val focus = LocalFocusManager.current
     val index by SoundtrackIndex.tracks.collectAsStateWithLifecycle()
     val progress by SoundtrackIndex.progress.collectAsStateWithLifecycle()
+    val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) { SoundtrackIndex.ensureBuilt() }
 
@@ -166,7 +168,17 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
                     TrackRow(
                         hit.track,
                         subtitle = hit.game.title,
-                        onClick = { PlayerConnection.playTracks(hits.map { it.track }, i) },
+                        onClick = {
+                            if (continueFromSearch) {
+                                // This song first, then the rest of its soundtrack in random order.
+                                val rest = (SoundtrackIndex.tracksFor(hit.game.id) ?: emptyList())
+                                    .filter { it.id != hit.track.id }
+                                    .shuffled()
+                                PlayerConnection.playTracks(listOf(hit.track) + rest, 0)
+                            } else {
+                                PlayerConnection.playTracks(hits.map { it.track }, i)
+                            }
+                        },
                     )
                 }
             }

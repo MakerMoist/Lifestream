@@ -105,7 +105,6 @@ private fun LifestreamRoot() {
         PlayerConnection.clearError()
     }
 
-    BackHandler(enabled = showPlayer) { showPlayer = false }
 
     Box(Modifier.fillMaxSize()) {
         Scaffold(

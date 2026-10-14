@@ -28,6 +28,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,7 +42,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lifestream.player.BuildConfig
+import com.lifestream.player.data.AppSettings
 import com.lifestream.player.ui.components.SectionLabel
 import com.lifestream.player.ui.theme.LsColors
 import com.lifestream.player.update.Updater
@@ -114,6 +117,7 @@ class SettingsViewModel : ViewModel() {
 fun SettingsScreen() {
     val vm: SettingsViewModel = viewModel()
     val context = LocalContext.current
+    val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
     LifecycleResumeEffect(Unit) {
         vm.onResume(context)
         onPauseOrDispose { }
@@ -132,27 +136,42 @@ fun SettingsScreen() {
             modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp),
         )
 
-        SectionLabel("App updates")
+        SectionLabel("Playback")
+        SettingsCard {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Keep playing after a search", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "When you play a song from Search, continue with the rest of its soundtrack, shuffled.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = continueFromSearch, onCheckedChange = { AppSettings.setContinueFromSearch(it) })
+            }
+        }
+
+        // App updates always stays last, with its check button always visible.
+        SectionLabel("App updates", Modifier.padding(top = 8.dp))
         SettingsCard {
             Text("Lifestream ${Updater.currentVersionName}", style = MaterialTheme.typography.titleMedium)
             Text(
-                "Updates come from the Lifestream releases on GitHub (${BuildConfig.UPDATE_REPO}).",
+                "Updates come from the Lifestream releases on GitHub (${BuildConfig.UPDATE_REPO}). Each one is " +
+                    "downloaded over HTTPS, checked against its published SHA-256 checksum, and must be signed " +
+                    "with Lifestream's own key; Android asks you to confirm before installing.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(16.dp))
             UpdateSection(vm, context)
-        }
-
-        SectionLabel("Safety", Modifier.padding(top = 8.dp))
-        SettingsCard {
-            Text(
-                "Every update is downloaded over HTTPS from GitHub, checked against its published " +
-                    "SHA-256 checksum, and must be signed with Lifestream's own key. Android always " +
-                    "asks you to confirm before installing.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Spacer(Modifier.height(16.dp))
+            val busy = vm.state is UpdateState.Checking || vm.state is UpdateState.Downloading
+            Button(onClick = { vm.check() }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Rounded.SystemUpdate, null, Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Check for updates")
+            }
         }
     }
 }
@@ -160,11 +179,11 @@ fun SettingsScreen() {
 @Composable
 private fun UpdateSection(vm: SettingsViewModel, context: Context) {
     when (val s = vm.state) {
-        UpdateState.Idle -> Button(onClick = { vm.check() }) {
-            Icon(Icons.Rounded.SystemUpdate, null, Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("Check for updates")
-        }
+        UpdateState.Idle -> Text(
+            "Tap Check for updates to see if a newer version is out.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
 
         UpdateState.Checking -> Row(verticalAlignment = Alignment.CenterVertically) {
             CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
@@ -177,11 +196,6 @@ private fun UpdateSection(vm: SettingsViewModel, context: Context) {
                 Icon(Icons.Rounded.CheckCircle, null, tint = LsColors.Mako)
                 Spacer(Modifier.width(8.dp))
                 Text("You're on the latest version.", style = MaterialTheme.typography.bodyMedium)
-            }
-            OutlinedButton(onClick = { vm.check() }) {
-                Icon(Icons.Rounded.Refresh, null, Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Check again")
             }
         }
 
@@ -234,7 +248,6 @@ private fun UpdateSection(vm: SettingsViewModel, context: Context) {
                 Spacer(Modifier.width(8.dp))
                 Text(s.message, style = MaterialTheme.typography.bodyMedium)
             }
-            OutlinedButton(onClick = { vm.check() }) { Text("Try again") }
         }
     }
 }

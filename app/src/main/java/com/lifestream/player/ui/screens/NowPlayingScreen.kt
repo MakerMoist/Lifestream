@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
@@ -94,6 +95,9 @@ fun NowPlayingScreen(onClose: () -> Unit) {
     val state by PlayerConnection.state.collectAsStateWithLifecycle()
     val track = state.current
     var showQueue by remember { mutableStateOf(false) }
+
+    // Back closes the player and returns to the page underneath (e.g. the soundtrack).
+    BackHandler { onClose() }
 
     // This screen floats above the app's Scaffold, so it must set its own text/icon colour;
     // otherwise everything falls back to black.

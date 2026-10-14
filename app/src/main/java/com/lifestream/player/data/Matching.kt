@@ -142,12 +142,78 @@ object Matching {
             ?: ok.minByOrNull { normalize(it.title).length }
     }
 
-    /** True if every search word starts a word of [title] ("one wing" → "One-Winged Angel"). */
-    fun titleMatches(title: String, query: String): Boolean {
+    /** True if [query] matches [title] (see [searchScore]). Used by each game's search box. */
+    fun titleMatches(title: String, query: String): Boolean =
+        queryTokens(query).isEmpty() || searchScore(query, title) != null
+
+    /**
+     * How well [query] matches a song [title] (plus optional [extraTokens], e.g. its game's name);
+     * null when it doesn't. Higher is better. Forgiving on purpose:
+     * - words can be typed partially ("one wing" → One-Winged Angel)
+     * - spacing doesn't matter ("Air Buster" ↔ "Airbuster", "Liberifatali")
+     * - small typos are tolerated ("Sephirot", "Zanarkan")
+     */
+    fun searchScore(query: String, title: String, extraTokens: List<String> = emptyList()): Int? {
         val q = queryTokens(query)
-        if (q.isEmpty()) return true
-        val words = normalize(title).split(' ')
-        return q.all { w -> words.any { it.startsWith(w) } } || title.contains(query.trim(), ignoreCase = true)
+        if (q.isEmpty()) return null
+        val normTitle = normalize(title)
+        val words = normTitle.split(' ').filter { it.isNotEmpty() }
+        val all = words + extraTokens
+        val compactQuery = q.joinToString("")
+        val compactTitle = normTitle.replace(" ", "")
+
+        var score = when {
+            q.all { w -> words.any { it.startsWith(w) } } -> 6
+            compactQuery.length >= 3 && compactTitle.contains(compactQuery) -> 5
+            q.all { w -> all.any { it.startsWith(w) } } -> 4
+            q.all { w -> all.any { wordMatches(w, it) } } -> 2
+            compactQuery.length >= 6 && fuzzyContains(compactTitle, compactQuery) -> 1
+            else -> return null
+        }
+        val phrase = normalize(query)
+        if (phrase.isNotEmpty() && normTitle.contains(phrase)) score += 2
+        if (normTitle == phrase || compactTitle == compactQuery) score += 3
+        return score
+    }
+
+    /** A query word matches a title word by prefix, or with one typo (two for long words). */
+    fun wordMatches(q: String, word: String): Boolean {
+        if (word.startsWith(q)) return true
+        if (q.length < 4 || isNumeralToken(q)) return false
+        val allowed = if (q.length >= 8) 2 else 1
+        return listOf(word, word.take(q.length), word.take(q.length + 1), word.take(q.length - 1))
+            .any { editDistance(q, it, allowed) <= allowed }
+    }
+
+    /** True if some slice of [text] is within a typo or two of [needle] (spacing already removed). */
+    private fun fuzzyContains(text: String, needle: String): Boolean {
+        val allowed = if (needle.length >= 10) 2 else 1
+        for (len in (needle.length - allowed)..(needle.length + allowed)) {
+            if (len <= 0 || len > text.length) continue
+            for (start in 0..(text.length - len)) {
+                if (editDistance(needle, text.substring(start, start + len), allowed) <= allowed) return true
+            }
+        }
+        return false
+    }
+
+    /** Levenshtein distance, giving up early once it exceeds [max]. */
+    private fun editDistance(a: String, b: String, max: Int): Int {
+        if (kotlin.math.abs(a.length - b.length) > max) return max + 1
+        var prev = IntArray(b.length + 1) { it }
+        var cur = IntArray(b.length + 1)
+        for (i in 1..a.length) {
+            cur[0] = i
+            var rowMin = cur[0]
+            for (j in 1..b.length) {
+                val cost = if (a[i - 1] == b[j - 1]) 0 else 1
+                cur[j] = minOf(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost)
+                if (cur[j] < rowMin) rowMin = cur[j]
+            }
+            if (rowMin > max) return max + 1
+            val t = prev; prev = cur; cur = t
+        }
+        return prev[b.length]
     }
 
     /** A game's searchable words: its title plus its card numeral. */

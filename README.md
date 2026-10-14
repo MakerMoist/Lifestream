@@ -11,10 +11,10 @@ A standalone Android music player for Final Fantasy soundtracks. Audio is stream
 - **Search inside a soundtrack**: every game page has its own search box.
 - **English titles**: many official albums only carry Japanese track names. A built-in glossary maps Final Fantasy names and well-known titles to their official English (魔晄炉 → Mako Reactor, 片翼の天使 → One-Winged Angel), and anything left is translated on the device (Google ML Kit, a one-time ~30 MB model download).
 - **One version per song**: remasters, piano/orchestral takes and duplicates collapse to a single entry (the original soundtrack's version wins).
-- **Strict search**: searches only the songs in Lifestream's own soundtracks (an on-device index built in the background) and the catalog's game names — e.g. "Prelude", "FF7", "Rebirth". Nothing comes from open YouTube search.
+- **Strict, forgiving search**: searches only the songs in Lifestream's own soundtracks (an on-device index built in the background) and the catalog's game names — e.g. "Prelude", "FF7", "Rebirth". Spacing and small typos don't matter ("Air Buster" finds Airbuster). Playing a result continues with the rest of its soundtrack, shuffled (switchable in Settings). Nothing comes from open YouTube search.
 - **Own player** built on Media3 ExoPlayer: background playback, media notification, lock-screen and headset controls, audio focus, pause on headphone unplug.
-- **Now Playing** screen: swipe the album art left or right to skip or go back; seek bar, shuffle, repeat (all / one), Up Next beside the title, and ⋮ for the song's options.
-- **Song options**: press and hold any song (or tap ⋮) for Play next, Add to queue, Add to playlist, Open its soundtrack, and Share (sends the YouTube link).
+- **Now Playing** screen: the phone's back button closes it; swipe the album art left or right to skip or go back; seek bar, shuffle, repeat (all / one), Up Next beside the title, and ⋮ for the song's options.
+- **Song options**: press and hold any song — including under Jump back in — (or tap ⋮) for Play next, Add to queue, Add to playlist, Open its soundtrack, and Share (sends the YouTube link).
 - **Playlists**: up to 5 renamable playlists mixing songs from any soundtrack, plus listening history — all saved on the device. (Old favorites became a "Favorites" playlist.)
 - **Settings → App updates**: checks this repo's `latest` release, downloads the new APK, verifies its SHA-256 and signing key, and hands it to Android's installer.
 - **Recovery**: expired or rejected stream URLs are re-resolved and retried automatically.

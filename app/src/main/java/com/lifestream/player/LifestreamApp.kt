@@ -1,6 +1,7 @@
 package com.lifestream.player
 
 import android.app.Application
+import com.lifestream.player.data.AppSettings
 import com.lifestream.player.data.Library
 import com.lifestream.player.data.SoundtrackIndex
 import com.lifestream.player.data.TitleTranslator
@@ -16,6 +17,7 @@ class LifestreamApp : Application() {
         // The extractor talks to YouTube's servers through our own OkHttp client.
         // Ask YouTube for English metadata; anything still in Japanese is translated on the device.
         NewPipe.init(OkHttpDownloader(Http.client), Localization("en", "US"), ContentCountry("US"))
+        AppSettings.init(this)
         Library.init(this)
         SoundtrackIndex.init(this)
         TitleTranslator.prefetch()
