@@ -62,7 +62,8 @@ fun main(args: Array<String>) {
             clean.forEach { songs.putIfAbsent(Matching.songKey(it), it) }
             detail.append("- used: ${album.title} — *${album.artist}* — ${titles.size} tracks${if (album.fromPlaylist) " (playlist)" else ""}\n")
             if (album.fromPlaylist) {
-                titles.take(6).zip(clean.take(6)).forEach { (raw, c) -> detail.append("    - `$raw` → **$c**\n") }
+                // Full listing for playlist sources: these are the ones that can contain stray songs.
+                titles.zip(clean).forEach { (raw, c) -> detail.append("    - `$raw` → **$c**\n") }
             }
         }
         detail.append("\n")
