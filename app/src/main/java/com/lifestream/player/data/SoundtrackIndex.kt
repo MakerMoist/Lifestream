@@ -111,6 +111,7 @@ object SoundtrackIndex {
                 }.awaitAll()
                 _progress.value = Progress(Catalog.games.size, Catalog.games.size, false)
                 writeToDisk()
+                TitleTranslator.release()
             }
         }
     }
@@ -118,11 +119,12 @@ object SoundtrackIndex {
     private suspend fun loadGame(game: Game): List<Track> = try {
         val source = MusicRepository.gameTracks(game)
         val out = LinkedHashMap<String, Track>()
+        val ids = HashSet<String>()
         var next: Any? = null
         var pages = 0
         do {
             val page = source.load(next)
-            page.items.forEach { out.putIfAbsent(Matching.songKey(it.title), it) }
+            page.items.forEach { if (it.id !in ids && out.putIfAbsent(Matching.songKey(it.title), it) == null) ids += it.id }
             next = page.next
             pages++
         } while (next != null && out.size < MAX_TRACKS_PER_GAME && pages < 300)
@@ -195,7 +197,7 @@ object SoundtrackIndex {
                 val arr = g.getJSONArray("tracks")
                 map[id] = (0 until arr.length()).mapNotNull { i ->
                     arr.optJSONObject(i)?.let(Track::fromJson)?.copy(gameId = id)?.let(ArtistCredits::fix)?.let(OfficialTitles::fix)
-                }
+                }.distinctBy { it.id }
                 stamps[id] = g.optLong("built")
             }
             builtAt.clear()

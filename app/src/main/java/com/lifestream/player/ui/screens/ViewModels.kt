@@ -146,6 +146,8 @@ class GameViewModel(game: Game) : ViewModel() {
                 override suspend fun load(page: Any?) = Paged(cached, null)
             }
         } ?: MusicRepository.gameTracks(game),
+        // One version of each song, and never the same recording twice.
+        alsoUnique = { it.id },
     ) { Matching.songKey(it.title) }
 
     /** Text in the "search this soundtrack" box. */

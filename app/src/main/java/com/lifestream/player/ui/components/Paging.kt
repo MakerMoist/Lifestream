@@ -32,6 +32,8 @@ import kotlinx.coroutines.launch
 class PagedList<T>(
     private val scope: CoroutineScope,
     private val source: PagedSource<T>,
+    /** A second value that must also be unique (e.g. the recording's id). */
+    private val alsoUnique: ((T) -> String)? = null,
     private val key: (T) -> String,
 ) {
     var items by mutableStateOf<List<T>>(emptyList())
@@ -59,11 +61,22 @@ class PagedList<T>(
                 // Filtering can leave a page empty; keep going (a few pages max) so the
                 // list never sits on a spinner with nothing new to show.
                 val seen = items.mapTo(HashSet<String>(), key)
+                val seenAlso = alsoUnique?.let { f -> items.mapTo(HashSet<String>(), f) }
                 var added = 0
                 var attempts = 0
                 do {
                     val page = source.load(next)
-                    val fresh = page.items.filter { seen.add(key(it)) }
+                    val fresh = page.items.filter { item ->
+                        val k = key(item)
+                        val a = alsoUnique?.invoke(item)
+                        if (k in seen || (a != null && seenAlso != null && a in seenAlso)) {
+                            false
+                        } else {
+                            seen += k
+                            if (a != null) seenAlso?.add(a)
+                            true
+                        }
+                    }
                     items = items + fresh
                     added += fresh.size
                     next = page.next

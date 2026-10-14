@@ -22,7 +22,10 @@ object SearchHistory {
         prefs = context.getSharedPreferences("search", Context.MODE_PRIVATE)
         _recent.value = runCatching {
             val arr = JSONArray(prefs.getString(KEY, "[]"))
-            (0 until arr.length()).map { arr.getString(it) }.filter { it.isNotBlank() }.take(MAX)
+            (0 until arr.length()).map { arr.optString(it).trim().take(MAX_LENGTH) }
+                .filter { it.isNotBlank() }
+                .distinctBy { it.lowercase() }
+                .take(MAX)
         }.getOrDefault(emptyList())
     }
 

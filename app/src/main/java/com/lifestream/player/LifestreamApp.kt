@@ -7,7 +7,6 @@ import com.lifestream.player.data.Library
 import com.lifestream.player.data.OfficialTitles
 import com.lifestream.player.playback.SongCache
 import com.lifestream.player.data.SoundtrackIndex
-import com.lifestream.player.data.TitleTranslator
 import com.lifestream.player.net.Http
 import com.lifestream.player.net.OkHttpDownloader
 import org.schabi.newpipe.extractor.NewPipe
@@ -26,6 +25,17 @@ class LifestreamApp : Application() {
         SearchHistory.init(this)
         SongCache.init(this)
         SoundtrackIndex.init(this)
-        TitleTranslator.prefetch()
+    }
+
+    /**
+     * When Android is short on memory and LifeStream is in the background (e.g. just playing music),
+     * let go of the decoded card art so the app is less likely to be stopped.
+     */
+    @Suppress("DEPRECATION")
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_BACKGROUND) {
+            com.lifestream.player.ui.components.ArtCache.clear()
+        }
     }
 }

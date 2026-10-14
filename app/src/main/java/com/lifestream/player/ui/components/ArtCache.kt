@@ -22,6 +22,9 @@ object ArtCache {
 
     fun cached(res: Int): ImageBitmap? = bitmaps[res]
 
+    /** Drops the decoded art (it's decoded again when Home is next shown). */
+    fun clear() = bitmaps.clear()
+
     /**
      * The art is stored at 1080x1200 so it's sharp on any screen, but cards are about half the
      * screen wide; each one is scaled to that so all of them together stay small in memory.

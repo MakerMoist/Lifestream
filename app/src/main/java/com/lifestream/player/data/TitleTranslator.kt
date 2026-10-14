@@ -1,5 +1,6 @@
 package com.lifestream.player.data
 
+import com.google.mlkit.nl.translate.Translator
 import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.nl.translate.TranslateLanguage
@@ -23,13 +24,25 @@ object TitleTranslator {
 
     private val cache = ConcurrentHashMap<String, String>()
 
-    private val translator by lazy {
-        Translation.getClient(
+    /**
+     * Created when a title needs translating and closed again by [release]: with official English
+     * names covering most songs it's rarely needed, so its model shouldn't sit in memory.
+     */
+    private var client: Translator? = null
+
+    private val translator: Translator
+        @Synchronized get() = client ?: Translation.getClient(
             TranslatorOptions.Builder()
                 .setSourceLanguage(TranslateLanguage.JAPANESE)
                 .setTargetLanguage(TranslateLanguage.ENGLISH)
                 .build()
-        )
+        ).also { client = it }
+
+    /** Frees the translation model's memory; it's reloaded (from disk) if needed again. */
+    @Synchronized
+    fun release() {
+        client?.close()
+        client = null
     }
 
     @Volatile private var modelReady = false
