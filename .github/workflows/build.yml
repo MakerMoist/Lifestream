@@ -115,6 +115,8 @@ jobs:
           gh release upload latest Lifestream.apk Lifestream.apk.sha256 version.json -R "$REPO" --clobber
           VERSION=$(python3 -c "import json; print(json.load(open('version.json'))['versionName'])")
           gh release edit latest -R "$REPO" --title "Lifestream $VERSION"
+          # Point the "latest" tag at the commit this build came from.
+          gh api -X PATCH "repos/$REPO/git/refs/tags/latest" -f sha="$GITHUB_SHA" -F force=true >/dev/null
           # The old debug build is no longer published.
           gh release delete-asset latest app-debug.apk -R "$REPO" -y 2>/dev/null || true
           if [ "$SIGNED" != "true" ]; then
