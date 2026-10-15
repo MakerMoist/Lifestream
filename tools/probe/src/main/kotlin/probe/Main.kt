@@ -175,7 +175,7 @@ internal fun sourcesFor(game: Game, log: StringBuilder): List<Album> {
         }
         playlists.values.maxByOrNull { Matching.playlistScore(it) }?.let { found[it.url] = it.copy(fromPlaylist = true) }
     }
-    return found.values.sortedByDescending { Matching.score(it, game) }
+    return Matching.ordered(found.values, game)
 }
 
 private fun allTitles(url: String): List<String> {
