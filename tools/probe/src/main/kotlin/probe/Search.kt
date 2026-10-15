@@ -14,8 +14,41 @@ import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQu
  * each with its id, uploader and length, so a recording can be checked and pinned.
  */
 fun runSearch(words: List<String>) {
-    val query = words.joinToString(" ").trim()
-    val out = StringBuilder("# Search: $query\n\n")
+    val out = StringBuilder()
+    searchInto(out, words.joinToString(" ").trim())
+    val target = File(System.getenv("PROBE_OUT") ?: "report.md").absoluteFile
+    target.writeText(out.toString())
+    println("wrote $target")
+}
+
+/** Several searches in one report: `--editions` looks for special and expanded soundtrack releases. */
+fun runEditions() {
+    val queries = listOf(
+        "Final Fantasy Tactics The Ivalice Chronicles original soundtrack",
+        "Chrono Cross Radical Dreamers Edition original soundtrack",
+        "Final Fantasy X-2 International Last Mission original soundtrack",
+        "Final Fantasy X HD Remaster original soundtrack",
+        "Final Fantasy VII Rebirth original soundtrack plus",
+        "Final Fantasy XVI original soundtrack ultimate edition",
+        "Crisis Core Final Fantasy VII original soundtrack",
+        "Final Fantasy XII original soundtrack special",
+        "Chrono Trigger original sound version",
+        "Final Fantasy IV original sound version",
+        "Final Fantasy VI pixel remaster original soundtrack",
+        "Lost Odyssey original soundtrack",
+    )
+    val out = StringBuilder()
+    for (q in queries) {
+        println("search $q")
+        searchInto(out, q, albumTracks = 2)
+    }
+    val target = File(System.getenv("PROBE_OUT") ?: "report.md").absoluteFile
+    target.writeText(out.toString())
+    println("wrote $target")
+}
+
+private fun searchInto(out: StringBuilder, query: String, albumTracks: Int = 4) {
+    out.append("# Search: $query\n\n")
     val yt = ServiceList.YouTube
 
     out.append("## Albums\n\n")
@@ -23,7 +56,7 @@ fun runSearch(words: List<String>) {
         .mapNotNull { it as? PlaylistInfoItem }
     albums.take(12).forEachIndexed { i, a ->
         out.append("- ${a.name} — ${a.uploaderName} — ${a.streamCount} tracks — ${a.url}\n")
-        if (i < 4) {
+        if (i < albumTracks) {
             runCatching { allTitlesWithIds(a.url) }.getOrNull()?.forEach { (id, title, artist, secs) ->
                 out.append("    - `$id` $title — $artist — ${secs}s\n")
             }
@@ -40,9 +73,13 @@ fun runSearch(words: List<String>) {
                 out.append("- `$id` ${s.name} — ${s.uploaderName} — ${s.duration}s — key `${Matching.songKey(s.name ?: "")}`\n")
             }
     }
-    val target = File(System.getenv("PROBE_OUT") ?: "report.md").absoluteFile
-    target.writeText(out.toString())
-    println("wrote $target")
+    // Playlists too (soundtracks with no official album are often uploaded as one).
+    out.append("\n## Playlists\n\n")
+    runCatching { search(query, F.PLAYLISTS, pages = 1) }.getOrDefault(emptyList())
+        .mapNotNull { it as? PlaylistInfoItem }
+        .take(8)
+        .forEach { p -> out.append("- ${p.name} — ${p.uploaderName} — ${p.streamCount} — ${p.url}\n") }
+    out.append("\n")
 }
 
 private data class Row(val id: String, val title: String, val artist: String, val secs: Long)

@@ -30,6 +30,10 @@ fun main(args: Array<String>) {
         runSearch(args.drop(1))
         return
     }
+    if ("--editions" in args) {
+        runEditions()
+        return
+    }
     if ("--covers" in args) {
         runCovers()
         return
