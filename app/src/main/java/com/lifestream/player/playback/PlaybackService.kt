@@ -206,7 +206,7 @@ class PlaybackService : MediaLibraryService() {
                 // LifeStream's own UI may also place songs in the shuffle order.
                 ours -> MediaSession.ConnectionResult.AcceptedResultBuilder(session)
                     .setAvailableSessionCommands(
-                        MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
+                        MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
                             .add(QueueCommands.placeCommand)
                             .build()
                     )
