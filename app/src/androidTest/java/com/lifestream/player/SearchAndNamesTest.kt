@@ -135,6 +135,13 @@ class SearchAndNamesTest {
         assertEquals("Prelude", tidySongTitle("[Official] Prelude"))
         assertEquals("Nobuo Uematsu", ArtistCredits.canonical("【公式】植松伸夫TV"))
         assertEquals("Masashi Hamauzu & Mitsuto Suzuki", ArtistCredits.forSong("ff7r", "SQUARE ENIX MUSIC"))
+        // Credits naming several people keep all of them, and fixing a credit twice changes nothing.
+        assertEquals("Mitsuto Suzuki & Masashi Hamauzu", ArtistCredits.canonical("Mitsuto Suzuki & Masashi Hamauzu"))
+        assertEquals("Nobuo Uematsu, Masashi Hamauzu", ArtistCredits.canonical("植松伸夫、浜渦正志"))
+        for (id in listOf("ff10", "ff13-2", "lr", "ff7rb")) {
+            val credit = ArtistCredits.creditFor(id)!!
+            assertEquals(credit, ArtistCredits.forSong(id, credit))
+        }
     }
 
     @Test

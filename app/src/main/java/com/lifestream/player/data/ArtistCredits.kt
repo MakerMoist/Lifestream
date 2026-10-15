@@ -58,8 +58,30 @@ object ArtistCredits {
         return computeCanonical(raw).also { canonicalNames[raw] = it }
     }
 
+    /** Between names in a credit: "A, B & C", "A / B", "A、B". */
+    private val separator = Regex("\\s*(?:,|&|/|、)\\s*")
+
     private fun computeCanonical(raw: String): String {
         val name = tidySongTitle(raw).trim()
+        // Several people: fix each name on its own, so "Mitsuto Suzuki & Masashi Hamauzu" stays
+        // both of them (it used to collapse to "Masashi Hamauzu").
+        if (separator.containsMatchIn(name)) {
+            val out = StringBuilder()
+            var last = 0
+            for (m in separator.findAll(name)) {
+                out.append(one(name.substring(last, m.range.first)))
+                out.append(if (m.value.contains('、')) ", " else m.value.let { d -> if (d.trim() == ",") ", " else " ${d.trim()} " })
+                last = m.range.last + 1
+            }
+            out.append(one(name.substring(last)))
+            return out.toString().trim()
+        }
+        return one(name)
+    }
+
+    /** One person's name (or channel), fixed where it's known. */
+    private fun one(raw: String): String {
+        val name = raw.trim()
         val lower = name.lowercase()
         return when {
             "植松" in name || "uematsu" in lower -> "Nobuo Uematsu"
