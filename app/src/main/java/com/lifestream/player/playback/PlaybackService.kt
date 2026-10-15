@@ -201,7 +201,18 @@ class PlaybackService : MediaSessionService() {
      * If the queue already ended (e.g. the song index wasn't ready yet), it picks up from there.
      */
     private class AutoPlayListener(private val player: ExoPlayer) : Player.Listener {
-        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = extend(resume = false)
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            // A brand-new queue is still being set up (its shuffle switches on just after), so
+            // adding songs now would get them shuffled in among it; wait until it's playing.
+            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED) return
+            extend(resume = false)
+        }
+
+        // A new queue whose starting song is already its last (e.g. one song, or the last one in a
+        // list) gets its follow-on songs once it's actually playing.
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            if (isPlaying) extend(resume = false)
+        }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
             if (playbackState == Player.STATE_ENDED) extend(resume = true)

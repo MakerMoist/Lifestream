@@ -189,9 +189,9 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                     IconButton(onClick = onClose) { Icon(Icons.Rounded.KeyboardArrowDown, "Close player") }
                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("NOW PLAYING", style = MaterialTheme.typography.labelSmall, color = LsColors.Gold)
-                        if (state.queue.size > 1) {
+                        if (state.queue.size > 1 && state.playPosition >= 0) {
                             Text(
-                                "${state.currentIndex + 1} of ${state.queue.size}",
+                                "${state.playPosition + 1} of ${state.queue.size}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White.copy(alpha = 0.8f),
                             )
@@ -344,14 +344,16 @@ private fun Controls(state: PlayerUiState) {
 
 @Composable
 private fun QueueList(state: PlayerUiState) {
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = state.currentIndex.coerceAtLeast(0))
+    // Listed in play order, so "Up next" is what really plays next (shuffled or not).
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = state.playPosition.coerceAtLeast(0))
     Text(
         "Up next",
         style = MaterialTheme.typography.titleLarge,
         modifier = Modifier.padding(start = 20.dp, bottom = 8.dp),
     )
     LazyColumn(state = listState, modifier = Modifier.height(480.dp)) {
-        itemsIndexed(state.queue) { index, track ->
+        itemsIndexed(state.playOrder) { _, index ->
+            val track = state.queue.getOrNull(index) ?: return@itemsIndexed
             val isCurrent = index == state.currentIndex
             Row(
                 Modifier

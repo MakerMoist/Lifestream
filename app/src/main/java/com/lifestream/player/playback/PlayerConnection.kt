@@ -33,6 +33,10 @@ data class PlayerUiState(
     val repeatMode: Int = Player.REPEAT_MODE_OFF,
     val queue: List<Track> = emptyList(),
     val currentIndex: Int = -1,
+    /** Queue indexes in the order they'll play (the shuffled order when shuffle is on). */
+    val playOrder: List<Int> = emptyList(),
+    /** Where the current song sits in [playOrder]. */
+    val playPosition: Int = -1,
     /** Whether skipping forward/back lands on another song (follows shuffle order and repeat). */
     val hasNext: Boolean = false,
     val hasPrevious: Boolean = false,
@@ -285,6 +289,8 @@ object PlayerConnection {
             queueCache = (0 until c.mediaItemCount).map { c.getMediaItemAt(it).toTrack() }
         }
         val queue = queueCache
+        // Cheap (a walk over the queue), and it must follow every shuffle-order change.
+        val order = QueueCommands.playOrder(c)
         val duration = c.duration.takeIf { it > 0 }
             ?: c.currentMediaItem?.toTrack()?.durationSec?.takeIf { it > 0 }?.times(1000)
             ?: 0L
@@ -301,6 +307,8 @@ object PlayerConnection {
                 repeatMode = c.repeatMode,
                 queue = queue,
                 currentIndex = c.currentMediaItemIndex,
+                playOrder = order,
+                playPosition = order.indexOf(c.currentMediaItemIndex),
                 hasNext = c.hasNextMediaItem(),
                 hasPrevious = c.hasPreviousMediaItem(),
                 error = if (c.playerError == null) null else it.error,
