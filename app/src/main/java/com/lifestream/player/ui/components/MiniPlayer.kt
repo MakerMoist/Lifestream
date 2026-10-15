@@ -3,7 +3,8 @@ package com.lifestream.player.ui.components
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -16,7 +17,6 @@ import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.onSizeChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withTimeoutOrNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -60,34 +60,61 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Mo
         modifier = modifier
             .fillMaxWidth()
             .onSizeChanged { widthPx = it.width.toFloat().coerceAtLeast(1f) }
-            // Slide right to close: stops the song and clears the queue. Touches are measured
-            // before the sliding layer, so the bar moving under your finger doesn't skew them.
+            // Slide right to close: stops the song and clears the queue. Only a deliberate
+            // sideways slide counts: a swipe that starts going up or down (scrolling past the
+            // bar) is ignored, and it takes half the bar's width (or a quick flick a third of the
+            // way) to close. Touches are measured before the sliding layer, so the bar moving
+            // under your finger doesn't skew them.
             .pointerInput(Unit) {
                 val tracker = VelocityTracker()
-                detectHorizontalDragGestures(
-                    onDragStart = { tracker.resetTracking() },
-                    onHorizontalDrag = { change, dragAmount ->
-                        change.consume()
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    tracker.resetTracking()
+                    tracker.addPosition(down.uptimeMillis, down.position)
+                    val slop = viewConfiguration.touchSlop
+                    var dx = 0f
+                    var dy = 0f
+                    var sliding = false
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                        if (!change.pressed) break
+                        val step = change.position - change.previousPosition
+                        dx += step.x
+                        dy += step.y
                         tracker.addPosition(change.uptimeMillis, change.position)
-                        scope.launch { offsetX.snapTo((offsetX.value + dragAmount).coerceAtLeast(0f)) }
-                    },
-                    onDragCancel = { scope.launch { offsetX.animateTo(0f, spring()) } },
-                    onDragEnd = {
-                        val close = offsetX.value > widthPx * 0.35f || tracker.calculateVelocity().x > 1500f
+                        if (!sliding) {
+                            // Up or down first: not a close; let it go.
+                            if (kotlin.math.abs(dy) > slop) break
+                            // Clearly sideways (to the right) and well past the touch slop.
+                            if (dx > slop * 2 && dx > kotlin.math.abs(dy) * 3) sliding = true else continue
+                        }
+                        change.consume()
+                        scope.launch { offsetX.snapTo((offsetX.value + step.x).coerceAtLeast(0f)) }
+                    }
+                    if (!sliding) {
+                        if (offsetX.value != 0f) scope.launch { offsetX.animateTo(0f, spring()) }
+                        return@awaitEachGesture
+                    }
+                    run {
+                        val velocity = tracker.calculateVelocity().x
+                        val close = offsetX.value > widthPx * 0.5f ||
+                            (velocity > 2_500f && offsetX.value > widthPx * 0.33f)
                         scope.launch {
                             if (close) {
                                 offsetX.animateTo(widthPx, tween(160))
                                 PlayerConnection.stopAndClear()
                                 // Stay off-screen until the cleared queue reaches the UI, so the
                                 // bar doesn't flash back for a frame (or come back if it failed).
-                                withTimeoutOrNull(1500) { PlayerConnection.state.first { it.current == null } }
+                                // (Spelled out: inside the gesture block the name means the touch-scope version.)
+                                kotlinx.coroutines.withTimeoutOrNull(1500) { PlayerConnection.state.first { it.current == null } }
                                 offsetX.snapTo(0f)
                             } else {
                                 offsetX.animateTo(0f, spring(dampingRatio = 0.7f))
                             }
                         }
-                    },
-                )
+                    }
+                }
             }
             .graphicsLayer {
                 translationX = offsetX.value

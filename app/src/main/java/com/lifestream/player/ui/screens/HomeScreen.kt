@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import com.lifestream.player.ui.components.CenteredButtonLabel
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -143,9 +144,11 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
     var seed by remember { mutableLongStateOf(System.nanoTime()) }
     var refreshing by remember { mutableStateOf(false) }
     var recommended by remember { mutableStateOf<List<Track>>(emptyList()) }
-    LaunchedEffect(recents.isNotEmpty(), index.size, seed) {
+    // Titles turned off in Settings → Titles don't appear here (cards or picks).
+    val hidden by AppSettings.hiddenTitles.collectAsStateWithLifecycle()
+    LaunchedEffect(recents.isNotEmpty(), index.size, seed, hidden) {
         recommended = withContext(Dispatchers.Default) {
-            Recommendations.recommend(recents, index, seed) { t -> SoundtrackIndex.gameOf(t)?.id }
+            Recommendations.recommend(recents, index.filterKeys { it !in hidden }, seed) { t -> SoundtrackIndex.gameOf(t)?.id }
         }
     }
     fun refresh() {
@@ -262,22 +265,22 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
                             enabled = !vm.surprising,
                             modifier = Modifier.weight(1f).height(44.dp),
                         ) {
-                            if (vm.surprising) {
-                                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                            } else {
-                                Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(20.dp))
+                            CenteredButtonLabel("New Game") {
+                                if (vm.surprising) {
+                                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                                } else {
+                                    Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(20.dp))
+                                }
                             }
-                            Spacer(Modifier.width(10.dp))
-                            Text("New Game", style = MaterialTheme.typography.titleSmall)
                         }
                         FilledTonalButton(
                             onClick = { lastPlaylistId?.let(onOpenPlaylist) },
                             enabled = lastPlaylistId != null,
                             modifier = Modifier.weight(1f).height(44.dp),
                         ) {
-                            Icon(Icons.AutoMirrored.Rounded.QueueMusic, null, Modifier.size(20.dp))
-                            Spacer(Modifier.width(10.dp))
-                            Text("Load Game", style = MaterialTheme.typography.titleSmall)
+                            CenteredButtonLabel("Load Game") {
+                                Icon(Icons.AutoMirrored.Rounded.QueueMusic, null, Modifier.size(20.dp))
+                            }
                         }
                     }
                     vm.surpriseNote?.let { note ->
@@ -296,14 +299,15 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
             if (recommended.isNotEmpty()) {
                 item(key = "recommended", span = { GridItemSpan(maxLineSpan) }) {
                     Column {
-                        SectionLabel("Recommended for you", Modifier.padding(top = 8.dp))
+                        SectionLabel("Recommended", Modifier.padding(top = 8.dp))
                         RecommendedRow(recommended)
                     }
                 }
             }
 
             listOf(Series.MAINLINE, Series.SPINOFF).forEach { series ->
-                val games = Catalog.bySeries(series)
+                val games = Catalog.bySeries(series).filter { it.id !in hidden }
+                if (games.isEmpty()) return@forEach
                 item(key = "label-${series.name}", span = { GridItemSpan(maxLineSpan) }) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         SectionLabel(series.label, Modifier.padding(top = 8.dp).weight(1f))
@@ -400,7 +404,11 @@ private fun RecommendedRow(songs: List<Track>) {
                     .width(120.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .combinedClickable(
-                        onClick = { PlayerConnection.playTracks(songs, index) },
+                        onClick = {
+                            // The song that's already playing opens Now Playing instead of restarting.
+                            if (PlayerConnection.currentId.value == track.id) NowPlayingRequest.open()
+                            else PlayerConnection.playTracks(songs, index)
+                        },
                         onLongClick = { TrackActions.show(track, at = anchor.at()) },
                     ),
             ) {

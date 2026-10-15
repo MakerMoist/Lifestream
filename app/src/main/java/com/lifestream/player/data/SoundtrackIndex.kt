@@ -191,7 +191,7 @@ object SoundtrackIndex {
         val q = Matching.queryTokens(query)
         if (q.isEmpty()) return emptyList()
         val compactQuery = q.joinToString("")
-        return Catalog.games.filter { game ->
+        return AppSettings.shownGames.filter { game ->
             val tokens = Matching.titleTokens(game)
             if (Matching.isAlias(query, game)) return@filter true
             matchesAll(q, tokens, exactNumerals = true) ||
@@ -209,6 +209,7 @@ object SoundtrackIndex {
         for ((gameId, list) in _tracks.value) {
             // Typing on has replaced this search: stop instead of finishing work nobody will see.
             if (!stillWanted()) return emptyList()
+            if (!AppSettings.isTitleShown(gameId)) continue // turned off in Settings → Titles
             val game = byId[gameId] ?: continue
             val gameTokens = Matching.titleTokens(game)
             for (track in list) {

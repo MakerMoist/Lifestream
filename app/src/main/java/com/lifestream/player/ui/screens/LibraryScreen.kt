@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import com.lifestream.player.ui.components.CenteredButtonLabel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -247,18 +248,14 @@ private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null, extr
             enabled = tracks.isNotEmpty(),
             modifier = Modifier.weight(1f).height(44.dp),
         ) {
-            Icon(Icons.Rounded.PlayArrow, null, Modifier.size(20.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("Play", style = MaterialTheme.typography.titleSmall)
+            CenteredButtonLabel("Play") { Icon(Icons.Rounded.PlayArrow, null, Modifier.size(20.dp)) }
         }
         OutlinedButton(
             onClick = { PlayerConnection.playTracks(tracks, randomStart = true, fromPlaylist = playlistId) },
             enabled = tracks.isNotEmpty(),
             modifier = Modifier.weight(1f).height(44.dp),
         ) {
-            Icon(Icons.Rounded.Shuffle, null, Modifier.size(20.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("Shuffle", style = MaterialTheme.typography.titleSmall)
+            CenteredButtonLabel("Shuffle") { Icon(Icons.Rounded.Shuffle, null, Modifier.size(20.dp)) }
         }
         extra()
     }

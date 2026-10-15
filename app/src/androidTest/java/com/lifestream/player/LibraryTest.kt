@@ -63,8 +63,8 @@ class LibraryTest {
     }
 
     @Test
-    fun playlistLimitIsFifteen() {
-        assertEquals(15, Library.MAX_PLAYLISTS)
+    fun playlistLimitIsTwenty() {
+        assertEquals(20, Library.MAX_PLAYLISTS)
         while (Library.canCreatePlaylist()) assertNotNull(create("P"))
         assertEquals(Library.MAX_PLAYLISTS, Library.playlists.value.size)
         assertNull(Library.createPlaylist("one too many"))
@@ -131,5 +131,52 @@ class LibraryTest {
             Library.clearRecents()
             before.reversed().forEach { Library.addRecent(it) }
         }
+    }
+
+    @Test
+    fun titlesTurnedOffStayOutOfSearchAndNewGame() {
+        val settings = com.lifestream.player.data.AppSettings
+        val before = settings.hiddenTitles.value
+        try {
+            settings.setTitleShown("fft", false)
+            assertFalse(settings.isTitleShown("fft"))
+            assertTrue(com.lifestream.player.data.SoundtrackIndex.searchGames("fft").none { it.id == "fft" })
+            assertTrue(settings.shownGames.none { it.id == "fft" })
+            assertTrue(com.lifestream.player.data.Mixes.instant().none { it.gameId == "fft" })
+            settings.setTitleShown("fft", true)
+            assertEquals("fft", com.lifestream.player.data.SoundtrackIndex.searchGames("fft").firstOrNull()?.id)
+        } finally {
+            settings.showAllTitles()
+            before.forEach { settings.setTitleShown(it, false) }
+        }
+        Log.i("LSTEST", "Titles turned off are left out of Search and New Game")
+    }
+
+    @Test
+    fun savedQueueReadsBack() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val file = File(context.filesDir, "last_queue.json")
+        val previous = if (file.exists()) file.readBytes() else null
+        try {
+            val tracks = (0 until 5).map { track(900 + it) }
+            com.lifestream.player.playback.QueueStore.save(
+                context,
+                com.lifestream.player.playback.QueueStore.Saved(tracks, 3, 42_000L, true, "pl-test", false),
+                now = true,
+            )
+            Thread.sleep(1_000) // written in the background
+            val back = com.lifestream.player.playback.QueueStore.load(context)!!
+            assertEquals(tracks.map { it.id }, back.tracks.map { it.id })
+            assertEquals(3, back.index)
+            assertEquals(42_000L, back.positionMs)
+            assertTrue(back.shuffle)
+            assertEquals("pl-test", back.playlistId)
+            // A damaged file is ignored rather than crashing the app.
+            file.writeText("{not json")
+            assertNull(com.lifestream.player.playback.QueueStore.load(context))
+        } finally {
+            if (previous != null) file.writeBytes(previous) else file.delete()
+        }
+        Log.i("LSTEST", "Playlist Stays Open: the saved queue reads back exactly")
     }
 }

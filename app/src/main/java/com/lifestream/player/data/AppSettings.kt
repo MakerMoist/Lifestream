@@ -23,6 +23,9 @@ object AppSettings {
     private const val KEY_ANDROID_AUTO = "android_auto"
     private const val KEY_ANDROID_AUTO_SEEN = "android_auto_seen"
     private const val KEY_CLOSE_FROM_RECENTS = "close_from_recents"
+    private const val KEY_HIDDEN_TITLES = "hidden_titles"
+    private const val KEY_CONTINUE_MODE = "continue_mode"
+    private const val KEY_KEEP_QUEUE = "keep_queue"
 
     /** Size choices for saved songs, in MB (0 = don't save songs). */
     val CACHE_LIMIT_CHOICES = listOf(0, 2048, 4096, 6144, 8192)
@@ -89,6 +92,52 @@ object AppSettings {
         prefs.edit().putBoolean(KEY_ANDROID_AUTO_SEEN, true).apply()
     }
 
+    private val _hiddenTitles = MutableStateFlow<Set<String>>(emptySet())
+
+    /**
+     * Titles turned off in Settings → Titles: left out of Home, Search, New Game and auto-play
+     * (songs already in playlists stay where they are).
+     */
+    val hiddenTitles: StateFlow<Set<String>> = _hiddenTitles.asStateFlow()
+
+    fun isTitleShown(id: String?) = id == null || id !in _hiddenTitles.value
+
+    /** The catalog's titles that are turned on, in catalog order. */
+    val shownGames: List<Game> get() = Catalog.games.filter { it.id !in _hiddenTitles.value }
+
+    fun setTitleShown(id: String, shown: Boolean) {
+        if (Catalog.games.none { it.id == id }) return
+        val next = if (shown) _hiddenTitles.value - id else _hiddenTitles.value + id
+        _hiddenTitles.value = next
+        prefs.edit().putStringSet(KEY_HIDDEN_TITLES, next).apply()
+    }
+
+    fun showAllTitles() {
+        _hiddenTitles.value = emptySet()
+        prefs.edit().remove(KEY_HIDDEN_TITLES).apply()
+    }
+
+    /** What "Keep Playing After Searching" continues with. */
+    enum class ContinueMode { SAME_TITLE, ALL_TITLES }
+
+    private val _continueMode = MutableStateFlow(ContinueMode.SAME_TITLE)
+    val continueMode: StateFlow<ContinueMode> = _continueMode.asStateFlow()
+
+    fun setContinueMode(mode: ContinueMode) {
+        _continueMode.value = mode
+        prefs.edit().putString(KEY_CONTINUE_MODE, mode.name).apply()
+    }
+
+    private val _keepQueue = MutableStateFlow(false)
+
+    /** "Playlist Stays Open": the last queue is back (paused) when the app opens again. Off unless turned on. */
+    val keepQueue: StateFlow<Boolean> = _keepQueue.asStateFlow()
+
+    fun setKeepQueue(on: Boolean) {
+        _keepQueue.value = on
+        prefs.edit().putBoolean(KEY_KEEP_QUEUE, on).apply()
+    }
+
     private val _closeFromRecents = MutableStateFlow(true)
 
     /**
@@ -125,6 +174,12 @@ object AppSettings {
         _androidAuto.value = prefs.getBoolean(KEY_ANDROID_AUTO, false)
         _androidAutoSeen.value = prefs.getBoolean(KEY_ANDROID_AUTO_SEEN, false)
         _closeFromRecents.value = prefs.getBoolean(KEY_CLOSE_FROM_RECENTS, true)
+        // Only ids of titles that still exist.
+        _hiddenTitles.value = prefs.getStringSet(KEY_HIDDEN_TITLES, emptySet()).orEmpty()
+            .filter { id -> Catalog.games.any { it.id == id } }.toSet()
+        _continueMode.value = ContinueMode.entries.firstOrNull { it.name == prefs.getString(KEY_CONTINUE_MODE, null) }
+            ?: ContinueMode.SAME_TITLE
+        _keepQueue.value = prefs.getBoolean(KEY_KEEP_QUEUE, false)
         // A size from an older version (e.g. 5 or 10 GB) becomes the largest choice that fits in it.
         val stored = prefs.getInt(KEY_CACHE_LIMIT_MB, DEFAULT_CACHE_LIMIT_MB)
         _cacheLimitMb.value = if (stored in CACHE_LIMIT_CHOICES) stored

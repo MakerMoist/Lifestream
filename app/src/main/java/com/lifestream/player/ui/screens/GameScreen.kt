@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import com.lifestream.player.ui.components.CenteredButtonLabel
 import androidx.compose.runtime.getValue
 import com.lifestream.player.data.Track
 import kotlinx.coroutines.withContext
@@ -25,7 +26,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
@@ -162,18 +162,14 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                                 enabled = tracks.isNotEmpty(),
                                 modifier = Modifier.weight(1f).height(44.dp),
                             ) {
-                                Icon(Icons.Rounded.PlayArrow, null, Modifier.size(20.dp))
-                                Spacer(Modifier.width(8.dp))
-                                Text("Play all", style = MaterialTheme.typography.titleSmall)
+                                CenteredButtonLabel("Play all") { Icon(Icons.Rounded.PlayArrow, null, Modifier.size(20.dp)) }
                             }
                             OutlinedButton(
                                 onClick = { PlayerConnection.playTracks(tracks, randomStart = true) },
                                 enabled = tracks.isNotEmpty(),
                                 modifier = Modifier.weight(1f).height(44.dp),
                             ) {
-                                Icon(Icons.Rounded.Shuffle, null, Modifier.size(20.dp))
-                                Spacer(Modifier.width(8.dp))
-                                Text("Shuffle", style = MaterialTheme.typography.titleSmall)
+                                CenteredButtonLabel("Shuffle") { Icon(Icons.Rounded.Shuffle, null, Modifier.size(20.dp)) }
                             }
                         }
                     }

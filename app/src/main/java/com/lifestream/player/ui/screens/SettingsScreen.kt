@@ -266,7 +266,7 @@ fun UpdatePrompt() {
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onOpenThemes: () -> Unit) {
+fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
     val vm = rememberUpdateViewModel()
     val autoUpdate by AppSettings.autoUpdate.collectAsStateWithLifecycle()
     val pauseAtZeroVolume by AppSettings.pauseAtZeroVolume.collectAsStateWithLifecycle()
@@ -278,6 +278,9 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
     val closeFromRecents by AppSettings.closeFromRecents.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
+    val continueMode by AppSettings.continueMode.collectAsStateWithLifecycle()
+    val keepQueue by AppSettings.keepQueue.collectAsStateWithLifecycle()
+    val hiddenTitles by AppSettings.hiddenTitles.collectAsStateWithLifecycle()
     val themeId by AppSettings.themeId.collectAsStateWithLifecycle()
     val searchKeyboard by AppSettings.searchKeyboard.collectAsStateWithLifecycle()
     val cacheLimitMb by AppSettings.cacheLimitMb.collectAsStateWithLifecycle()
@@ -313,7 +316,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
                 Column(Modifier.weight(1f)) {
                     Text("Keep Playing After Searching", style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "When you play a song from Search, continue with the rest of its soundtrack, shuffled.",
+                        "When you play a song from Search, continue playing based on your setting.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -321,13 +324,28 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = continueFromSearch, onCheckedChange = { AppSettings.setContinueFromSearch(it) })
             }
+            // What it continues with (only while it's on).
+            Spacer(Modifier.height(8.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = continueMode == AppSettings.ContinueMode.SAME_TITLE,
+                    onClick = { AppSettings.setContinueMode(AppSettings.ContinueMode.SAME_TITLE) },
+                    enabled = continueFromSearch,
+                    label = { Text("Same Title Shuffled") },
+                )
+                FilterChip(
+                    selected = continueMode == AppSettings.ContinueMode.ALL_TITLES,
+                    onClick = { AppSettings.setContinueMode(AppSettings.ContinueMode.ALL_TITLES) },
+                    enabled = continueFromSearch,
+                    label = { Text("All Titles Shuffled") },
+                )
+            }
             Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Pause On Zero Volume", style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "When lowering the volume, if it reaches 0; the currently playing song will be paused. " +
-                            "Unpauses after turning the volume back up.",
+                        "When lowering the volume to zero, the current song pauses. Resumes playing after the volume increases.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -361,7 +379,29 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = autoPlayAtEnd, onCheckedChange = { AppSettings.setAutoPlayAtEnd(it) })
             }
+            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Playlist Stays Open", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "When toggled, the last played playlist/Queue will continue after re-opening the app.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = keepQueue, onCheckedChange = {
+                    AppSettings.setKeepQueue(it)
+                    if (it) com.lifestream.player.playback.PlayerConnection.saveQueue() else com.lifestream.player.playback.PlayerConnection.forgetSavedQueue()
+                })
+            }
         }
+        // Which titles appear on Home, in Search and in New Game (a page of its own, like Themes).
+        NavRow(
+            title = "Titles",
+            subtitle = if (hiddenTitles.isEmpty()) "All titles are on" else "${hiddenTitles.size} turned off",
+            onClick = onOpenTitles,
+        )
 
         SectionLabel("Interface", Modifier.padding(top = 8.dp))
         ThemeRow(Palettes.byId(themeId), onClick = onOpenThemes)
@@ -430,8 +470,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
                 Column(Modifier.weight(1f)) {
                     Text("Close Fully From Recent Apps", style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "Swiping LifeStream away in your recent apps stops the music and force closes the app. " +
-                            "Turn off to keep the music playing in the background.",
+                        "Swiping the app closed in your recent app list force closes it.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -441,11 +480,11 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
             }
         }
         SettingsCard {
-            Text("Saved Songs", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
+            Text("Saved Songs", style = MaterialTheme.typography.bodyLarge)
             Text(
                 "Cache recently streamed songs locally instead of using data. Speeds up listening but uses more storage.",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(12.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -683,6 +722,27 @@ private fun formatBytes(bytes: Long): String {
         mb < 1 -> "<1 MB"
         mb >= 1024 -> String.format(java.util.Locale.US, "%.1f GB", mb / 1024)
         else -> "${mb.toInt()} MB"
+    }
+}
+
+/** A setting that opens a page of its own (like Themes). */
+@Composable
+private fun NavRow(title: String, subtitle: String, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.bodyLarge)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 

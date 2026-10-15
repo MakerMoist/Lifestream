@@ -102,9 +102,9 @@ class HomeViewModel : ViewModel() {
                 }
                 // Index not built yet: shuffle one random soundtrack instead.
                 // A few attempts in case a soundtrack can't be loaded right now.
-                val candidates = Catalog.games.filter { it.id != lastSurprise }.shuffled().take(4)
+                val candidates = AppSettings.shownGames.filter { it.id != lastSurprise }.shuffled().take(4)
                 for (game in candidates) {
-                    val tracks = SoundtrackIndex.songsFor(game.id) ?: tracksFor(game)
+                    val tracks = (SoundtrackIndex.songsFor(game.id) ?: tracksFor(game)).shuffled().take(com.lifestream.player.data.Mixes.INSTANT_SIZE)
                     if (tracks.isNotEmpty()) {
                         lastSurprise = game.id
                         PlayerConnection.playTracks(tracks, randomStart = true, instant = true)

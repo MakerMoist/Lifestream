@@ -126,7 +126,11 @@ fun TrackRow(
         modifier
             .menuAnchor(rowAnchor)
             .fillMaxWidth()
-            .combinedClickable(onClick = onClick, onLongClick = { TrackActions.show(track, playlistId, rowAnchor.at()) })
+            // Tapping the song that's already playing opens Now Playing instead of restarting it.
+            .combinedClickable(
+                onClick = { if (isCurrent) com.lifestream.player.ui.screens.NowPlayingRequest.open() else onClick() },
+                onLongClick = { TrackActions.show(track, playlistId, rowAnchor.at()) },
+            )
             .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -278,5 +282,19 @@ fun SlimSearchField(
                 )
             },
         )
+    }
+}
+
+/**
+ * A big button's icon and label with the label itself centered on the button: the icon sits just
+ * before the text and a matching gap after it balances the row.
+ */
+@Composable
+fun CenteredButtonLabel(text: String, icon: @Composable () -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(20.dp), contentAlignment = Alignment.Center) { icon() }
+        Spacer(Modifier.width(8.dp))
+        Text(text, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+        Spacer(Modifier.width(28.dp))
     }
 }

@@ -84,6 +84,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
     val index by SoundtrackIndex.tracks.collectAsStateWithLifecycle()
     val progress by SoundtrackIndex.progress.collectAsStateWithLifecycle()
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
+    val continueMode by AppSettings.continueMode.collectAsStateWithLifecycle()
     val recentSearches by SearchHistory.recent.collectAsStateWithLifecycle()
     var confirmClear by remember { mutableStateOf(false) }
     val searchKeyboard by AppSettings.searchKeyboard.collectAsStateWithLifecycle()
@@ -113,7 +114,9 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
     LaunchedEffect(Unit) { SoundtrackIndex.ensureBuilt() }
 
     // Search as you type, re-running as more soundtracks finish indexing.
-    LaunchedEffect(vm.input, index) {
+    // Re-run when a title is turned on or off in Settings → Titles, too.
+    val hiddenTitles by AppSettings.hiddenTitles.collectAsStateWithLifecycle()
+    LaunchedEffect(vm.input, index, hiddenTitles) {
         delay(150)
         val q = vm.input
         val (games, hits) = withContext(Dispatchers.Default) {
@@ -132,7 +135,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
         SlimSearchField(
             value = vm.input,
             onValueChange = { vm.input = it.take(100) }, // song names are short; keeps matching cheap
-            placeholder = "Songs or games, e.g. \"Prelude\" or \"FF7\"",
+            placeholder = "Search any title\\name\\game...",
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp)
@@ -250,13 +253,18 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
                         onClick = {
                             SearchHistory.add(vm.input)
                             if (continueFromSearch) {
-                                // This song first, then the rest of its soundtrack in random order.
-                                val rest = (SoundtrackIndex.songsFor(hit.game.id) ?: emptyList())
-                                    .filter {
-                                        it.id != hit.track.id &&
-                                            Matching.songKey(it) != Matching.songKey(hit.track)
-                                    }
-                                    .shuffled()
+                                val rest = when (continueMode) {
+                                    // This song first, then the rest of its soundtrack in random order.
+                                    AppSettings.ContinueMode.SAME_TITLE -> (SoundtrackIndex.songsFor(hit.game.id) ?: emptyList())
+                                        .filter {
+                                            it.id != hit.track.id &&
+                                                Matching.songKey(it) != Matching.songKey(hit.track)
+                                        }
+                                        .shuffled()
+                                    // This song first, then a random mix from every title that's on.
+                                    AppSettings.ContinueMode.ALL_TITLES -> com.lifestream.player.data.Mixes.instant(excluding = setOf(hit.track.id))
+                                }
+                                // Already in order: no reshuffle, so the chosen song plays first.
                                 PlayerConnection.playTracks(listOf(hit.track) + rest, 0)
                             } else {
                                 PlayerConnection.playTracks(hits.map { it.track }, i)

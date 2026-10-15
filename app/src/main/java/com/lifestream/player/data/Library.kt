@@ -21,7 +21,7 @@ data class Playlist(val id: String, val name: String, val tracks: List<Track>)
 
 /** Playlists and listening history, stored on the device. */
 object Library {
-    const val MAX_PLAYLISTS = 15
+    const val MAX_PLAYLISTS = 20
     const val MAX_NAME_LENGTH = 40
     private const val MAX_TRACKS_PER_PLAYLIST = 1000
     private const val MAX_RECENTS = 50

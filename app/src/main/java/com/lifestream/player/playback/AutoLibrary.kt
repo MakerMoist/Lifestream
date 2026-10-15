@@ -94,7 +94,7 @@ object AutoLibrary {
                 folder(HISTORY, "History", MediaMetadata.MEDIA_TYPE_FOLDER_MIXED, extras = listStyle()),
             )
             parentId == HOME -> home()
-            parentId == TITLES -> Catalog.games.map { titleItem(context, it) }
+            parentId == TITLES -> AppSettings.shownGames.map { titleItem(context, it) }
             parentId == PLAYLISTS -> Library.playlists.value.map { p ->
                 folder(
                     PLAYLIST + p.id, p.name, MediaMetadata.MEDIA_TYPE_PLAYLIST,
@@ -139,7 +139,7 @@ object AutoLibrary {
         }
         val recommended = Recommendations.recommend(
             Library.recents.value,
-            SoundtrackIndex.tracks.value,
+            SoundtrackIndex.tracks.value.filterKeys { AppSettings.isTitleShown(it) },
             seed = System.currentTimeMillis() / (30 * 60_000), // stays the same for half an hour
             limit = 24,
         ) { t -> SoundtrackIndex.gameOf(t)?.id }

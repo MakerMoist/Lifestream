@@ -450,7 +450,9 @@ class PlaybackService : MediaLibraryService() {
          * whole index), so this stays quick on the main thread.
          */
         private fun randomSongs(count: Int, exclude: Set<String>): List<com.lifestream.player.data.Track> {
-            val byGame = SoundtrackIndex.tracks.value.values.filter { it.isNotEmpty() }
+            val byGame = SoundtrackIndex.tracks.value
+                .filterKeys { AppSettings.isTitleShown(it) }
+                .values.filter { it.isNotEmpty() }
             if (byGame.isEmpty()) return emptyList()
             val out = LinkedHashMap<String, com.lifestream.player.data.Track>()
             var attempts = 0

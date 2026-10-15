@@ -8,6 +8,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.lifestream.player.data.AppSettings
 import com.lifestream.player.data.Library
 import com.lifestream.player.data.Track
 import kotlinx.coroutines.CoroutineScope
@@ -98,11 +99,57 @@ object PlayerConnection {
             controller = c
             c.addListener(listener)
             sync(c, rebuildQueue = true)
+            // "Playlist Stays Open": put the last queue back, paused, if the player is empty.
+            if (AppSettings.keepQueue.value && c.mediaItemCount == 0 && pending.isEmpty()) {
+                val saved = kotlinx.coroutines.withContext(Dispatchers.IO) { QueueStore.load(appContext) }
+                if (saved != null && c.mediaItemCount == 0 && pending.isEmpty()) restore(c, saved)
+            }
             // One failing command mustn't stop the rest (or crash the app).
             pending.toList().forEach { action -> runCatching { action(c) } }
             pending.clear()
             startTicker()
         }
+    }
+
+    private fun restore(c: MediaController, saved: QueueStore.Saved) {
+        playingPlaylistId = saved.playlistId?.takeIf { Library.playlist(it) != null }
+        _instantQueue.value = saved.instant
+        queueFirstId = saved.tracks.first().id
+        c.shuffleModeEnabled = false
+        c.setMediaItems(saved.tracks.map { it.toMediaItem() }, saved.index, saved.positionMs)
+        c.shuffleModeEnabled = saved.shuffle
+        // Not prepared or played: it waits, paused, until play is pressed (which prepares it).
+    }
+
+    /**
+     * Keeps the current queue for "Playlist Stays Open" (when it's on). [now] writes without the
+     * usual short wait (the app is going away).
+     */
+    fun saveQueue(now: Boolean = false) {
+        val context = appContext ?: return
+        if (!AppSettings.keepQueue.value) return
+        val c = controller?.takeIf { it.isConnected } ?: return
+        if (c.mediaItemCount == 0) {
+            QueueStore.clear(context)
+            return
+        }
+        QueueStore.save(
+            context,
+            QueueStore.Saved(
+                tracks = queueCache.takeIf { it.size == c.mediaItemCount } ?: (0 until c.mediaItemCount).map { c.getMediaItemAt(it).toTrack() },
+                index = c.currentMediaItemIndex.coerceAtLeast(0),
+                positionMs = c.currentPosition.coerceAtLeast(0),
+                shuffle = c.shuffleModeEnabled,
+                playlistId = playingPlaylistId,
+                instant = _instantQueue.value,
+            ),
+            now = now,
+        )
+    }
+
+    /** Turning "Playlist Stays Open" off forgets the saved queue. */
+    fun forgetSavedQueue() {
+        appContext?.let { QueueStore.clear(it) }
     }
 
     fun release() {
@@ -304,6 +351,8 @@ object PlayerConnection {
 
     /** Stops playback and empties the queue (swiping the mini player away). */
     fun stopAndClear() = withController {
+        // Closed on purpose: nothing to bring back next time.
+        appContext?.let { ctx -> QueueStore.clear(ctx) }
         queueFirstId = null
         playingPlaylistId = null
         _instantQueue.value = false
@@ -318,6 +367,10 @@ object PlayerConnection {
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) {
             controller?.let { sync(it, rebuildQueue = events.contains(Player.EVENT_TIMELINE_CHANGED)) }
+            // The queue, the song or pausing changed: keep the saved queue up to date.
+            if (events.containsAny(Player.EVENT_TIMELINE_CHANGED, Player.EVENT_MEDIA_ITEM_TRANSITION, Player.EVENT_IS_PLAYING_CHANGED)) {
+                saveQueue()
+            }
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {

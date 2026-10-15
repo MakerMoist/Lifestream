@@ -65,8 +65,10 @@ import com.lifestream.player.ui.screens.NowPlayingScreen
 import com.lifestream.player.ui.screens.SearchScreen
 import com.lifestream.player.ui.screens.SearchFocus
 import com.lifestream.player.ui.screens.TabReselect
+import com.lifestream.player.ui.screens.NowPlayingRequest
 import com.lifestream.player.ui.screens.SettingsScreen
 import com.lifestream.player.ui.screens.ThemesScreen
+import com.lifestream.player.ui.screens.TitlesScreen
 import com.lifestream.player.ui.screens.UpdatePrompt
 import com.lifestream.player.ui.theme.LifestreamTheme
 import com.lifestream.player.ui.theme.LsColors
@@ -81,6 +83,12 @@ class MainActivity : ComponentActivity() {
                 LifestreamRoot()
             }
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // "Playlist Stays Open": keep where the queue is (song and spot) as the app is left.
+        PlayerConnection.saveQueue(now = true)
     }
 
     override fun onDestroy() {
@@ -152,8 +160,14 @@ private fun LifestreamRoot() {
                     val id = entry.arguments?.getString("id") ?: return@composable
                     PlaylistScreen(playlistId = id, onBack = { nav.popBackStack() })
                 }
-                composable("settings") { SettingsScreen(onOpenThemes = { nav.navigate("settings/themes") }) }
+                composable("settings") {
+                    SettingsScreen(
+                        onOpenThemes = { nav.navigate("settings/themes") },
+                        onOpenTitles = { nav.navigate("settings/titles") },
+                    )
+                }
                 composable("settings/themes") { ThemesScreen(onBack = { nav.popBackStack() }) }
+                composable("settings/titles") { TitlesScreen(onBack = { nav.popBackStack() }) }
                 composable("game/{id}") { entry ->
                     val game = entry.arguments?.getString("id")?.let { Catalog.game(it) }
                     if (game != null) {
@@ -161,6 +175,12 @@ private fun LifestreamRoot() {
                     }
                 }
             }
+        }
+
+        // Tapping the song that's already playing (in any list) opens Now Playing.
+        val openRequestAtStart = remember { NowPlayingRequest.count }
+        LaunchedEffect(NowPlayingRequest.count) {
+            if (NowPlayingRequest.count != openRequestAtStart) showPlayer = true
         }
 
         val playerOpen = showPlayer && playerState.current != null
