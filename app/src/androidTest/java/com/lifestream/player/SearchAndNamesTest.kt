@@ -86,6 +86,24 @@ class SearchAndNamesTest {
     }
 
     @Test
+    fun shortNamesFindTheirTitles() {
+        fun first(q: String) = com.lifestream.player.data.SoundtrackIndex.searchGames(q).firstOrNull()?.id
+        assertEquals("fft", first("fft"))
+        assertEquals("cx", first("cc"))
+        assertEquals("ct", first("ct"))
+        assertEquals("ccr", first("ccr"))
+        assertEquals("lr", first("lr"))
+        assertEquals("lo", first("lo"))
+        assertEquals("coe33", first("e33"))
+        assertEquals("ff7r", first("ff7r"))
+        assertEquals("ff7rb", first("ff7rb"))
+        assertEquals("ff10-2", first("ffx2"))
+        assertEquals("ff7", first("ff7"))
+        assertEquals("ff1", first("ff1"))
+        assertEquals("CT", com.lifestream.player.data.SoundtrackIndex.searchGames("CT").first().numeral)
+    }
+
+    @Test
     fun soundsLikeFindsJapaneseNames() {
         assertTrue(Romaji.soundsLike("midgardsormr", "ミドガルズオルム"))
         assertFalse(Romaji.soundsLike("chocobo", "ミドガルズオルム"))

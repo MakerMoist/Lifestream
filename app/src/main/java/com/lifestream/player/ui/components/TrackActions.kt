@@ -82,8 +82,8 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * The options menu for a song, shared by every song row (long-press or ⋮), Home's picks and Now
- * Playing. It pops up right where it was opened (the finger's spot, or the ⋮ button), grouped
- * into Play · Playlists · Go to · More.
+ * Playing. It pops up right where it was opened (the finger's spot, or the ⋮ button) and lists
+ * the song's options.
  */
 object TrackActions {
     /**
@@ -210,7 +210,7 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
     }
 }
 
-/** One group of the menu: its label and its actions. */
+/** A run of related options (kept together in the list; no heading is shown). */
 private class MenuSection(val label: String, val items: List<MenuItem>)
 
 private class MenuItem(val icon: ImageVector, val label: String, val danger: Boolean = false, val onClick: () -> Unit)
@@ -298,7 +298,7 @@ private fun SongMenu(
                 add(
                     MenuSection(
                         "Go to",
-                        listOf(MenuItem(Icons.Rounded.Album, game.title) {
+                        listOf(MenuItem(Icons.Rounded.Album, "Open ${game.title}") {
                             close()
                             onOpenGame(game)
                         }),
@@ -412,16 +412,10 @@ private fun MenuContent(track: Track, game: Game?, sections: List<MenuSection>) 
                 )
             }
         }
-        sections.forEach { section ->
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Text(
-                section.label.uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                color = LsColors.Gold,
-                modifier = Modifier.padding(start = 16.dp, top = 10.dp, bottom = 2.dp),
-            )
-            section.items.forEach { item -> MenuRow(item) }
-        }
+        // Just the options, with no group headings.
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Spacer(Modifier.height(4.dp))
+        sections.flatMap { it.items }.forEach { item -> MenuRow(item) }
     }
 }
 

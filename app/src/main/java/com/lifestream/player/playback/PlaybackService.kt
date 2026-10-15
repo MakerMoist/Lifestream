@@ -61,6 +61,7 @@ class PlaybackService : MediaLibraryService() {
     private val serviceScope = MainScope()
     private var otherAudio: OtherAudioListener? = null
     private var idleReleaser: IdleReleaser? = null
+    private var recovery: RecoveryListener? = null
 
     /**
      * Shuffle choice for a queue Android Auto just asked for, applied once that queue has actually
@@ -87,12 +88,18 @@ class PlaybackService : MediaLibraryService() {
         }
 
         val player = ExoPlayer.Builder(this, renderers)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(StreamDataSources.factory()))
+            .setMediaSourceFactory(
+                DefaultMediaSourceFactory(StreamDataSources.factory())
+                    // A weak connection gets time to recover before a song counts as failed.
+                    .setLoadErrorHandlingPolicy(PatientLoadErrors())
+            )
             // Audio is small, so buffer up to 3 minutes ahead: the phone's radio downloads in a few
             // bursts and can sleep in between, instead of waking every few seconds.
             .setLoadControl(
                 DefaultLoadControl.Builder()
-                    .setBufferDurationsMs(60_000, 180_000, 1_500, 3_000)
+                    // After running dry, wait for 5 s of audio before carrying on, so a slow
+                    // connection doesn't stutter (start-up still begins after 1.5 s).
+                    .setBufferDurationsMs(60_000, 180_000, 1_500, 5_000)
                     .setPrioritizeTimeOverSizeThresholds(true)
                     .build()
             )
@@ -109,7 +116,7 @@ class PlaybackService : MediaLibraryService() {
             .setWakeMode(C.WAKE_MODE_NETWORK)
             .build()
 
-        player.addListener(RecoveryListener(player))
+        player.addListener(RecoveryListener(player).also { recovery = it })
         player.addListener(VolumeListener(player))
         player.addListener(OtherAudioListener(this, player).also { otherAudio = it })
         player.addListener(object : Player.Listener {
@@ -201,6 +208,8 @@ class PlaybackService : MediaLibraryService() {
         otherAudio = null
         idleReleaser?.cancel()
         idleReleaser = null
+        recovery?.cancel()
+        recovery = null
         session?.run {
             player.release()
             release()
@@ -566,29 +575,62 @@ class PlaybackService : MediaLibraryService() {
     }
 
     /**
-     * Stream URLs expire and YouTube occasionally rejects a request. On an error we drop the
-     * cached URL and retry the same track once from where it stopped; if it fails again we move on.
+     * How long a weak connection gets before a load counts as failed: up to 10 tries, waiting a
+     * little longer each time (about a minute in all), instead of the player's default 3 quick
+     * ones. A song YouTube won't serve, or an expired link, fails straight away so it can be
+     * fetched afresh or skipped.
+     */
+    private class PatientLoadErrors : androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy(10) {
+        override fun getRetryDelayMsFor(
+            info: androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy.LoadErrorInfo,
+        ): Long {
+            var cause: Throwable? = info.exception
+            while (cause != null) {
+                if (cause is StreamUnavailableException) return C.TIME_UNSET
+                if (cause is StreamHttpException && cause.code in 400..499) return C.TIME_UNSET
+                cause = cause.cause
+            }
+            val standard = super.getRetryDelayMsFor(info)
+            if (standard == C.TIME_UNSET) return C.TIME_UNSET
+            return (info.errorCount * 1_500L).coerceAtMost(8_000L)
+        }
+    }
+
+    /**
+     * When a song stops on an error: an expired link is fetched afresh and the song carries on
+     * from where it stopped. A connection problem gets several more tries, a few seconds apart,
+     * before the song is skipped. If several songs in a row fail (no connection, or YouTube
+     * refusing this network) it stops and shows the error instead of racing through the queue.
      */
     private class RecoveryListener(private val player: ExoPlayer) : Player.Listener {
-        private val retried = mutableSetOf<String>()
-
-        /**
-         * Songs that failed one after another. When several in a row fail (no connection, or
-         * YouTube refusing this network) it stops and shows the error instead of racing through
-         * the whole queue.
-         */
+        private val handler = Handler(Looper.getMainLooper())
+        private val tries = HashMap<String, Int>()
         private var failedInARow = 0
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
-            if (isPlaying) failedInARow = 0
+            if (isPlaying) {
+                failedInARow = 0
+                player.currentMediaItem?.mediaId?.let { tries.remove(it) }
+            }
         }
 
         override fun onPlayerError(error: PlaybackException) {
             val id = player.currentMediaItem?.mediaId ?: return
             StreamResolver.invalidate(id)
-            if (retried.add(id)) {
-                player.prepare()
-                player.play()
+            val attempt = (tries[id] ?: 0) + 1
+            tries[id] = attempt
+            val connection = isConnectionProblem(error)
+            val allowed = if (connection) CONNECTION_RETRIES else 1
+            if (attempt <= allowed) {
+                // The first retry is immediate (usually an expired link); connection retries wait.
+                val wait = if (attempt == 1 && !connection) 0L else RETRY_WAITS_MS[(attempt - 1).coerceAtMost(RETRY_WAITS_MS.lastIndex)]
+                handler.postDelayed({
+                    // Only if it's still this song, still stopped, and nobody paused meanwhile.
+                    if (player.currentMediaItem?.mediaId == id && player.playerError != null && player.playWhenReady) {
+                        player.prepare()
+                        player.play()
+                    }
+                }, wait)
             } else if (++failedInARow < MAX_FAILED_IN_A_ROW && player.hasNextMediaItem()) {
                 player.seekToNextMediaItem()
                 player.prepare()
@@ -596,13 +638,30 @@ class PlaybackService : MediaLibraryService() {
             }
         }
 
+        /** Drops any retry still waiting (the player is going away). */
+        fun cancel() = handler.removeCallbacksAndMessages(null)
+
+        private fun isConnectionProblem(error: PlaybackException): Boolean {
+            var cause: Throwable? = error
+            while (cause != null) {
+                if (cause is StreamUnavailableException || cause is StreamHttpException) return false
+                cause = cause.cause
+            }
+            return error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
+                error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ||
+                error.errorCode == PlaybackException.ERROR_CODE_IO_UNSPECIFIED ||
+                error.errorCode == PlaybackException.ERROR_CODE_TIMEOUT
+        }
+
         private companion object {
             const val MAX_FAILED_IN_A_ROW = 3
+            const val CONNECTION_RETRIES = 4
+            val RETRY_WAITS_MS = longArrayOf(2_000, 5_000, 10_000, 20_000)
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            // A different track is now current; let it earn its own retry later.
-            retried.retainAll(setOfNotNull(mediaItem?.mediaId))
+            // A different track is now current; let it earn its own retries later.
+            tries.keys.retainAll(setOfNotNull(mediaItem?.mediaId))
         }
     }
 }

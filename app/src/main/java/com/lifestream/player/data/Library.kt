@@ -151,6 +151,8 @@ object Library {
      */
     suspend fun refresh() = kotlinx.coroutines.withContext(Dispatchers.Default) {
         fun fresh(t: Track): Track {
+            // As the song index has it now (e.g. a new cover), otherwise just tidied up.
+            SoundtrackIndex.indexed(t.id)?.let { return it }
             val linked = if (t.gameId == null) SoundtrackIndex.gameOf(t)?.let { t.copy(gameId = it.id) } ?: t else t
             return OfficialTitles.fix(ArtistCredits.fix(linked))
         }

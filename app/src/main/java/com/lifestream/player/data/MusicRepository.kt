@@ -117,6 +117,8 @@ object MusicRepository {
         private var index = 0
         private var albumPage: Any? = null
         private var extrasDone = game.extras.isEmpty()
+        /** The soundtrack album's cover (from its first song), for extras shown with it. */
+        private var albumCover: String? = null
 
         override suspend fun load(page: Any?): Paged<Track> {
             val list = albums ?: gameAlbums(game).also { albums = it }
@@ -137,6 +139,7 @@ object MusicRepository {
                 // Skip singles and previews that sit next to the real soundtrack.
                 val tooSmall = firstAndOnlyPage && result.items.size < 4 && max > 1
                 if (!tooSmall) {
+                    if (albumCover == null) albumCover = result.items.firstNotNullOfOrNull { it.thumbnail }
                     out += if (album.fromPlaylist) {
                         result.items
                             .filterNot { it.title.equals("Private video", true) || it.title.equals("Deleted video", true) }
@@ -156,7 +159,7 @@ object MusicRepository {
             // After the soundtrack: any extra songs (e.g. a localized theme song).
             if (out.isEmpty() && index >= max && !extrasDone) {
                 extrasDone = true
-                out += findExtras(game)
+                out += findExtras(game, albumCover)
             }
             return Paged(
                 out.map { ArtistCredits.fix(it.copy(gameId = game.id)) },
@@ -165,17 +168,19 @@ object MusicRepository {
         }
     }
 
-    /** Finds each of [game]'s extra songs as its original recording; ones not found are skipped. */
-    private suspend fun findExtras(game: Game): List<Track> = game.extras.mapNotNull { extra ->
-        extra.pinnedTrack()?.let { return@mapNotNull it }
-        try {
-            val results = songSearch(extra.query).load(null).items
-            Matching.pickExtra(extra, results)
+    /**
+     * Finds each of [game]'s extra songs as its original recording; ones not found are skipped.
+     * Extras marked [ExtraSong.albumArt] show [albumCover], like the soundtrack's other songs.
+     */
+    private suspend fun findExtras(game: Game, albumCover: String?): List<Track> = game.extras.mapNotNull { extra ->
+        val found = extra.pinnedTrack() ?: try {
+            Matching.pickExtra(extra, songSearch(extra.query).load(null).items)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             null
         }
+        if (found != null && extra.albumArt && albumCover != null) found.copy(thumbnail = albumCover) else found
     }
 
     // ---- Free-text search ----

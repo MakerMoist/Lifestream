@@ -300,8 +300,19 @@ object Matching {
     }
 
     /** A game's searchable words: its title plus its card numeral. */
-    fun titleTokens(game: Game): List<String> =
-        normalize("${game.title} ${game.numeral}").split(' ').filter { it.isNotEmpty() }
+    fun titleTokens(game: Game): List<String> {
+        val words = normalize(game.title).split(' ').filter { it.isNotEmpty() }
+        // The card label counts where it's a real numeral ("I" for Final Fantasy); labels like
+        // "CC·R" would otherwise make "cc" find Crisis Core instead of Chrono Cross.
+        val numerals = normalize(game.numeral).split(' ').filter { isNumeral(it) }
+        return (words + numerals + game.aliases.map(::normalize)).distinct()
+    }
+
+    /** True when the whole query is one of [game]'s short names ("fft", "cc", "ct"…). */
+    fun isAlias(query: String, game: Game): Boolean {
+        val compact = queryTokens(query).joinToString("")
+        return compact.isNotEmpty() && game.aliases.any { normalize(it).replace(" ", "") == compact }
+    }
 
     private val bareFollowers = setOf("ORIGINAL", "OST", "SOUNDTRACK", "PIXEL", "PS", "OSV")
 
@@ -473,7 +484,7 @@ object Matching {
     fun isFillerTrack(cleanTitle: String): Boolean = filler.containsMatchIn(cleanTitle)
 
     fun cleanTrackTitle(raw: String, game: Game): String {
-        val gameWords = titleTokens(game).toSet() + setOf(
+        val gameWords = titleTokens(game).toSet() + normalize(game.numeral).split(' ') + setOf(
             "FINAL", "FANTASY", "FF", "OST", "SOUNDTRACK", "ORIGINAL", "MUSIC", "DISC", "CD", "TRACK", "BGM",
         )
         var t = Normalizer.normalize(raw, Normalizer.Form.NFKC).trim()

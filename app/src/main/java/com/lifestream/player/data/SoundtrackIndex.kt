@@ -30,7 +30,7 @@ import java.io.File
 object SoundtrackIndex {
 
     /** Bump when the way soundtracks are sourced changes, so old indexes are rebuilt. */
-    private const val VERSION = 13
+    private const val VERSION = 14
     private const val FILE_NAME = "soundtrack-index.json"
     // Soundtracks rarely change; refreshing weekly keeps background network use low.
     private const val MAX_AGE_MS = 7L * 24 * 60 * 60 * 1000
@@ -83,7 +83,7 @@ object SoundtrackIndex {
     /** The soundtrack a song belongs to: from the song itself, or by finding it in the index. */
     fun gameOf(track: Track): Game? {
         track.gameId?.let { id -> Catalog.game(id)?.let { return it } }
-        return gameIdsByTrack()[track.id]?.let { Catalog.game(it) }
+        return tracksById()[track.id]?.gameId?.let { Catalog.game(it) }
     }
 
     /** Drops the track → title lookup table; it's rebuilt the next time it's needed. */
@@ -106,17 +106,20 @@ object SoundtrackIndex {
         }
     }
 
-    /** track id → game id, rebuilt only when the index itself changes. */
-    @Volatile private var byTrack: Pair<Map<String, List<Track>>, Map<String, String>>? = null
+    /** track id → the song as indexed, rebuilt only when the index itself changes. */
+    @Volatile private var byTrack: Pair<Map<String, List<Track>>, Map<String, Track>>? = null
 
-    private fun gameIdsByTrack(): Map<String, String> {
+    private fun tracksById(): Map<String, Track> {
         val current = _tracks.value
         byTrack?.let { (source, map) -> if (source === current) return map }
-        val map = HashMap<String, String>()
-        for ((gameId, list) in current) for (t in list) map.putIfAbsent(t.id, gameId)
+        val map = HashMap<String, Track>()
+        for ((gameId, list) in current) for (t in list) map.putIfAbsent(t.id, if (t.gameId == null) t.copy(gameId = gameId) else t)
         byTrack = current to map
         return map
     }
+
+    /** The song as it's indexed now (latest name, credit and artwork), if it's in the index. */
+    fun indexed(trackId: String): Track? = tracksById()[trackId]
 
     /** Loads any game that is missing or stale. Safe to call often. */
     fun ensureBuilt() {
@@ -191,10 +194,11 @@ object SoundtrackIndex {
         val compactQuery = q.joinToString("")
         return Catalog.games.filter { game ->
             val tokens = Matching.titleTokens(game)
+            if (Matching.isAlias(query, game)) return@filter true
             matchesAll(q, tokens, exactNumerals = true) ||
                 q.all { w -> if (Matching.isNumeralToken(w)) w in tokens else tokens.any { Matching.wordMatches(w, it) } } ||
                 (compactQuery.length >= 4 && tokens.joinToString("").contains(compactQuery))
-        }
+        }.sortedByDescending { Matching.isAlias(query, it) }
     }
 
     /** Songs whose title (optionally together with their game's name) matches, best first. */

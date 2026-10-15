@@ -8,6 +8,9 @@ import org.schabi.newpipe.extractor.stream.StreamInfo
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 
+/** YouTube answered, but this song's audio isn't available (not a connection problem). */
+class StreamUnavailableException(message: String, cause: Throwable? = null) : IOException(message, cause)
+
 /**
  * Turns a YouTube video id into a direct audio-only stream URL on YouTube's media servers
  * (googlevideo.com). URLs expire after a few hours, so they are resolved lazily right before
@@ -41,7 +44,9 @@ object StreamResolver {
         } catch (e: IOException) {
             throw e
         } catch (e: Exception) {
-            throw IOException("Couldn't load stream info for $videoId: ${e.message}", e)
+            // YouTube answered but won't give this song (unavailable, sign-in wall…): retrying
+            // straight away won't help, unlike a dropped connection.
+            throw StreamUnavailableException("Couldn't load stream info for $videoId: ${e.message}", e)
         }
 
         val streams = info.audioStreams
@@ -58,7 +63,7 @@ object StreamResolver {
                     null
                 }
             }
-        if (streams.isEmpty()) throw IOException("No playable audio stream for $videoId")
+        if (streams.isEmpty()) throw StreamUnavailableException("No playable audio stream for $videoId")
 
         val expiresAt = Uri.parse(streams.first().url).getQueryParameter("expire")?.toLongOrNull()?.times(1000)
             ?: (now + 3 * 60 * 60_000)

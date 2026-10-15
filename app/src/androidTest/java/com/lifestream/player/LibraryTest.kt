@@ -107,7 +107,9 @@ class LibraryTest {
             kotlinx.coroutines.runBlocking { Library.refresh() }
             val t = Library.recents.value.first()
             assertEquals(com.lifestream.player.data.OfficialTitles.forId(id), t.title)
-            assertEquals("Masashi Hamauzu & Mitsuto Suzuki", t.artist)
+            // The indexed version when the song is in the index, otherwise the soundtrack's credit.
+            val indexed = com.lifestream.player.data.SoundtrackIndex.indexed(id)
+            assertEquals(indexed?.artist ?: "Masashi Hamauzu & Mitsuto Suzuki", t.artist)
         } finally {
             Library.clearRecents()
             before.reversed().forEach { Library.addRecent(it) }

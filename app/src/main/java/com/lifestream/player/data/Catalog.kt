@@ -11,6 +11,8 @@ object Catalog {
     private fun num(vararg n: String, exclude: List<String> = emptyList(), notWith: Set<String> = emptySet()) =
         MatchSpec(numerals = n.toSet(), exclude = exclude, excludeNumerals = notWith)
 
+    private const val X2_CREDIT = "Noriko Matsueda & Takahito Eguchi"
+
     /** Other entries in the franchise that must not leak into the original VII. */
     private val notOriginalVII = listOf(
         "REMAKE", "REBIRTH", "INTERGRADE", "INTERMISSION", "CRISIS CORE", "ADVENT CHILDREN",
@@ -42,10 +44,13 @@ object Catalog {
             match = num("VII", exclude = notOriginalVII), art = R.drawable.art_ff7),
         Game("fft", "T", "Final Fantasy Tactics", 1997, "Hitoshi Sakimoto · Masaharu Iwata",
             "Final Fantasy Tactics original soundtrack", c(0xFF3F2A14), c(0xFFE7C78A),
-            match = MatchSpec(allOf = listOf("TACTICS"), exclude = listOf("ADVANCE", "A2")), art = R.drawable.art_fft),
+            match = MatchSpec(allOf = listOf("TACTICS"), exclude = listOf("ADVANCE", "A2")), art = R.drawable.art_fft,
+            aliases = listOf("FFT"),
+        ),
         Game("ccr", "CC·R", "Crisis Core: Reunion", 2022, "Takeharu Ishimoto",
             "Crisis Core Final Fantasy VII Reunion original soundtrack", c(0xFF172554), c(0xFF93C5FD),
             match = MatchSpec(allOf = listOf("CRISIS CORE", "REUNION")), art = R.drawable.art_ccr,
+            aliases = listOf("CCR", "CCFF7", "CCFFVII", "CCFF7R"),
             // Reunion's soundtrack isn't on YouTube Music; its songs show Square Enix's official
             // Crisis Core soundtrack cover (the game's logo) instead of the uploader's thumbnails.
             coverArt = "https://yt3.googleusercontent.com/NUroKdpFTlpUapk0E2XKyYWogJie3XlaXlalTiEBLmhLdZUEWu1ZWz2bebbfIeX1_AKjq3BR3rcasEoW=w544-h544-s-l90-rj"),
@@ -57,10 +62,13 @@ object Catalog {
                 allOf = listOf("REMAKE"),
                 exclude = listOf("REBIRTH"),
             ), art = R.drawable.art_ff7r,
+            aliases = listOf("FF7R", "FFVIIR"),
             albumQueries = listOf("Final Fantasy VII Remake Intergrade original soundtrack")),
         Game("ff7rb", "VII·RB", "Final Fantasy VII Rebirth", 2024, "Mitsuto Suzuki · various",
             "Final Fantasy VII Rebirth original soundtrack", c(0xFF0F172A), c(0xFF67E8F9),
-            match = MatchSpec(numerals = setOf("VII"), allOf = listOf("REBIRTH")), art = R.drawable.art_ff7rb),
+            match = MatchSpec(numerals = setOf("VII"), allOf = listOf("REBIRTH")), art = R.drawable.art_ff7rb,
+            aliases = listOf("FF7RB", "FFVIIRB"),
+        ),
         Game("ff8", "VIII", "Final Fantasy VIII", 1999, "Nobuo Uematsu",
             "Final Fantasy VIII original soundtrack", c(0xFF1F2937), c(0xFF93C5FD), match = num("VIII"), art = R.drawable.art_ff8,
             // Licensed vocal theme, left off the streaming album.
@@ -75,7 +83,17 @@ object Catalog {
                 ExtraSong("real Emotion", "Kumi Koda", "ec6gB4QH5jU", 240),
                 // The English version sung by Jade (Sweetbox) for the Western release. Square Enix
                 // has no upload of it, so this one song comes from a fan upload of the full track.
-                ExtraSong("1000 Words (English Version)", "Jade Valerie", "r4voJjkJevs", 361),
+                ExtraSong("1000 Words (English Version)", "Jade Valerie", "r4voJjkJevs", 361, albumArt = true),
+                // The songs added by FINAL FANTASY X-2 International + Last Mission Original
+                // Soundtrack (its new mixes of 1000 Words and real Emotion are the same songs, so
+                // they're left out). Not on YouTube Music as an album; these are uploads of it.
+                ExtraSong("Last Mission No. 1", X2_CREDIT, "wQbLGGQ53yg", 326, albumArt = true),
+                ExtraSong("Last Mission No. 2", X2_CREDIT, "uBxaDw0MNhM", 348, albumArt = true),
+                ExtraSong("Last Mission No. 3", X2_CREDIT, "U82kO_Sqbsg", 272, albumArt = true),
+                ExtraSong("Flash Over", X2_CREDIT, "FCcOqCAsYEQ", 325, albumArt = true),
+                ExtraSong("To You", X2_CREDIT, "cKcMUoSp0SQ", 299, albumArt = true),
+                ExtraSong("Wind Crest ~The Three Trails~", X2_CREDIT, "RRyMcJcV-nQ", 148, albumArt = true),
+                ExtraSong("Creature Create", X2_CREDIT, "s2xywlpPaBc", 226, albumArt = true),
             )),
         Game("ff11", "XI", "Final Fantasy XI", 2002, "Uematsu · Mizuta · Tanioka",
             "Final Fantasy XI original soundtrack", c(0xFF1C1917), c(0xFFD6D3D1), match = num("XI"), art = R.drawable.art_ff11,
@@ -89,7 +107,7 @@ object Catalog {
         Game("ff13", "XIII", "Final Fantasy XIII", 2009, "Masashi Hamauzu",
             "Final Fantasy XIII original soundtrack", c(0xFF082F49), c(0xFFBAE6FD), match = num("XIII", exclude = listOf("LIGHTNING RETURNS"), notWith = setOf("XIII2")), art = R.drawable.art_ff13,
             // The Western release's theme song isn't on the Japanese soundtrack album.
-            extras = listOf(ExtraSong("My Hands", "Leona Lewis"))),
+            extras = listOf(ExtraSong("My Hands", "Leona Lewis", albumArt = true))),
         Game("ff13-2", "XIII-2", "Final Fantasy XIII-2", 2011, "Hamauzu · Mizuta · Suzuki",
             "Final Fantasy XIII-2 original soundtrack", c(0xFF1E0B3A), c(0xFFB9A2FF),
             match = num("XIII2", notWith = setOf("XIII")), art = R.drawable.art_ff13_2),
@@ -97,6 +115,7 @@ object Catalog {
         Game("lr", "LR", "Lightning Returns: Final Fantasy XIII", 2013, "Hamauzu · Mizuta · Suzuki",
             "Lightning Returns Final Fantasy XIII original soundtrack", c(0xFF2A0E2E), c(0xFFF5A3D0),
             match = MatchSpec(numerals = setOf("XIII"), allOf = listOf("LIGHTNING RETURNS")), art = R.drawable.art_lr,
+            aliases = listOf("LR", "LRFF13", "LRFFXIII"),
             albumQueries = listOf("Lightning Returns Final Fantasy XIII original soundtrack plus")),
         Game("ff14", "XIV", "Final Fantasy XIV", 2013, "Masayoshi Soken",
             "Final Fantasy XIV original soundtrack", c(0xFF2E1065), c(0xFFC4B5FD), match = num("XIV"), art = R.drawable.art_ff14,
@@ -117,7 +136,7 @@ object Catalog {
         Game("ff16", "XVI", "Final Fantasy XVI", 2023, "Masayoshi Soken",
             "Final Fantasy XVI original soundtrack", c(0xFF450A0A), c(0xFFFB923C), match = num("XVI"), art = R.drawable.art_ff16),
 
-        // Other Banger Games
+        // Other Games
         // The game's soundtrack and its Verso's Drafts expansion soundtrack; not the bonus album
         // ("Nos vies en Lumière (Bonus Edition)") or the pre-release trailer EPs ("Reveal Edition",
         // "Gustave Edition", "Cast Reveal Edition").
@@ -128,16 +147,23 @@ object Catalog {
                 exclude = listOf("EDITION", "BONUS", "NOS VIES", "TRAILER", "REVEAL"),
                 requireFinalFantasy = false,
             ), art = R.drawable.art_coe33, fullSongTitles = true,
+            aliases = listOf("E33", "COE33", "CO33", "CO E33"),
             albumQueries = listOf("Clair Obscur Expedition 33 Verso's Drafts original soundtrack")),
         Game("ct", "CT", "Chrono Trigger", 1995, "Yasunori Mitsuda · Nobuo Uematsu",
             "Chrono Trigger original soundtrack", c(0xFF1E3A5F), c(0xFFFFD166), Series.SPINOFF,
-            match = MatchSpec(allOf = listOf("CHRONO", "TRIGGER"), requireFinalFantasy = false), art = R.drawable.art_ct),
+            match = MatchSpec(allOf = listOf("CHRONO", "TRIGGER"), requireFinalFantasy = false), art = R.drawable.art_ct,
+            aliases = listOf("CT"),
+        ),
         Game("cx", "CC", "Chrono Cross", 1999, "Yasunori Mitsuda",
             "Chrono Cross original soundtrack", c(0xFF083344), c(0xFF22D3EE), Series.SPINOFF,
-            match = MatchSpec(allOf = listOf("CHRONO", "CROSS"), requireFinalFantasy = false), art = R.drawable.art_cx),
+            match = MatchSpec(allOf = listOf("CHRONO", "CROSS"), requireFinalFantasy = false), art = R.drawable.art_cx,
+            aliases = listOf("CC"),
+        ),
         Game("lo", "LO", "Lost Odyssey", 2007, "Nobuo Uematsu",
             "Lost Odyssey original soundtrack", c(0xFF292524), c(0xFFE7B76B), Series.SPINOFF,
-            match = MatchSpec(allOf = listOf("LOST ODYSSEY"), requireFinalFantasy = false), art = R.drawable.art_lo),
+            match = MatchSpec(allOf = listOf("LOST ODYSSEY"), requireFinalFantasy = false), art = R.drawable.art_lo,
+            aliases = listOf("LO"),
+        ),
     )
 
     /** Soundtracks that were folded into another (saved songs and playlists still use the old id). */

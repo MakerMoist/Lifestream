@@ -126,6 +126,8 @@ data class Game(
      * whole name identifies a song instead of the part before the dash.
      */
     val fullSongTitles: Boolean = false,
+    /** Short names that find this title in Search, e.g. "FFT", "CC", "CT" (letters and digits only). */
+    val aliases: List<String> = emptyList(),
 )
 
 /**
@@ -137,6 +139,8 @@ data class ExtraSong(
     val artist: String,
     val videoId: String? = null,
     val durationSec: Long = 0,
+    /** Shows the soundtrack's album cover, like the title's other songs, instead of its own picture. */
+    val albumArt: Boolean = false,
 ) {
     val query: String get() = "$artist $title"
 
@@ -148,7 +152,7 @@ data class ExtraSong(
 
 enum class Series(val label: String) {
     MAINLINE("Main series"),
-    SPINOFF("Other Banger Games"),
+    SPINOFF("Other Games"),
 }
 
 fun formatDuration(seconds: Long): String {
