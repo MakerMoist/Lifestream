@@ -97,6 +97,8 @@ object Romaji {
 
     private val skeletons = ConcurrentHashMap<String, String>()
 
+    fun trimCaches() = skeletons.clear()
+
     /** Skeleton of a Japanese title's kana reading (cached; titles repeat across searches). */
     fun kanaSkeleton(japanese: String): String = skeletons.getOrPut(japanese) {
         if (skeletons.size > 20_000) skeletons.clear()

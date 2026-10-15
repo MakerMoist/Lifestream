@@ -11,6 +11,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.graphics.ImageBitmap
 import com.lifestream.player.ui.components.ArtCache
 import com.lifestream.player.ui.components.rememberArt
@@ -140,13 +142,14 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back")
                     }
                     Column(Modifier.padding(horizontal = 20.dp)) {
+                        // The big numeral is no longer shown, but its space is kept so the title and
+                        // composer stay where they were.
                         Text(
-                            game.numeral,
+                            "I",
                             fontFamily = FontFamily.Serif,
                             fontWeight = FontWeight.Bold,
                             fontSize = 56.sp,
-                            color = game.colorB,
-                            style = TextStyle(shadow = Shadow(Color.Black.copy(alpha = 0.7f), Offset(0f, 2f), 12f)),
+                            modifier = Modifier.alpha(0f).clearAndSetSemantics { },
                         )
                         Text(game.title, style = MaterialTheme.typography.headlineSmall, color = Color.White)
                         Text(

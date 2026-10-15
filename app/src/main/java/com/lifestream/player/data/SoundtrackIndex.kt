@@ -74,6 +74,25 @@ object SoundtrackIndex {
         return gameIdsByTrack()[track.id]?.let { Catalog.game(it) }
     }
 
+    /** Drops the track → title lookup table; it's rebuilt the next time it's needed. */
+    fun trimCaches() {
+        byTrack = null
+    }
+
+    /**
+     * Songs from one album share their artwork address, composer and title id; keeping one copy of
+     * each repeated text (instead of thousands) noticeably shrinks the index in memory.
+     */
+    private fun shareStrings(lists: Map<String, List<Track>>): Map<String, List<Track>> {
+        val pool = HashMap<String, String>()
+        fun one(s: String?): String? = s?.let { pool.getOrPut(it) { it } }
+        return lists.mapValues { (_, list) ->
+            list.map { t ->
+                t.copy(artist = one(t.artist)!!, thumbnail = one(t.thumbnail), gameId = one(t.gameId))
+            }
+        }
+    }
+
     /** track id → game id, rebuilt only when the index itself changes. */
     @Volatile private var byTrack: Pair<Map<String, List<Track>>, Map<String, String>>? = null
 
@@ -122,6 +141,7 @@ object SoundtrackIndex {
                     }
                 }.awaitAll()
                 _progress.value = Progress(Catalog.games.size, Catalog.games.size, false)
+                _tracks.value = shareStrings(_tracks.value)
                 writeToDisk()
                 TitleTranslator.release()
             }
@@ -217,7 +237,7 @@ object SoundtrackIndex {
             }
             builtAt.clear()
             builtAt.putAll(stamps)
-            _tracks.value = map
+            _tracks.value = shareStrings(map)
         }
     }
 

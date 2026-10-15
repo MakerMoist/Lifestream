@@ -52,6 +52,9 @@ object TitleTranslator {
 
     fun hasJapanese(text: String) = japanese.containsMatchIn(text)
 
+    /** Frees remembered translations (titles are stored translated, so this is rarely needed again). */
+    fun trimCaches() = cache.clear()
+
     /** Starts the model download in the background so titles are translated from the first search. */
     fun prefetch() {
         Thread({ runCatching { ensureModel() } }, "title-translator").start()

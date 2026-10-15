@@ -206,25 +206,23 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
                 Column(
                     Modifier
                         .statusBarsPadding()
-                        .padding(top = 20.dp, bottom = 4.dp),
+                        .padding(top = 8.dp, bottom = 4.dp),
                 ) {
-                    // Tap the quote for another one. The area keeps room for a long quote, so the
-                    // page below doesn't jump each time the quote changes.
+                    // Tap the quote for another one. The area fits each quote exactly (no empty
+                    // space above it); when the next quote is longer or shorter, the page below
+                    // eases into place instead of jumping.
                     if (showQuotes) {
                         val quote = villainQuotes[quoteIndex]
-                        val minQuoteHeight = with(LocalDensity.current) { (25 * 4 + 18).sp.toDp() } + 6.dp
                         AnimatedContent(
                             targetState = quote,
                             transitionSpec = {
                                 fadeIn(tween(600, delayMillis = 250)) togetherWith fadeOut(tween(350)) using
-                                    SizeTransform(clip = false) { _, _ -> tween(400) }
+                                    SizeTransform(clip = false) { _, _ -> tween(500) }
                             },
-                            // Short quotes sit at the bottom, right above the buttons.
-                            contentAlignment = Alignment.BottomStart,
+                            contentAlignment = Alignment.TopStart,
                             label = "quote",
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(min = minQuoteHeight)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
@@ -232,7 +230,7 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
                                     quoteIndex = VillainQuotes.next()
                                 },
                         ) { q ->
-                            Column(Modifier.fillMaxWidth().heightIn(min = minQuoteHeight), verticalArrangement = Arrangement.Bottom) {
+                            Column(Modifier.fillMaxWidth()) {
                                 Text(
                                     "\u201C${q.text}\u201D",
                                     style = MaterialTheme.typography.headlineSmall.copy(

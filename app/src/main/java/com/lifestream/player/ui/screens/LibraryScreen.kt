@@ -215,6 +215,8 @@ fun PlaylistScreen(playlistId: String, onBack: () -> Unit) {
         androidx.compose.runtime.LaunchedEffect(Unit) { onBack() }
         return
     }
+    // Opening a playlist counts as using it, for Home's "Last Playlist".
+    androidx.compose.runtime.LaunchedEffect(playlist.id) { Library.setLastPlaylist(playlist.id) }
 
     LazyColumn(
         Modifier

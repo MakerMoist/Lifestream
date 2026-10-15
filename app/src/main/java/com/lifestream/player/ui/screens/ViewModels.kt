@@ -103,7 +103,7 @@ class HomeViewModel : ViewModel() {
                 }
                 val titles = mix.mapNotNull { it.gameId }.distinct().size
                 if (mix.size >= 20 && titles >= 3) {
-                    PlayerConnection.playTracks(mix)
+                    PlayerConnection.playTracks(mix, instant = true)
                     val note = "Shuffling ${mix.size} songs from $titles soundtracks"
                     surpriseNote = note
                     clearNoteLater(note)
@@ -116,7 +116,7 @@ class HomeViewModel : ViewModel() {
                     val tracks = SoundtrackIndex.songsFor(game.id) ?: tracksFor(game)
                     if (tracks.isNotEmpty()) {
                         lastSurprise = game.id
-                        PlayerConnection.playTracks(tracks, randomStart = true)
+                        PlayerConnection.playTracks(tracks, randomStart = true, instant = true)
                         surpriseNote = "Shuffling ${game.title}"
                         clearNoteLater("Shuffling ${game.title}")
                         return@launch

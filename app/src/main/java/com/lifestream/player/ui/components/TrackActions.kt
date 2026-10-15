@@ -36,6 +36,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -88,6 +90,8 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
     var choosingFor by remember { mutableStateOf<Track?>(null) }
     var namingFor by remember { mutableStateOf<Track?>(null) }
     var removingFor by remember { mutableStateOf<Track?>(null) }
+    var savingInstant by remember { mutableStateOf(false) }
+    val instantQueue by PlayerConnection.instantQueue.collectAsStateWithLifecycle()
     val playlists by Library.playlists.collectAsStateWithLifecycle()
 
     target?.let { t ->
@@ -127,6 +131,13 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
                 ActionRow(Icons.AutoMirrored.Rounded.QueueMusic, "Add to queue") {
                     PlayerConnection.addToQueue(track)
                     toast(context, "Added to queue")
+                    TrackActions.dismiss()
+                }
+            }
+            // An Instant Playlist can be kept: offered on the playing song's menu (Now Playing's ⋮).
+            if (instantQueue && PlayerConnection.state.value.current?.id == track.id) {
+                ActionRow(Icons.Rounded.Add, "Save as playlist") {
+                    savingInstant = true
                     TrackActions.dismiss()
                 }
             }
@@ -179,6 +190,8 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
         )
     }
 
+    if (savingInstant) SaveInstantPlaylistDialog(onDismiss = { savingInstant = false })
+
     removingFor?.let { track ->
         RemoveFromPlaylistDialog(track = track, onDismiss = { removingFor = null })
     }
@@ -223,7 +236,8 @@ private fun AddToPlaylistDialog(track: Track, onDismiss: () -> Unit, onNewPlayli
         onDismissRequest = onDismiss,
         title = { Text("Add to playlist") },
         text = {
-            Column {
+            // Scrolls when there are many playlists.
+            Column(Modifier.verticalScroll(rememberScrollState())) {
                 playlists.forEach { p ->
                     val already = p.tracks.any { it.id == track.id }
                     Row(
@@ -275,6 +289,29 @@ private fun AddToPlaylistDialog(track: Track, onDismiss: () -> Unit, onNewPlayli
     )
 }
 
+/** Names and saves the playing Instant Playlist as a playlist of your own. */
+@Composable
+fun SaveInstantPlaylistDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    if (!Library.canCreatePlaylist()) {
+        androidx.compose.runtime.LaunchedEffect(Unit) {
+            toast(context, "You have ${Library.MAX_PLAYLISTS} playlists, the most allowed.")
+            onDismiss()
+        }
+        return
+    }
+    PlaylistNameDialog(
+        title = "Save as playlist",
+        initial = "",
+        confirmLabel = "Save",
+        onDismiss = onDismiss,
+    ) { name ->
+        val saved = PlayerConnection.saveInstantPlaylist(name)
+        toast(context, if (saved != null) "Saved as ${saved.name}" else "Couldn't save this playlist")
+        onDismiss()
+    }
+}
+
 /** Picks which playlist to take a song out of, when it's in more than one. */
 @Composable
 private fun RemoveFromPlaylistDialog(track: Track, onDismiss: () -> Unit) {
@@ -285,7 +322,8 @@ private fun RemoveFromPlaylistDialog(track: Track, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         title = { Text("Remove from playlist") },
         text = {
-            Column {
+            // Scrolls when there are many playlists.
+            Column(Modifier.verticalScroll(rememberScrollState())) {
                 containing.forEach { p ->
                     Row(
                         Modifier

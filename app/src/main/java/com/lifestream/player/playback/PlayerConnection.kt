@@ -136,6 +136,26 @@ object PlayerConnection {
 
     // ---- Commands ----
 
+    private val _instantQueue = MutableStateFlow(false)
+
+    /** True while the queue is an Instant Playlist, which can be saved as a playlist of your own. */
+    val instantQueue: StateFlow<Boolean> = _instantQueue.asStateFlow()
+
+    /**
+     * Saves the playing Instant Playlist (songs in the order they play, including any added by
+     * auto-play) as a playlist called [name]. Null if there's nothing to save or no room.
+     */
+    fun saveInstantPlaylist(name: String): com.lifestream.player.data.Playlist? {
+        if (!_instantQueue.value) return null
+        val s = _state.value
+        val songs = s.playOrder.mapNotNull { s.queue.getOrNull(it) }.ifEmpty { s.queue }
+        val playlist = Library.createPlaylistWith(name, songs) ?: return null
+        _instantQueue.value = false
+        playingPlaylistId = playlist.id
+        Library.setLastPlaylist(playlist.id)
+        return playlist
+    }
+
     /** The playlist the current queue was started from, if any (see [onAddedToPlaylist]). */
     var playingPlaylistId: String? = null
         private set
@@ -151,12 +171,15 @@ object PlayerConnection {
         shuffle: Boolean = true,
         randomStart: Boolean = false,
         fromPlaylist: String? = null,
+        /** Set by Home's Instant Playlist, so the queue can be saved as a playlist. */
+        instant: Boolean = false,
     ) {
         // Drop anything without a valid video id (e.g. a corrupted saved favourite).
         val chosen = tracks.getOrNull(startIndex)
         val valid = tracks.filter { SafeInput.isVideoId(it.id) }
         if (valid.isEmpty()) return
         playingPlaylistId = fromPlaylist
+        _instantQueue.value = instant
         fromPlaylist?.let { Library.setLastPlaylist(it) }
         withController { c ->
             // Off first, then on after the new queue is in: the player service builds the shuffle
@@ -261,6 +284,7 @@ object PlayerConnection {
     /** Stops playback and empties the queue (swiping the mini player away). */
     fun stopAndClear() = withController {
         playingPlaylistId = null
+        _instantQueue.value = false
         it.stop()
         it.clearMediaItems()
     }

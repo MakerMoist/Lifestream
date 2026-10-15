@@ -128,6 +128,12 @@ object Matching {
 
     fun queryTokens(query: String): List<String> = forQuery(query).second
 
+    /** Frees search caches (they're rebuilt as soon as a search runs again). */
+    fun trimCaches() {
+        normalizedTitles.clear()
+        lastQuery = null
+    }
+
     private fun computeQueryTokens(query: String): List<String> {
         val out = mutableListOf<String>()
         for (tok in normalize(query).split(' ').filter { it.isNotEmpty() }) {

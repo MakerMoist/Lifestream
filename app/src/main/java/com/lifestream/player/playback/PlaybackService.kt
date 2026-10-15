@@ -45,6 +45,7 @@ class PlaybackService : MediaSessionService() {
 
     private var session: MediaSession? = null
     private var otherAudio: OtherAudioListener? = null
+    private var idleReleaser: IdleReleaser? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -100,6 +101,7 @@ class PlaybackService : MediaSessionService() {
             }
         })
         player.addListener(AutoPlayListener(player))
+        player.addListener(IdleReleaser(player).also { idleReleaser = it })
 
         setMediaNotificationProvider(
             DefaultMediaNotificationProvider.Builder(this).build().apply {
@@ -134,6 +136,8 @@ class PlaybackService : MediaSessionService() {
     override fun onDestroy() {
         otherAudio?.release()
         otherAudio = null
+        idleReleaser?.cancel()
+        idleReleaser = null
         session?.run {
             player.release()
             release()
@@ -193,6 +197,28 @@ class PlaybackService : MediaSessionService() {
             mediaItems: MutableList<MediaItem>,
         ): ListenableFuture<MutableList<MediaItem>> =
             Futures.immediateFuture(mediaItems.mapNotNull { it.withPlayableUri() }.toMutableList())
+    }
+
+    /**
+     * After a long pause, lets go of the decoder, the buffered audio and the network connection
+     * (the queue and position stay). Pressing play prepares it again from the same spot.
+     */
+    private class IdleReleaser(private val player: ExoPlayer) : Player.Listener {
+        private val handler = Handler(Looper.getMainLooper())
+        private val releaseNow = Runnable {
+            if (!player.playWhenReady && player.playbackState != Player.STATE_IDLE) player.stop()
+        }
+
+        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+            handler.removeCallbacks(releaseNow)
+            if (!playWhenReady) handler.postDelayed(releaseNow, RELEASE_AFTER_MS)
+        }
+
+        fun cancel() = handler.removeCallbacks(releaseNow)
+
+        private companion object {
+            const val RELEASE_AFTER_MS = 15 * 60 * 1000L
+        }
     }
 
     /**
@@ -280,7 +306,8 @@ class PlaybackService : MediaSessionService() {
                 }
             } else if (pausedByVolume) {
                 pausedByVolume = false
-                if (!player.playWhenReady && player.mediaItemCount > 0 && player.playbackState != Player.STATE_IDLE) {
+                if (!player.playWhenReady && player.mediaItemCount > 0) {
+                    if (player.playbackState == Player.STATE_IDLE) player.prepare() // released while paused
                     player.play()
                 }
             }
@@ -330,7 +357,7 @@ class PlaybackService : MediaSessionService() {
 
         private fun maybeResume() {
             if (pausedAt == 0L) return
-            val gone = player.playWhenReady || player.mediaItemCount == 0 || player.playbackState == Player.STATE_IDLE
+            val gone = player.playWhenReady || player.mediaItemCount == 0
             if (gone || SystemClock.elapsedRealtime() - pausedAt > GIVE_UP_AFTER_MS) {
                 stopWaiting()
                 return
@@ -343,6 +370,7 @@ class PlaybackService : MediaSessionService() {
             // sound without playing anything, like a camera recording video, doesn't count).
             if (!otherPlayed) return
             stopWaiting()
+            if (player.playbackState == Player.STATE_IDLE) player.prepare() // released while paused
             player.play()
         }
 

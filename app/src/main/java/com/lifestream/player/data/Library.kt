@@ -14,7 +14,7 @@ data class Playlist(val id: String, val name: String, val tracks: List<Track>)
 
 /** Playlists and listening history, stored on the device. */
 object Library {
-    const val MAX_PLAYLISTS = 5
+    const val MAX_PLAYLISTS = 15
     const val MAX_NAME_LENGTH = 40
     private const val MAX_TRACKS_PER_PLAYLIST = 1000
     private const val MAX_RECENTS = 50
@@ -60,7 +60,9 @@ object Library {
     fun setLastPlaylist(id: String) {
         if (playlist(id) == null || _lastPlaylistId.value == id) return
         _lastPlaylistId.value = id
-        prefs.edit().putString(KEY_LAST_PLAYLIST, id).apply()
+        // Written straight away (not in the background), so it survives the app being closed
+        // right after; it's one tiny value and changes rarely.
+        prefs.edit().putString(KEY_LAST_PLAYLIST, id).commit()
     }
 
     /** Playlists that contain the song (for "Remove from playlist"). */
@@ -72,6 +74,16 @@ object Library {
     fun createPlaylist(name: String): Playlist? {
         if (!canCreatePlaylist()) return null
         val p = Playlist(UUID.randomUUID().toString(), cleanName(name, "Playlist ${_playlists.value.size + 1}"), emptyList())
+        _playlists.value = _playlists.value + p
+        savePlaylists()
+        return p
+    }
+
+    /** Creates a playlist already holding [tracks] (e.g. a saved Instant Playlist); null at the limit. */
+    fun createPlaylistWith(name: String, tracks: List<Track>): Playlist? {
+        if (!canCreatePlaylist()) return null
+        val songs = tracks.distinctBy { it.id }.take(MAX_TRACKS_PER_PLAYLIST)
+        val p = Playlist(UUID.randomUUID().toString(), cleanName(name, "Instant Playlist"), songs)
         _playlists.value = _playlists.value + p
         savePlaylists()
         return p

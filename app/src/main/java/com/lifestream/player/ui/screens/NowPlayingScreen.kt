@@ -93,6 +93,8 @@ import com.lifestream.player.playback.PlayerConnection
 import com.lifestream.player.playback.PlayerUiState
 import com.lifestream.player.ui.components.Artwork
 import com.lifestream.player.ui.components.TrackActions
+import com.lifestream.player.ui.components.SaveInstantPlaylistDialog
+import androidx.compose.material.icons.rounded.Add
 import com.lifestream.player.ui.theme.LsColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,16 +103,20 @@ fun NowPlayingScreen(onClose: () -> Unit) {
     val state by PlayerConnection.state.collectAsStateWithLifecycle()
     val track = state.current
     var showQueue by remember { mutableStateOf(false) }
+    var savingInstant by remember { mutableStateOf(false) }
+    val instantQueue by PlayerConnection.instantQueue.collectAsStateWithLifecycle()
 
     // Back closes the player and returns to the page underneath (e.g. the soundtrack).
     BackHandler { onClose() }
 
     // Drag down to minimize: the screen follows your finger and closes past a quarter of the way
-    // (or with a downward flick); otherwise it springs back.
+    // (or with a downward flick); otherwise it springs back. Drag up to open Up next: the screen
+    // lifts a little (with resistance) and the list opens past a short distance or an upward flick.
     val scope = rememberCoroutineScope()
     val dragY = remember { Animatable(0f) }
     var heightPx by remember { mutableFloatStateOf(1f) }
     val closeFlingPx = with(LocalDensity.current) { 1000.dp.toPx() }
+    val openQueuePx = with(LocalDensity.current) { 56.dp.toPx() }
     val close by rememberUpdatedState(onClose)
 
     // This screen floats above the app's Scaffold, so it must set its own text/icon colour;
@@ -127,14 +133,25 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                         onVerticalDrag = { change, dragAmount ->
                             change.consume()
                             tracker.addPosition(change.uptimeMillis, change.position)
-                            scope.launch { dragY.snapTo((dragY.value + dragAmount).coerceAtLeast(0f)) }
+                            // Upward movement is damped: it's a pull, not a slide.
+                            val step = if (dragY.value + dragAmount < 0f) dragAmount * 0.35f else dragAmount
+                            scope.launch { dragY.snapTo((dragY.value + step).coerceAtLeast(-openQueuePx * 2)) }
                         },
                         onDragCancel = { scope.launch { dragY.animateTo(0f, spring()) } },
                         onDragEnd = {
                             val velocity = tracker.calculateVelocity().y
                             val shouldClose = dragY.value > heightPx * 0.25f ||
                                 (velocity > closeFlingPx && dragY.value > heightPx * 0.05f)
-                            if (shouldClose) close() else scope.launch { dragY.animateTo(0f, spring(dampingRatio = 0.8f)) }
+                            // Up (a short pull, or a flick that was going up) opens Up next.
+                            val openQueue = dragY.value < -openQueuePx * 0.5f ||
+                                (velocity < -closeFlingPx && dragY.value < 0f)
+                            when {
+                                shouldClose -> close()
+                                else -> {
+                                    if (openQueue) showQueue = true
+                                    scope.launch { dragY.animateTo(0f, spring(dampingRatio = 0.8f)) }
+                                }
+                            }
                         },
                     )
                 }
@@ -224,9 +241,16 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    // Up next sits beside the title.
-                    IconButton(onClick = { showQueue = true }) {
-                        Icon(Icons.AutoMirrored.Rounded.QueueMusic, "Up next")
+                    // Up next sits beside the title; an Instant Playlist also gets a save button above it.
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        if (instantQueue) {
+                            IconButton(onClick = { savingInstant = true }) {
+                                Icon(Icons.Rounded.Add, "Save as playlist")
+                            }
+                        }
+                        IconButton(onClick = { showQueue = true }) {
+                            Icon(Icons.AutoMirrored.Rounded.QueueMusic, "Up next")
+                        }
                     }
                 }
 
@@ -239,6 +263,8 @@ fun NowPlayingScreen(onClose: () -> Unit) {
         }
 
     }
+
+    if (savingInstant) SaveInstantPlaylistDialog(onDismiss = { savingInstant = false })
 
     if (showQueue) {
         ModalBottomSheet(
