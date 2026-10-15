@@ -1,5 +1,10 @@
 package com.lifestream.player.ui.screens
 
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.em
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.foundation.text.BasicText
 import com.lifestream.player.ui.components.CenteredButtonLabel
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -9,7 +14,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
@@ -212,21 +216,21 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
                         .statusBarsPadding()
                         .padding(top = 8.dp, bottom = 4.dp),
                 ) {
-                    // Tap the quote for another one. The area fits each quote exactly (no empty
-                    // space above it); when the next quote is longer or shorter, the page below
-                    // eases into place instead of jumping.
+                    // Tap the quote for another one. The area is always the same height (room for
+                    // four lines and the name), so changing quotes never moves the page below.
+                    // Short quotes sit in the middle of it; the longest shrink a little to fit.
                     if (showQuotes) {
                         val quote = villainQuotes[quoteIndex]
+                        val quoteHeight = with(LocalDensity.current) { (QuoteSize * QuoteLines * 1.32f).toDp() + 6.dp + 18.sp.toDp() }
+                        val quoteColor = LocalContentColor.current
                         AnimatedContent(
                             targetState = quote,
-                            transitionSpec = {
-                                fadeIn(tween(600, delayMillis = 250)) togetherWith fadeOut(tween(350)) using
-                                    SizeTransform(clip = false) { _, _ -> tween(500) }
-                            },
-                            contentAlignment = Alignment.TopStart,
+                            transitionSpec = { fadeIn(tween(600, delayMillis = 250)) togetherWith fadeOut(tween(350)) },
+                            contentAlignment = Alignment.CenterStart,
                             label = "quote",
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .height(quoteHeight)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
@@ -234,20 +238,25 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
                                     quoteIndex = VillainQuotes.next()
                                 },
                         ) { q ->
-                            Column(Modifier.fillMaxWidth()) {
-                                Text(
+                            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+                                BasicText(
                                     "\u201C${q.text}\u201D",
                                     style = MaterialTheme.typography.headlineSmall.copy(
                                         fontStyle = FontStyle.Italic,
-                                        fontSize = 19.sp,
-                                        lineHeight = 25.sp,
+                                        lineHeight = 1.32.em,
+                                        color = quoteColor,
                                     ),
+                                    maxLines = QuoteLines,
+                                    autoSize = TextAutoSize.StepBased(minFontSize = 13.sp, maxFontSize = QuoteSize, stepSize = 0.5.sp),
+                                    modifier = Modifier.weight(1f, fill = false),
                                 )
                                 Spacer(Modifier.height(6.dp))
                                 Text(
                                     "\u2014 ${q.who}, ${q.game}",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = LsColors.Gold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                             }
                         }
@@ -558,3 +567,7 @@ fun CrystalMotif(color: Color, modifier: Modifier = Modifier) {
         drawLine(color.copy(alpha = 0.25f), Offset(cx - half, mid), Offset(cx + half, mid), strokeWidth = 1.dp.toPx())
     }
 }
+
+/** The Home quote's full text size and the most lines it may take (longer ones shrink to fit). */
+private val QuoteSize = 19.sp
+private const val QuoteLines = 4

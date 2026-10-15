@@ -37,9 +37,15 @@ object Catalog {
         Game("ff4", "IV", "Final Fantasy IV", 1991, "Nobuo Uematsu",
             "Final Fantasy IV original soundtrack", c(0xFF312E81), c(0xFFA5B4FC), match = num("IV"), art = R.drawable.art_ff4),
         Game("ff5", "V", "Final Fantasy V", 1992, "Nobuo Uematsu",
-            "Final Fantasy V original soundtrack", c(0xFF134E4A), c(0xFF5EEAD4), match = num("V"), art = R.drawable.art_ff5),
+            "Final Fantasy V original soundtrack", c(0xFF134E4A), c(0xFF5EEAD4), match = num("V"), art = R.drawable.art_ff5,
+            // YouTube only has small (480x360) frames for this soundtrack's songs, which look
+            // blurry when shown large; the album's own cover is sharp.
+            coverArt = "https://yt3.googleusercontent.com/Oz0XyLPOF78ND3kUtozAGDOUTlkDQT-hcuuu2hXYoeRubap3fTDAylrVoxLzc7EBtH4ltassBQ6xJQY-=w544-h544-l90-rj"),
         Game("ff6", "VI", "Final Fantasy VI", 1994, "Nobuo Uematsu",
-            "Final Fantasy VI original soundtrack", c(0xFF4A044E), c(0xFFE879F9), match = num("VI"), art = R.drawable.art_ff6),
+            "Final Fantasy VI original soundtrack", c(0xFF4A044E), c(0xFFE879F9), match = num("VI"), art = R.drawable.art_ff6,
+            // YouTube only has small (480x360) frames for this soundtrack's songs, which look
+            // blurry when shown large; the album's own cover is sharp.
+            coverArt = "https://yt3.googleusercontent.com/yrm6nocGlOsaKN6w2xdmncbfuFHVdlUP4DvJfg0Tpivky3XhYVLYsg8fB__eqjaS_z9J_AN7WMi8JMsYhw=w544-h544-l90-rj"),
         Game("ccr", "CC·R", "Crisis Core: Reunion", 2022, "Takeharu Ishimoto",
             "Crisis Core Final Fantasy VII Reunion original soundtrack", c(0xFF172554), c(0xFF93C5FD),
             match = MatchSpec(allOf = listOf("CRISIS CORE", "REUNION")), art = R.drawable.art_ccr,
@@ -159,6 +165,9 @@ object Catalog {
             "Chrono Trigger original soundtrack", c(0xFF1E3A5F), c(0xFFFFD166), Series.SPINOFF,
             match = MatchSpec(allOf = listOf("CHRONO", "TRIGGER"), requireFinalFantasy = false), art = R.drawable.art_ct,
             aliases = listOf("CT"),
+            // YouTube only has small (480x360) frames for this soundtrack's songs, which look
+            // blurry when shown large; the album's own cover is sharp.
+            coverArt = "https://yt3.googleusercontent.com/Nt784WTZYI6WHUjn6UGg_IbTIzfHeNBN_Lj17t7YvP9lK1WL5L3ZH_uWna9th7EGAvr5HTTxYNAm1Fs=w544-h544-s-l90-rj",
         ),
         Game("cx", "CC", "Chrono Cross", 1999, "Yasunori Mitsuda",
             "Chrono Cross original soundtrack", c(0xFF083344), c(0xFF22D3EE), Series.SPINOFF,

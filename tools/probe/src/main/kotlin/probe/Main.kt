@@ -58,6 +58,10 @@ fun main(args: Array<String>) {
         runArtists(args.filter { it != "--artists" }.toSet())
         return
     }
+    if ("--thumbs" in args) {
+        runThumbs(args.filter { it != "--thumbs" }.toSet())
+        return
+    }
     if ("--tfbl" in args) {
         runChecklist(args.filter { it != "--tfbl" }.toSet())
         return

@@ -124,8 +124,9 @@ data class Game(
     /** How many official albums the game's list plays through. */
     val maxAlbums: Int = 8,
     /**
-     * Official album cover used for every song, for games whose songs come from a fan upload
-     * (whose video thumbnails aren't the album art).
+     * Official album cover used for every song: for games whose songs come from a fan upload
+     * (whose video thumbnails aren't the album art), or whose songs only have small, blurry
+     * thumbnails on YouTube.
      */
     val coverArt: String? = null,
     /**

@@ -122,12 +122,13 @@ fun NowPlayingScreen(onClose: () -> Unit) {
 
     // Drag down to minimize: the screen follows your finger and closes past a quarter of the way
     // (or with a downward flick); otherwise it springs back. Drag up to open Up next: the screen
-    // lifts a little (with resistance) and the list opens past a short distance or an upward flick.
+    // stays put and the list slides up as soon as the swipe is clearly going up (no lift and
+    // drop back, which made it bump).
     val scope = rememberCoroutineScope()
     val dragY = remember { Animatable(0f) }
     var heightPx by remember { mutableFloatStateOf(1f) }
     val closeFlingPx = with(LocalDensity.current) { 1000.dp.toPx() }
-    val openQueuePx = with(LocalDensity.current) { 56.dp.toPx() }
+    val openQueuePx = with(LocalDensity.current) { 40.dp.toPx() }
     val close by rememberUpdatedState(onClose)
 
     // This screen floats above the app's Scaffold, so it must set its own text/icon colour;
@@ -139,28 +140,42 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                 .onSizeChanged { heightPx = it.height.toFloat().coerceAtLeast(1f) }
                 .pointerInput(Unit) {
                     val tracker = VelocityTracker()
+                    var pull = 0f // upward distance while the screen is at rest
+                    var opened = false
                     detectVerticalDragGestures(
-                        onDragStart = { tracker.resetTracking() },
+                        onDragStart = {
+                            tracker.resetTracking()
+                            pull = 0f
+                            opened = false
+                        },
                         onVerticalDrag = { change, dragAmount ->
                             change.consume()
                             tracker.addPosition(change.uptimeMillis, change.position)
-                            // Upward movement is damped: it's a pull, not a slide.
-                            val step = if (dragY.value + dragAmount < 0f) dragAmount * 0.35f else dragAmount
-                            scope.launch { dragY.snapTo((dragY.value + step).coerceAtLeast(-openQueuePx * 2)) }
+                            if (opened) return@detectVerticalDragGestures
+                            val next = dragY.value + dragAmount
+                            if (next >= 0f) {
+                                pull = 0f
+                                scope.launch { dragY.snapTo(next) }
+                            } else {
+                                if (dragY.value != 0f) scope.launch { dragY.snapTo(0f) }
+                                pull += next
+                                if (pull < -openQueuePx) {
+                                    opened = true
+                                    showQueue = true
+                                }
+                            }
                         },
                         onDragCancel = { scope.launch { dragY.animateTo(0f, spring()) } },
                         onDragEnd = {
                             val velocity = tracker.calculateVelocity().y
-                            val shouldClose = dragY.value > heightPx * 0.25f ||
-                                (velocity > closeFlingPx && dragY.value > heightPx * 0.05f)
-                            // Up (a short pull, or a flick that was going up) opens Up next.
-                            val openQueue = dragY.value < -openQueuePx * 0.5f ||
-                                (velocity < -closeFlingPx && dragY.value < 0f)
+                            val shouldClose = !opened && (dragY.value > heightPx * 0.25f ||
+                                (velocity > closeFlingPx && dragY.value > heightPx * 0.05f))
                             when {
                                 shouldClose -> close()
                                 else -> {
-                                    if (openQueue) showQueue = true
-                                    scope.launch { dragY.animateTo(0f, spring(dampingRatio = 0.8f)) }
+                                    // A quick upward flick that ended before the distance also opens it.
+                                    if (!opened && pull < 0f && velocity < -closeFlingPx) showQueue = true
+                                    if (dragY.value != 0f) scope.launch { dragY.animateTo(0f, spring(dampingRatio = 0.8f)) }
                                 }
                             }
                         },

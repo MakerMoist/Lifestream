@@ -184,6 +184,18 @@ class SearchAndNamesTest {
         Log.i("LSTEST", "On-device translation works: 静かな森 → $out")
     }
 
+    @Test
+    fun blurrySongArtUsesTheAlbumCover() {
+        // FFV, FFVI and Chrono Trigger songs only have small thumbnails; they show the sharp album cover.
+        for (id in listOf("ff5", "ff6", "ct")) {
+            val cover = com.lifestream.player.data.Catalog.game(id)!!.coverArt!!
+            assertNotNull(SafeInput.safeArtwork(cover))
+            val t = Track("dQw4w9WgXcQ", "Song", "Nobuo Uematsu", 100, "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg", id)
+            assertEquals(cover, ArtistCredits.fix(t).thumbnail)
+            assertTrue(hiResArtwork(cover, 1200)!!.contains("=w1200-h1200"))
+        }
+    }
+
     // ---- Input checks ----
 
     @Test

@@ -35,7 +35,6 @@ import androidx.compose.material.icons.rounded.QueuePlayNext
 import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -331,7 +330,7 @@ private fun SongMenu(
                         // Taps on the menu itself don't fall through and close it.
                         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
                 ) {
-                    MenuContent(track, game, items)
+                    MenuContent(items)
                 }
             },
         ) { measurables, constraints ->
@@ -367,31 +366,13 @@ private fun SongMenu(
 }
 
 @Composable
-private fun MenuContent(track: Track, game: Game?, items: List<MenuItem>) {
+private fun MenuContent(items: List<MenuItem>) {
+    // Just the actions: the song is the one that was held or tapped, right beside the menu.
     Column(
         Modifier
             .verticalScroll(rememberScrollState())
             .padding(vertical = 6.dp),
     ) {
-        Row(
-            Modifier.padding(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Artwork(track.thumbnail, Modifier.size(42.dp), corner = 6.dp, size = 42.dp)
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(track.title, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(
-                    game?.title ?: track.artist,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Spacer(Modifier.height(4.dp))
         items.forEach { item -> MenuRow(item) }
     }
 }
