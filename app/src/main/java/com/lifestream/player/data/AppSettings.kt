@@ -21,6 +21,7 @@ object AppSettings {
     private const val KEY_LEVEL_VOLUME = "level_volume"
     private const val KEY_AUTO_PLAY_AT_END = "auto_play_at_end"
     private const val KEY_ANDROID_AUTO = "android_auto"
+    private const val KEY_ANDROID_AUTO_SEEN = "android_auto_seen"
 
     /** Size choices for saved songs, in MB (0 = don't save songs). */
     val CACHE_LIMIT_CHOICES = listOf(0, 2048, 4096, 6144, 8192)
@@ -73,6 +74,20 @@ object AppSettings {
     /** Show LifeStream's library and player in Android Auto. Off unless turned on. */
     val androidAuto: StateFlow<Boolean> = _androidAuto.asStateFlow()
 
+    private val _androidAutoSeen = MutableStateFlow(false)
+
+    /**
+     * Android Auto has opened LifeStream's library at least once. Until it has, Settings explains
+     * how to let Android Auto show an app that isn't from the Play Store.
+     */
+    val androidAutoSeen: StateFlow<Boolean> = _androidAutoSeen.asStateFlow()
+
+    fun markAndroidAutoSeen() {
+        if (_androidAutoSeen.value) return
+        _androidAutoSeen.value = true
+        prefs.edit().putBoolean(KEY_ANDROID_AUTO_SEEN, true).apply()
+    }
+
     private val _autoPlayAtEnd = MutableStateFlow(true)
 
     /** When the queue runs out, keep going with random songs from any soundtrack. */
@@ -94,6 +109,7 @@ object AppSettings {
         _levelVolume.value = prefs.getBoolean(KEY_LEVEL_VOLUME, true)
         _autoPlayAtEnd.value = prefs.getBoolean(KEY_AUTO_PLAY_AT_END, true)
         _androidAuto.value = prefs.getBoolean(KEY_ANDROID_AUTO, false)
+        _androidAutoSeen.value = prefs.getBoolean(KEY_ANDROID_AUTO_SEEN, false)
         // A size from an older version (e.g. 5 or 10 GB) becomes the largest choice that fits in it.
         val stored = prefs.getInt(KEY_CACHE_LIMIT_MB, DEFAULT_CACHE_LIMIT_MB)
         _cacheLimitMb.value = if (stored in CACHE_LIMIT_CHOICES) stored

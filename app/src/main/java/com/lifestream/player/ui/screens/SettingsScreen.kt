@@ -416,6 +416,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = androidAuto, onCheckedChange = { AppSettings.setAndroidAuto(it) })
             }
+            if (androidAuto) AndroidAutoSetupHint(context)
         }
         SettingsCard {
             Text("Saved Songs", style = MaterialTheme.typography.titleMedium)
@@ -579,6 +580,71 @@ private fun UpdateSection(vm: SettingsViewModel, context: Context, showActions: 
                 Text(s.message, style = MaterialTheme.typography.bodyMedium)
             }
         }
+    }
+}
+
+private const val ANDROID_AUTO_PACKAGE = "com.google.android.projection.gearhead"
+
+/**
+ * Android Auto only shows apps installed from the Play Store. Until it has opened LifeStream's
+ * library (its own screens and full-screen player), it treats LifeStream as a phone app: the
+ * player card still shows on the car's screen, but tapping it opens LifeStream on the phone.
+ * This explains the one-time Android Auto setting that fixes that.
+ */
+@Composable
+private fun AndroidAutoSetupHint(context: Context) {
+    val seen by AppSettings.androidAutoSeen.collectAsStateWithLifecycle()
+    Spacer(Modifier.height(12.dp))
+    if (seen) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.CheckCircle, null, tint = LsColors.Mako, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(
+                "Android Auto has opened LifeStream's library.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        return
+    }
+    Text(
+        "If tapping LifeStream in the car opens it on your phone instead, Android Auto is hiding it " +
+            "because it isn't from the Play Store. To allow it (once):",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(6.dp))
+    listOf(
+        "Open Android Auto's settings (button below, then \"Additional settings in the app\").",
+        "Scroll down and tap \"Version and permission info\" 10 times to unlock developer mode.",
+        "Open the ⋮ menu → Developer settings, and turn on \"Unknown sources\".",
+        "Reconnect your phone to the car. LifeStream then appears in the car's app list.",
+    ).forEachIndexed { i, step ->
+        Text(
+            "${i + 1}. $step",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 2.dp),
+        )
+    }
+    val installed = remember {
+        runCatching { context.packageManager.getApplicationInfo(ANDROID_AUTO_PACKAGE, 0) }.isSuccess
+    }
+    if (installed) {
+        Spacer(Modifier.height(10.dp))
+        OutlinedButton(
+            onClick = {
+                runCatching {
+                    context.startActivity(
+                        android.content.Intent(
+                            android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            android.net.Uri.parse("package:$ANDROID_AUTO_PACKAGE"),
+                        ).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Open Android Auto Settings") }
     }
 }
 

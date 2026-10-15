@@ -128,6 +128,30 @@ class PlayerTest {
     }
 
     @Test
+    fun libraryRootAnswersBrowsersButNotRecentRequests() {
+        val token = SessionToken(context, ComponentName(context, PlaybackService::class.java))
+        val browser = androidx.media3.session.MediaBrowser.Builder(context, token).buildAsync().get(20, TimeUnit.SECONDS)
+        try {
+            val normalFuture = arrayOfNulls<com.google.common.util.concurrent.ListenableFuture<androidx.media3.session.LibraryResult<MediaItem>>>(2)
+            onMain {
+                normalFuture[0] = browser.getLibraryRoot(null)
+                normalFuture[1] = browser.getLibraryRoot(
+                    androidx.media3.session.MediaLibraryService.LibraryParams.Builder().setRecent(true).build()
+                )
+            }
+            val normal = normalFuture[0]!!.get(10, TimeUnit.SECONDS)
+            val recent = normalFuture[1]!!.get(10, TimeUnit.SECONDS)
+            assertEquals(androidx.media3.session.LibraryResult.RESULT_SUCCESS, normal.resultCode)
+            assertEquals(AutoLibrary.ROOT, normal.value!!.mediaId)
+            assertTrue("recent roots aren't offered", recent.resultCode != androidx.media3.session.LibraryResult.RESULT_SUCCESS)
+            // Only the real Android Auto counts as "Android Auto has opened the library".
+            assertTrue("the app's own browser isn't Android Auto", !AppSettings.androidAutoSeen.value)
+        } finally {
+            onMain { browser.release() }
+        }
+    }
+
+    @Test
     fun playerServiceAcceptsTheAppAndKeepsShuffleCommandPrivate() {
         val token = SessionToken(context, ComponentName(context, PlaybackService::class.java))
         val future = MediaController.Builder(context, token).buildAsync()

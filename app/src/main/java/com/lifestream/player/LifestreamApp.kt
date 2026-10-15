@@ -57,6 +57,7 @@ class LifestreamApp : Application(), coil.ImageLoaderFactory {
         OfficialTitles.init(this)
         Library.init(this)
         SearchHistory.init(this)
+        com.lifestream.player.ui.components.VillainQuotes.init(this)
         SongCache.init(this)
         SoundtrackIndex.init(this)
         Thread({ runCatching { com.lifestream.player.update.Updater.cleanUpOldDownloads(this) } }, "update-cleanup").start()

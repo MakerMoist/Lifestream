@@ -280,8 +280,16 @@ class PlaybackService : MediaLibraryService() {
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
             params: LibraryParams?,
-        ): ListenableFuture<LibraryResult<MediaItem>> =
-            Futures.immediateFuture(LibraryResult.ofItem(AutoLibrary.root(), params))
+        ): ListenableFuture<LibraryResult<MediaItem>> {
+            // Android Auto is showing LifeStream's own screens (its library and full-screen player).
+            if (AutoLibrary.isAndroidAuto(this@PlaybackService, browser)) AppSettings.markAndroidAutoSeen()
+            // "Recently played" roots (used to resume playback from system media controls) aren't
+            // offered; answering with the whole library there would be wrong.
+            if (params?.isRecent == true) {
+                return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_NOT_SUPPORTED))
+            }
+            return Futures.immediateFuture(LibraryResult.ofItem(AutoLibrary.root(), params))
+        }
 
         override fun onGetChildren(
             session: MediaLibrarySession,
