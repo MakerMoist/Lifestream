@@ -35,7 +35,7 @@ class OnlineFeaturesTest {
         SoundtrackIndex.ensureBuilt()
         Log.i("LSTEST", "Soundtrack index test started (${SoundtrackIndex.progress.value})")
         val deadline = System.currentTimeMillis() + 240_000
-        while (SoundtrackIndex.tracks.value.size < 3 && System.currentTimeMillis() < deadline) Thread.sleep(1_000)
+        while (SoundtrackIndex.tracks.value.size < 6 && System.currentTimeMillis() < deadline) Thread.sleep(1_000)
         val index = SoundtrackIndex.tracks.value
         if (index.isEmpty()) Log.i("LSTEST", "SKIPPED soundtrack index: nothing loaded (${SoundtrackIndex.progress.value})")
         assumeTrue("YouTube Music unreachable from here", index.isNotEmpty())
@@ -57,7 +57,7 @@ class OnlineFeaturesTest {
         }
 
         // Every song can be found by its own name.
-        val sample = index.values.flatten().filter { Matching.queryTokens(it.title).isNotEmpty() }.shuffled().take(40)
+        val sample = index.values.flatten().filter { Matching.queryTokens(it.title).isNotEmpty() }.shuffled().take(600)
         for (t in sample) {
             val hits = SoundtrackIndex.searchTracks(t.title, limit = 500)
             assertTrue("'${t.title}' finds itself", hits.any { it.track.id == t.id })
@@ -66,7 +66,7 @@ class OnlineFeaturesTest {
         val anyGame = Catalog.game(index.keys.first())!!
         assertTrue(SoundtrackIndex.searchGames(anyGame.title).contains(anyGame))
         assertTrue(SoundtrackIndex.gameOf(index.values.first().first()) != null)
-        Log.i("LSTEST", "Soundtrack index: ${index.size} titles, $songs songs ($japanese still in Japanese); search finds each sampled song")
+        Log.i("LSTEST", "Soundtrack index: ${index.size} titles, $songs songs ($japanese still in Japanese); search finds every one of ${sample.size} songs checked by name")
 
         // Instant Playlist and auto-play draw from it.
         val mix = Mixes.instant()
