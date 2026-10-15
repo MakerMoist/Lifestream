@@ -241,6 +241,7 @@ object Matching {
 
     /** True if [needle] is within [allowed] edits of [text] or of some stretch of it. */
     fun withinEdits(needle: String, text: String, allowed: Int): Boolean {
+        if (!mayBeWithin(needle, text, allowed)) return false
         if (editDistance(needle, text, allowed) <= allowed) return true
         for (len in (needle.length - allowed)..(needle.length + allowed)) {
             if (len <= 0 || len >= text.length) continue
@@ -254,11 +255,30 @@ object Matching {
     /** True if some slice of [text] is within a typo or two of [needle] (spacing already removed). */
     private fun fuzzyContains(text: String, needle: String): Boolean {
         val allowed = if (needle.length >= 10) 2 else 1
+        if (!mayBeWithin(needle, text, allowed)) return false
         for (len in (needle.length - allowed)..(needle.length + allowed)) {
             if (len <= 0 || len > text.length) continue
             for (start in 0..(text.length - len)) {
                 if (editDistance(needle, text.substring(start, start + len), allowed) <= allowed) return true
             }
+        }
+        return false
+    }
+
+    /**
+     * Quick rejection before the expensive typo search: split [needle] into [allowed] + 1 pieces;
+     * [allowed] typos can spoil at most that many pieces, so a real match always contains at least
+     * one piece unchanged. If none appears in [text], it can't match (most songs, for most
+     * searches), and the slice-by-slice comparison is skipped.
+     */
+    private fun mayBeWithin(needle: String, text: String, allowed: Int): Boolean {
+        val pieces = allowed + 1
+        if (needle.length < pieces * 2) return true // pieces too short to say anything
+        val size = needle.length / pieces
+        for (k in 0 until pieces) {
+            val start = k * size
+            val end = if (k == pieces - 1) needle.length else start + size
+            if (text.contains(needle.substring(start, end))) return true
         }
         return false
     }

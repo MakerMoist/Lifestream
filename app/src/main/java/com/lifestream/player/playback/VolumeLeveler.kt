@@ -79,7 +79,11 @@ class VolumeLeveler : BaseAudioProcessor() {
         } else {
             val frames = remaining / (4 * channels)
             repeat(frames) {
-                for (c in 0 until channels) frame[c] = inputBuffer.getFloat().toDouble()
+                for (c in 0 until channels) {
+                    // A corrupt sample (NaN/∞) would poison the filters for good; treat it as silence.
+                    val v = inputBuffer.getFloat()
+                    frame[c] = if (v.isFinite()) v.toDouble() else 0.0
+                }
                 core.process(frame)
                 for (c in 0 until channels) out.putFloat(frame[c].coerceIn(-1.0, 1.0).toFloat())
             }
@@ -211,6 +215,17 @@ internal class LevelerCore(sampleRate: Int, private val channels: Int, startGain
     }
 
     private fun endBlock() {
+        if (!blockEnergy.isFinite() || !meanEnergy.isFinite() || !gain.isFinite()) {
+            // Never expected, but recover instead of staying broken: start this song afresh.
+            state.fill(0.0)
+            blockEnergy = 0.0
+            blockCount = 0
+            blockPeak = 0.0
+            newSong()
+            gain = Math.pow(10.0, currentGainDb / 20.0).takeIf { it.isFinite() } ?: 1.0
+            gainStep = 0.0
+            return
+        }
         val meanSquare = blockEnergy / blockCount
         val loudness = lufs(meanSquare)
         val estimate = if (counted > 0) lufs(meanEnergy) else loudness

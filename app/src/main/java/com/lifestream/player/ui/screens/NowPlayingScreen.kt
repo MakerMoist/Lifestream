@@ -94,6 +94,7 @@ import com.lifestream.player.playback.PlayerUiState
 import com.lifestream.player.ui.components.Artwork
 import com.lifestream.player.ui.components.TrackActions
 import com.lifestream.player.ui.components.SaveInstantPlaylistDialog
+import com.lifestream.player.ui.components.SoftBlur
 import androidx.compose.material.icons.rounded.Add
 import com.lifestream.player.ui.theme.LsColors
 
@@ -160,22 +161,26 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                 // Swallow taps so they don't fall through to the screen underneath.
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
         ) {
-            // Blurred artwork wash behind everything (blur is a no-op before Android 12).
+            // Blurred artwork wash behind everything. A small copy is blurred once when it loads
+            // (see SoftBlur) and stretched to fill the screen, instead of a live full-screen blur
+            // that the GPU would redo whenever anything on this screen moves.
             val wash = remember(track?.thumbnail) { SafeInput.safeArtwork(track?.thumbnail) }
             if (wash != null) {
-                // Heavily blurred, so a small image looks the same and is far cheaper to hold and blur.
                 val context = LocalContext.current
                 val request = remember(wash) {
                     val small = SafeInput.safeArtwork(hiResArtwork(wash, 120, videoThumbs = false)) ?: wash
-                    ImageRequest.Builder(context).data(small).size(96).crossfade(true).build()
+                    ImageRequest.Builder(context)
+                        .data(small)
+                        .size(96)
+                        .transformations(SoftBlur())
+                        .crossfade(true)
+                        .build()
                 }
                 AsyncImage(
                     model = request,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .blur(60.dp),
+                    modifier = Modifier.fillMaxSize(),
                     alpha = 0.45f,
                 )
             }

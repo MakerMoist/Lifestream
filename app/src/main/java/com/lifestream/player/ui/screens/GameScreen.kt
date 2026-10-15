@@ -81,10 +81,16 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
     val filtering = vm.filter.isNotBlank()
     val matches by produceState(emptyList<Track>(), vm.filter, tracks) {
         val query = vm.filter
-        value = if (query.isBlank()) emptyList()
-        else withContext(Dispatchers.Default) { tracks.filter {
-            (Matching.queryTokens(query).isEmpty() && !Matching.hasJapanese(query)) || Matching.songScore(it, query) != null
-        } }
+        if (query.isBlank()) {
+            value = emptyList()
+            return@produceState
+        }
+        // A short pause while typing, so each keystroke doesn't rescan the whole soundtrack.
+        kotlinx.coroutines.delay(120)
+        value = withContext(Dispatchers.Default) {
+            val matchAll = Matching.queryTokens(query).isEmpty() && !Matching.hasJapanese(query)
+            if (matchAll) tracks else tracks.filter { Matching.songScore(it, query) != null }
+        }
     }
     // A search covers the whole soundtrack, so keep loading pages while one is active.
     LaunchedEffect(filtering, tracks.size, vm.tracks.loading) {

@@ -124,7 +124,8 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
         delay(150)
         val q = vm.input
         val (games, hits) = withContext(Dispatchers.Default) {
-            SoundtrackIndex.searchGames(q) to SoundtrackIndex.searchTracks(q)
+            val job = coroutineContext[kotlinx.coroutines.Job]
+            SoundtrackIndex.searchGames(q) to SoundtrackIndex.searchTracks(q) { job?.isActive != false }
         }
         vm.games = games
         vm.hits = hits

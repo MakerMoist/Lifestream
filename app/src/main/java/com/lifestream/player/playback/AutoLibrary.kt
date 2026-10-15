@@ -169,6 +169,8 @@ object AutoLibrary {
                 val list = tracksFor(parent)?.filter { SafeInput.isVideoId(it.id) } ?: return null
                 val index = list.indexOfFirst { it.id == videoId }
                 if (index < 0) return null
+                // Playing a playlist from the car counts for Home's "Last Playlist" too.
+                if (parent.startsWith(PLAYLIST)) Library.setLastPlaylist(parent.removePrefix(PLAYLIST))
                 // A title's own songs play in soundtrack order; everything else shuffles.
                 Request(list, index, shuffle = !parent.startsWith(TITLE))
             }

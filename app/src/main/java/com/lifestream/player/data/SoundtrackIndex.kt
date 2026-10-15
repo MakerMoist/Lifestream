@@ -185,12 +185,14 @@ object SoundtrackIndex {
     }
 
     /** Songs whose title (optionally together with their game's name) matches, best first. */
-    fun searchTracks(query: String, limit: Int = 150): List<Hit> {
+    fun searchTracks(query: String, limit: Int = 150, stillWanted: () -> Boolean = { true }): List<Hit> {
         // Japanese queries have no Latin words but still match songs' Japanese names.
         if (Matching.queryTokens(query).isEmpty() && !Matching.hasJapanese(query)) return emptyList()
         val hits = mutableListOf<Pair<Int, Hit>>()
         val byId = Catalog.games.associateBy { it.id }
         for ((gameId, list) in _tracks.value) {
+            // Typing on has replaced this search: stop instead of finishing work nobody will see.
+            if (!stillWanted()) return emptyList()
             val game = byId[gameId] ?: continue
             val gameTokens = Matching.titleTokens(game)
             for (track in list) {

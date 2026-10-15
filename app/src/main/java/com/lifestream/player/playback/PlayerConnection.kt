@@ -99,7 +99,8 @@ object PlayerConnection {
             controller = c
             c.addListener(listener)
             sync(c, rebuildQueue = true)
-            pending.forEach { it(c) }
+            // One failing command mustn't stop the rest (or crash the app).
+            pending.toList().forEach { action -> runCatching { action(c) } }
             pending.clear()
             startTicker()
         }
@@ -117,6 +118,8 @@ object PlayerConnection {
     private fun onControllerLost(lost: MediaController) {
         if (controller !== lost) return
         lost.removeListener(listener)
+        // A dead connection still holds a thread and binder resources until it's released.
+        runCatching { lost.release() }
         controller = null
         _state.update { it.copy(connected = false, isPlaying = false, isBuffering = false) }
     }
@@ -156,6 +159,12 @@ object PlayerConnection {
         return playlist
     }
 
+    /**
+     * The first song of the queue LifeStream last started. If the queue is replaced from
+     * elsewhere (Android Auto, a headset, the system), what it was started from no longer applies.
+     */
+    private var queueFirstId: String? = null
+
     /** The playlist the current queue was started from, if any (see [onAddedToPlaylist]). */
     var playingPlaylistId: String? = null
         private set
@@ -178,10 +187,12 @@ object PlayerConnection {
         val chosen = tracks.getOrNull(startIndex)
         val valid = tracks.filter { SafeInput.isVideoId(it.id) }
         if (valid.isEmpty()) return
-        playingPlaylistId = fromPlaylist
-        _instantQueue.value = instant
         fromPlaylist?.let { Library.setLastPlaylist(it) }
         withController { c ->
+            // Recorded when the queue is actually handed over (this may wait for a reconnect).
+            playingPlaylistId = fromPlaylist
+            _instantQueue.value = instant
+            queueFirstId = valid.first().id
             // Off first, then on after the new queue is in: the player service builds the shuffle
             // order from the starting song when shuffle switches on.
             c.shuffleModeEnabled = false
@@ -278,11 +289,17 @@ object PlayerConnection {
     }
 
     fun removeFromQueue(index: Int) = withController {
-        if (index in 0 until it.mediaItemCount) it.removeMediaItem(index)
+        if (index !in 0 until it.mediaItemCount) return@withController
+        // Taking out the queue's first song is still the same queue (an Instant Playlist stays one).
+        if (index == 0 && queueFirstId != null) {
+            queueFirstId = if (it.mediaItemCount > 1) it.getMediaItemAt(1).mediaId else null
+        }
+        it.removeMediaItem(index)
     }
 
     /** Stops playback and empties the queue (swiping the mini player away). */
     fun stopAndClear() = withController {
+        queueFirstId = null
         playingPlaylistId = null
         _instantQueue.value = false
         it.stop()
@@ -311,6 +328,11 @@ object PlayerConnection {
         // Rebuilding a long queue on every event (position, buffering…) made big queues sluggish.
         if (rebuildQueue || queueCache.size != c.mediaItemCount) {
             queueCache = (0 until c.mediaItemCount).map { c.getMediaItemAt(it).toTrack() }
+            if (queueFirstId != null && queueCache.firstOrNull()?.id != queueFirstId) {
+                queueFirstId = null
+                playingPlaylistId = null
+                _instantQueue.value = false
+            }
         }
         val queue = queueCache
         // Cheap (a walk over the queue), and it must follow every shuffle-order change.

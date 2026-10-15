@@ -210,8 +210,24 @@ object StreamDataSources {
         return Uri.parse("$SCHEME://track/$videoId")
     }
 
+    /**
+     * The app's shared connections, but every hop of an audio request (redirects included) must
+     * stay on YouTube's media servers over HTTPS; the first address alone is checked in open().
+     */
+    private val mediaClient by lazy {
+        Http.client.newBuilder()
+            .addNetworkInterceptor { chain ->
+                val url = chain.request().url
+                if (!url.isHttps || !SafeInput.isGoogleVideoHost(url.host)) {
+                    throw IOException("Refusing audio from an unexpected host")
+                }
+                chain.proceed(chain.request())
+            }
+            .build()
+    }
+
     fun factory(): DataSource.Factory {
-        val upstream = DataSource.Factory { YouTubeStreamDataSource(Http.client) }
+        val upstream = DataSource.Factory { YouTubeStreamDataSource(mediaClient) }
         val network = ResolvingDataSource.Factory(upstream) { spec ->
             if (spec.uri.scheme == SCHEME) {
                 val id = spec.uri.lastPathSegment

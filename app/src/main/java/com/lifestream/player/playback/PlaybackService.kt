@@ -62,6 +62,13 @@ class PlaybackService : MediaLibraryService() {
     private var otherAudio: OtherAudioListener? = null
     private var idleReleaser: IdleReleaser? = null
 
+    /**
+     * Shuffle choice for a queue Android Auto just asked for, applied once that queue has actually
+     * arrived in the player (so shuffled play starts from the chosen song). Expires quickly.
+     */
+    private var pendingShuffle: Boolean? = null
+    private var pendingShuffleAt = 0L
+
     override fun onCreate() {
         super.onCreate()
         SongCache.init(this)
@@ -113,6 +120,16 @@ class PlaybackService : MediaLibraryService() {
             // Shuffled play always continues from the song that's playing.
             override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
                 if (shuffleModeEnabled) QueueCommands.shuffleFromCurrent(player)
+            }
+
+            override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
+                if (reason != Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) return
+                val shuffle = pendingShuffle ?: return
+                pendingShuffle = null
+                if (SystemClock.elapsedRealtime() - pendingShuffleAt > 5_000) return
+                // Off then on, so the order is rebuilt from the chosen song.
+                player.shuffleModeEnabled = false
+                player.shuffleModeEnabled = shuffle
             }
         })
         player.addListener(AutoPlayListener(player))
@@ -169,6 +186,10 @@ class PlaybackService : MediaLibraryService() {
         super.onDestroy()
     }
 
+    /** LifeStream itself: its package name and its own app user id (which no other app shares). */
+    private fun isOurs(controller: MediaSession.ControllerInfo) =
+        controller.packageName == packageName && controller.uid == android.os.Process.myUid()
+
     private inner class SessionCallback : MediaLibrarySession.Callback {
         /**
          * The service has to be exported for system media controls, so check who's connecting:
@@ -180,7 +201,7 @@ class PlaybackService : MediaLibraryService() {
             session: MediaSession,
             controller: MediaSession.ControllerInfo,
         ): MediaSession.ConnectionResult {
-            val ours = controller.packageName == packageName
+            val ours = isOurs(controller)
             return when {
                 // LifeStream's own UI may also place songs in the shuffle order.
                 ours -> MediaSession.ConnectionResult.AcceptedResultBuilder(session)
@@ -204,7 +225,7 @@ class PlaybackService : MediaLibraryService() {
             customCommand: SessionCommand,
             args: Bundle,
         ): ListenableFuture<SessionResult> {
-            if (customCommand.customAction == QueueCommands.PLACE && controller.packageName == packageName) {
+            if (customCommand.customAction == QueueCommands.PLACE && isOurs(controller)) {
                 (session.player as? ExoPlayer)?.let { player ->
                     QueueCommands.place(
                         player,
@@ -239,12 +260,9 @@ class PlaybackService : MediaLibraryService() {
             if (fromLibrary) {
                 val request = AutoLibrary.resolve(mediaItems, startIndex)
                     ?: return Futures.immediateFailedFuture(UnsupportedOperationException("Nothing to play"))
-                // Once the queue is in: shuffle (or not), starting from the chosen song.
-                val player = mediaSession.player
-                android.os.Handler(Looper.getMainLooper()).post {
-                    player.shuffleModeEnabled = false
-                    player.shuffleModeEnabled = request.shuffle
-                }
+                // Once the queue is in the player: shuffle (or not), starting from the chosen song.
+                pendingShuffle = request.shuffle
+                pendingShuffleAt = SystemClock.elapsedRealtime()
                 return Futures.immediateFuture(
                     MediaSession.MediaItemsWithStartPosition(
                         request.tracks.map { it.toMediaItem() },
