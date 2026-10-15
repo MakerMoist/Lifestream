@@ -23,9 +23,6 @@ object StreamResolver {
 
     private val cache = ConcurrentHashMap<String, Entry>()
 
-    @Throws(IOException::class)
-    fun resolve(videoId: String): String = resolveStream(videoId, null).url
-
     /**
      * Resolves the best audio file, or [preferredItag] when that format is available (used to
      * finish a partly saved song from the same file).

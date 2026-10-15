@@ -91,10 +91,6 @@ object Romaji {
         return out.toString()
     }
 
-    private val kana = Regex("[\\u3040-\\u30FF]")
-
-    fun hasKana(text: String) = kana.containsMatchIn(text)
-
     private val skeletons = ConcurrentHashMap<String, String>()
 
     fun trimCaches() = skeletons.clear()

@@ -109,6 +109,7 @@ object PlayerConnection {
     fun release() {
         ticker?.cancel()
         connecting?.cancel()
+        pending.clear()
         controller?.removeListener(listener)
         controller?.release()
         controller = null
@@ -321,12 +322,26 @@ object PlayerConnection {
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            mediaItem?.let { Library.addRecent(it.toTrack()) }
+            if (controller?.isPlaying == true) recordPlayed(mediaItem)
+        }
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            if (isPlaying) recordPlayed(controller?.currentMediaItem)
         }
 
         override fun onPlayerError(error: PlaybackException) {
             _state.update { it.copy(error = friendlyError(error)) }
         }
+    }
+
+    /**
+     * History lists songs that actually played, not ones that failed and were skipped. Pausing
+     * and resuming the song already at the top of History doesn't add it again.
+     */
+    private fun recordPlayed(item: MediaItem?) {
+        val track = item?.toTrack() ?: return
+        if (Library.recents.value.firstOrNull()?.id == track.id) return
+        Library.addRecent(track)
     }
 
     private fun sync(c: MediaController, rebuildQueue: Boolean = false) {

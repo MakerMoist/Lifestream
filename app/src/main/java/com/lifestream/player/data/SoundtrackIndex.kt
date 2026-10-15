@@ -266,7 +266,7 @@ object SoundtrackIndex {
             }
             val tmp = File(file.parentFile, "$FILE_NAME.tmp")
             tmp.writeText(JSONObject().put("version", VERSION).put("games", games).toString())
-            tmp.renameTo(file)
+            if (!tmp.renameTo(file)) tmp.delete()
         }
     }
 }

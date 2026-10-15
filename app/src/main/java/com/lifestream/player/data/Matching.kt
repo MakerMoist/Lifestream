@@ -196,11 +196,6 @@ object Matching {
     private fun compactJapanese(text: String): String =
         Normalizer.normalize(text, Normalizer.Form.NFKC).lowercase(Locale.ROOT).filter { it.isLetterOrDigit() }
 
-    /** True if [query] matches [title] (see [searchScore]). Used by each game's search box. */
-
-    fun titleMatches(title: String, query: String): Boolean =
-        queryTokens(query).isEmpty() || searchScore(query, title) != null
-
     /**
      * How well [query] matches a song [title] (plus optional [extraTokens], e.g. its game's name);
      * null when it doesn't. Higher is better. Forgiving on purpose:
@@ -317,11 +312,6 @@ object Matching {
         return i >= 0 && tokens.getOrNull(i + 2) in bareFollowers
     }
 
-    fun isJunk(title: String): Boolean {
-        val t = normalize(title)
-        return junk.any { hasWord(t, it) }
-    }
-
     fun matches(spec: MatchSpec, title: String): Boolean {
         val t = normalize(title)
         if (spec.requireFinalFantasy && !mentionsFinalFantasy(t)) return false
@@ -341,14 +331,6 @@ object Matching {
         return officialArtists.any { hasWord(a, it) }
     }
 
-    /** Track-level check used when there is no album to vouch for a song. */
-    fun looksLikeFinalFantasy(track: Track): Boolean =
-        !isJunk(track.title) &&
-            (isOfficialArtist(track.artist) || mentionsFinalFantasy(normalize(track.title)))
-
-    /** Album-level check for free-text search with "Final Fantasy only" on. */
-    fun looksLikeFinalFantasy(album: Album): Boolean =
-        !isJunk(album.title) && mentionsFinalFantasy(normalize(album.title))
 
     private val versionWords = Regex(
         "\\b(final fantasy|ost|soundtrack|version|ver|remaster|remastered|piano|orchestra|orchestral|" +

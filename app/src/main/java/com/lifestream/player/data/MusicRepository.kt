@@ -107,10 +107,6 @@ object MusicRepository {
         }
     }
 
-    fun gameAlbumsSource(game: Game): PagedSource<Album> = object : PagedSource<Album> {
-        override suspend fun load(page: Any?): Paged<Album> = Paged(gameAlbums(game), null)
-    }
-
     /** A game's tracks, played through its official soundtrack album(s) in order. */
     fun gameTracks(game: Game): PagedSource<Track> = GameTracksSource(game)
 
@@ -185,26 +181,13 @@ object MusicRepository {
     // ---- Free-text search ----
 
     /**
-     * Song search. Tries YouTube Music's "songs" index first, then regular video search.
-     * With [finalFantasyOnly], keeps only tracks by Final Fantasy composers / labels or with
-     * Final Fantasy in the title, and drops covers, lo-fi and similar filler.
+     * Song search (used to find a title's extra songs). Tries YouTube Music's "songs" index
+     * first, then regular video search.
      */
-    fun songSearch(query: String, finalFantasyOnly: Boolean = false): PagedSource<Track> {
-        val base = FallbackSearch(
-            query,
-            listOf(YoutubeSearchQueryHandlerFactory.MUSIC_SONGS, YoutubeSearchQueryHandlerFactory.VIDEOS),
-        ) { item -> (item as? StreamInfoItem)?.toTrack() }
-        return if (finalFantasyOnly) Filtered(base) { Matching.looksLikeFinalFantasy(it) } else base
-    }
-
-    /** Album search: YouTube Music albums first, then regular playlists. */
-    fun albumSearch(query: String, finalFantasyOnly: Boolean = false): PagedSource<Album> {
-        val base = FallbackSearch(
-            query,
-            listOf(YoutubeSearchQueryHandlerFactory.MUSIC_ALBUMS, YoutubeSearchQueryHandlerFactory.PLAYLISTS),
-        ) { item -> (item as? PlaylistInfoItem)?.toAlbum() }
-        return if (finalFantasyOnly) Filtered(base) { Matching.looksLikeFinalFantasy(it) } else base
-    }
+    fun songSearch(query: String): PagedSource<Track> = FallbackSearch(
+        query,
+        listOf(YoutubeSearchQueryHandlerFactory.MUSIC_SONGS, YoutubeSearchQueryHandlerFactory.VIDEOS),
+    ) { item -> (item as? StreamInfoItem)?.toTrack() }
 
     /** The tracks inside an album / playlist. */
     fun albumTracks(url: String): PagedSource<Track> = object : PagedSource<Track> {
@@ -223,16 +206,6 @@ object MusicRepository {
                     if (more.hasNextPage()) more.nextPage else null,
                 )
             }
-        }
-    }
-
-    private class Filtered<T>(
-        private val inner: PagedSource<T>,
-        private val keep: (T) -> Boolean,
-    ) : PagedSource<T> {
-        override suspend fun load(page: Any?): Paged<T> {
-            val result = inner.load(page)
-            return Paged(result.items.filter(keep), result.next)
         }
     }
 

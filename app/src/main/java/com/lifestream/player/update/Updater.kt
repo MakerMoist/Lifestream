@@ -103,42 +103,46 @@ object Updater {
             val target = File(dir, "Lifestream-${release.versionCode}.apk")
             val partial = File(dir, "${target.name}.part")
 
-            client.newCall(Request.Builder().url(release.apkUrl).header("User-Agent", "LifeStream").build())
-                .execute().use { response ->
-                    if (!response.isSuccessful) throw IOException("Download failed (HTTP ${response.code}).")
-                    requireGitHub(response.request.url.toString()) // where redirects actually landed
-                    val body = response.body ?: throw IOException("Download failed (empty response).")
-                    val total = body.contentLength().takeIf { it > 0 } ?: release.apkSize
-                    if (total > MAX_APK_BYTES) throw IOException("Update is unexpectedly large.")
-                    val digest = MessageDigest.getInstance("SHA-256")
-                    var read = 0L
-                    var lastPercent = -1
-                    partial.outputStream().use { out ->
-                        body.byteStream().use { input ->
-                            val buf = ByteArray(64 * 1024)
-                            while (true) {
-                                val n = input.read(buf)
-                                if (n < 0) break
-                                read += n
-                                if (read > MAX_APK_BYTES) throw IOException("Update is unexpectedly large.")
-                                digest.update(buf, 0, n)
-                                out.write(buf, 0, n)
-                                if (total > 0) {
-                                    val percent = (read * 100 / total).toInt().coerceIn(0, 100)
-                                    if (percent != lastPercent) {
-                                        lastPercent = percent
-                                        onProgress(percent / 100f)
+            try {
+                client.newCall(Request.Builder().url(release.apkUrl).header("User-Agent", "LifeStream").build())
+                    .execute().use { response ->
+                        if (!response.isSuccessful) throw IOException("Download failed (HTTP ${response.code}).")
+                        requireGitHub(response.request.url.toString()) // where redirects actually landed
+                        val body = response.body ?: throw IOException("Download failed (empty response).")
+                        val total = body.contentLength().takeIf { it > 0 } ?: release.apkSize
+                        if (total > MAX_APK_BYTES) throw IOException("Update is unexpectedly large.")
+                        val digest = MessageDigest.getInstance("SHA-256")
+                        var read = 0L
+                        var lastPercent = -1
+                        partial.outputStream().use { out ->
+                            body.byteStream().use { input ->
+                                val buf = ByteArray(64 * 1024)
+                                while (true) {
+                                    val n = input.read(buf)
+                                    if (n < 0) break
+                                    read += n
+                                    if (read > MAX_APK_BYTES) throw IOException("Update is unexpectedly large.")
+                                    digest.update(buf, 0, n)
+                                    out.write(buf, 0, n)
+                                    if (total > 0) {
+                                        val percent = (read * 100 / total).toInt().coerceIn(0, 100)
+                                        if (percent != lastPercent) {
+                                            lastPercent = percent
+                                            onProgress(percent / 100f)
+                                        }
                                     }
                                 }
                             }
                         }
+                        val actual = digest.digest().joinToString("") { "%02x".format(it) }
+                        if (actual != release.sha256) {
+                            throw IOException("The download didn't match its checksum, so it was discarded.")
+                        }
                     }
-                    val actual = digest.digest().joinToString("") { "%02x".format(it) }
-                    if (actual != release.sha256) {
-                        partial.delete()
-                        throw IOException("The download didn't match its checksum, so it was discarded.")
-                    }
-                }
+            } catch (e: Exception) {
+                partial.delete() // a failed or cancelled download doesn't stay in storage
+                throw e
+            }
             if (!partial.renameTo(target)) throw IOException("Couldn't save the update.")
             if (!signedLikeThisApp(context, target)) {
                 target.delete()
@@ -160,7 +164,8 @@ object Updater {
     fun cleanUpOldDownloads(context: Context) {
         File(context.cacheDir, "updates").listFiles()?.forEach { f ->
             val code = f.name.removePrefix("Lifestream-").substringBefore(".apk").toIntOrNull()
-            if (code == null || code <= currentVersionCode) f.delete()
+            // Unfinished downloads too: a new download always starts over.
+            if (code == null || code <= currentVersionCode || f.name.endsWith(".part")) f.delete()
         }
     }
 

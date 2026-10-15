@@ -7,8 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import androidx.compose.runtime.produceState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.alpha
@@ -16,8 +14,6 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.graphics.ImageBitmap
 import com.lifestream.player.ui.components.ArtCache
 import com.lifestream.player.ui.components.rememberArt
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,17 +28,9 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
 import com.lifestream.player.data.Matching
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -61,13 +49,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lifestream.player.data.Game
 import com.lifestream.player.playback.PlayerConnection
-import com.lifestream.player.ui.components.Artwork
 import com.lifestream.player.ui.components.TrackRow
 import com.lifestream.player.ui.components.SlimSearchField
 import com.lifestream.player.ui.components.pagedItems
@@ -79,19 +65,23 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
     val tracks = vm.tracks.items
     val focus = LocalFocusManager.current
     val filtering = vm.filter.isNotBlank()
-    val matches by produceState(emptyList<Track>(), vm.filter, tracks) {
+    // The search text each result list belongs to, so "no match" only shows once the search for
+    // what's typed now has finished (not for a moment while typing).
+    val result by produceState("" to emptyList<Track>(), vm.filter, tracks) {
         val query = vm.filter
         if (query.isBlank()) {
-            value = emptyList()
+            value = query to emptyList()
             return@produceState
         }
         // A short pause while typing, so each keystroke doesn't rescan the whole soundtrack.
         kotlinx.coroutines.delay(120)
-        value = withContext(Dispatchers.Default) {
+        value = query to withContext(Dispatchers.Default) {
             val matchAll = Matching.queryTokens(query).isEmpty() && !Matching.hasJapanese(query)
             if (matchAll) tracks else tracks.filter { Matching.songScore(it, query) != null }
         }
     }
+    val matches = result.second
+    val searchDone = result.first == vm.filter
     // A search covers the whole soundtrack, so keep loading pages while one is active.
     LaunchedEffect(filtering, tracks.size, vm.tracks.loading) {
         if (filtering && !vm.tracks.endReached && !vm.tracks.loading) vm.tracks.loadMore()
@@ -210,7 +200,7 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
         }
 
         if (filtering) {
-            if (matches.isEmpty() && vm.tracks.endReached) {
+            if (searchDone && matches.isEmpty() && vm.tracks.endReached) {
                 item(key = "no-match") {
                     Text(
                         "No songs in ${game.title} match \"${vm.filter.trim()}\".",

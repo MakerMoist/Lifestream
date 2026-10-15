@@ -143,7 +143,10 @@ object Catalog {
     /** Soundtracks that were folded into another (saved songs and playlists still use the old id). */
     private val merged = mapOf("ff7int" to "ff7r")
 
-    fun game(id: String): Game? = games.firstOrNull { it.id == id } ?: merged[id]?.let { m -> games.firstOrNull { it.id == m } }
+    // Looked up for every song while searching and sorting, so by key rather than a scan.
+    private val byId: Map<String, Game> by lazy { games.associateBy { it.id } }
+
+    fun game(id: String): Game? = byId[id] ?: merged[id]?.let { byId[it] }
 
     /** The current id for a soundtrack id that may have been merged into another. */
     fun currentId(id: String?): String? = id?.let { merged[it] ?: it }

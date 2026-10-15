@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.sp
 object LsColors {
     private val p get() = ThemeState.current
     val Night: Color get() = p.night
-    val Deep: Color get() = p.deep
     val Panel: Color get() = p.panel
     val Crystal: Color get() = p.primary
     val Mako: Color get() = p.accent
