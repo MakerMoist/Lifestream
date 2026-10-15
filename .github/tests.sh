@@ -6,6 +6,8 @@ set -u
 PKG=com.lifestream.player
 adb uninstall "$PKG" >/dev/null 2>&1 || true
 adb uninstall "$PKG.test" >/dev/null 2>&1 || true
+# A large log buffer, so the tests' own notes aren't pushed out by the player's logging.
+adb logcat -G 16M >/dev/null 2>&1 || true
 adb logcat -c
 
 ./gradlew --no-daemon connectedDebugAndroidTest > "$RUNNER_TEMP/tests.log" 2>&1
