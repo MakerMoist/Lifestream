@@ -49,6 +49,17 @@ fun runCompare(only: Set<String>) {
             }
         }
         game.extras.forEach { e -> keys += Matching.songKey(e.title); e.videoId?.let { ids += it } }
+        // The list the app ends up with: one version of each song, first album first, and what was merged.
+        val kept = LinkedHashMap<String, String>()
+        val merged = StringBuilder()
+        for (a in used) {
+            for (it in runCatching { tracks(a.url) }.getOrDefault(emptyList())) {
+                val k = Matching.songKey(it.name ?: "", game.fullSongTitles)
+                val first = kept.putIfAbsent(k, "${it.name}  [${a.title.take(40)}]")
+                if (first != null) merged.append("- `${it.name}` [${a.title.take(40)}] → kept `$first`\n")
+            }
+        }
+        out.append("### FINAL ${kept.size} songs; merged as the same song:\n").append(merged).append("\n")
         val seen = used.map { it.url }.toMutableSet()
         for (q in candidateQueries[game.id].orEmpty()) {
             val albums = runCatching { search(q, F.MUSIC_ALBUMS, pages = 1) }.getOrDefault(emptyList())
