@@ -33,6 +33,7 @@ class OnlineFeaturesTest {
     @Test
     fun soundtrackIndexBuildsAndSearchFindsItsSongs() {
         SoundtrackIndex.ensureBuilt()
+        Log.i("LSTEST", "Soundtrack index test started (${SoundtrackIndex.progress.value})")
         val deadline = System.currentTimeMillis() + 240_000
         while (SoundtrackIndex.tracks.value.size < 3 && System.currentTimeMillis() < deadline) Thread.sleep(1_000)
         val index = SoundtrackIndex.tracks.value

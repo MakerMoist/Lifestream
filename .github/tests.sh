@@ -10,8 +10,14 @@ adb uninstall "$PKG.test" >/dev/null 2>&1 || true
 adb logcat -G 16M >/dev/null 2>&1 || true
 adb logcat -c
 
+# The tests' own notes are collected as they're written (nothing can scroll them away).
+adb logcat -v brief -s LSTEST:I > "$RUNNER_TEMP/notes.txt" 2>/dev/null &
+notes_pid=$!
+
 ./gradlew --no-daemon connectedDebugAndroidTest > "$RUNNER_TEMP/tests.log" 2>&1
 status=$?
+sleep 2
+kill "$notes_pid" 2>/dev/null || true
 if [ "$status" != 0 ]; then
   grep -E '^e: |error:|FAILED|Execution failed' "$RUNNER_TEMP/tests.log" | head -20 | cut -c1-400 | sed 's/^/::error::/' || true
 fi
@@ -37,5 +43,5 @@ for path in glob.glob("app/build/outputs/androidTest-results/**/TEST-*.xml", rec
 print(f"::notice title=Feature tests::{passed} passed, {failed} failed, {skipped} skipped")
 PY
 
-adb logcat -d 2>/dev/null | grep -E " LSTEST *: " | sed -E 's/.* LSTEST *: //' | sort -u | head -20 | sed 's/^/::notice::/' || true
+grep -E "LSTEST" "$RUNNER_TEMP/notes.txt" | sed -E 's/^[^:]*: //' | sort -u | head -20 | sed 's/^/::notice::/' || true
 exit $status
