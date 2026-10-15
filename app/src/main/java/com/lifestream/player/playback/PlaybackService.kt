@@ -404,18 +404,22 @@ class PlaybackService : MediaLibraryService() {
             }
         }
 
-        /** A spread across titles: pick a random soundtrack, then a random song from it. */
+        /**
+         * A spread across titles: pick a random soundtrack, then a random song from it, skipping
+         * filler, short clips and songs already queued. Only the picked songs are checked (not the
+         * whole index), so this stays quick on the main thread.
+         */
         private fun randomSongs(count: Int, exclude: Set<String>): List<com.lifestream.player.data.Track> {
-            val byGame = SoundtrackIndex.tracks.value.values
-                .map { list -> list.filter { SafeInput.isVideoId(it.id) && it.id !in exclude && !Matching.isFillerTrack(it.title) && it.durationSec !in 1L..44L } }
-                .filter { it.isNotEmpty() }
+            val byGame = SoundtrackIndex.tracks.value.values.filter { it.isNotEmpty() }
             if (byGame.isEmpty()) return emptyList()
             val out = LinkedHashMap<String, com.lifestream.player.data.Track>()
             var attempts = 0
-            while (out.size < count && attempts < count * 6) {
-                val song = byGame.random().random()
-                out.putIfAbsent(song.id, song)
+            while (out.size < count && attempts < count * 20) {
                 attempts++
+                val song = byGame.random().random()
+                if (song.id in exclude || song.id in out || !SafeInput.isVideoId(song.id)) continue
+                if (song.durationSec in 1L..44L || Matching.isFillerTrack(song.title)) continue
+                out[song.id] = song
             }
             return out.values.toList()
         }

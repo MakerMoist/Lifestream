@@ -144,6 +144,7 @@ class SearchAndNamesTest {
     fun onDeviceTranslation() {
         // Downloads Google's offline Japanese model (~30 MB) the first time; skipped if unavailable.
         val out = TitleTranslator.toEnglish("静かな森")
+        if (Matching.hasJapanese(out)) Log.i("LSTEST", "SKIPPED on-device translation: model unavailable")
         assumeTrue("translation model unavailable here", !Matching.hasJapanese(out))
         assertTrue(out.isNotBlank())
         TitleTranslator.release()
@@ -171,6 +172,12 @@ class SearchAndNamesTest {
         assertTrue(SafeInput.isGoogleVideoHost("rr1---sn-abc.googlevideo.com"))
         assertFalse(SafeInput.isGoogleVideoHost("evilgooglevideo.com"))
         assertFalse(SafeInput.isGoogleVideoHost("googlevideo.com.evil.net"))
+        // The extractor may only reach YouTube's and Google's own servers.
+        assertTrue(com.lifestream.player.net.Http.isExtractorHost("music.youtube.com"))
+        assertTrue(com.lifestream.player.net.Http.isExtractorHost("youtubei.googleapis.com"))
+        assertFalse(com.lifestream.player.net.Http.isExtractorHost("youtube.com.evil.net"))
+        assertFalse(com.lifestream.player.net.Http.isExtractorHost("notyoutube.com"))
+        assertFalse(com.lifestream.player.net.Http.isExtractorHost("127.0.0.1"))
         assertNotNull(SafeInput.safeArtwork("https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"))
         assertNotNull(SafeInput.safeArtwork("https://lh3.googleusercontent.com/abc=w120-h120"))
         assertNull(SafeInput.safeArtwork("http://i.ytimg.com/vi/x/hqdefault.jpg"))

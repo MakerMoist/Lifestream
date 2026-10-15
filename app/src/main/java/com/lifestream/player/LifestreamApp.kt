@@ -52,7 +52,7 @@ class LifestreamApp : Application(), coil.ImageLoaderFactory {
         super.onCreate()
         // The extractor talks to YouTube's servers through our own OkHttp client.
         // Ask YouTube for English metadata; anything still in Japanese is translated on the device.
-        NewPipe.init(OkHttpDownloader(Http.client), Localization("en", "US"), ContentCountry("US"))
+        NewPipe.init(OkHttpDownloader(Http.extractorClient), Localization("en", "US"), ContentCountry("US"))
         AppSettings.init(this)
         OfficialTitles.init(this)
         Library.init(this)

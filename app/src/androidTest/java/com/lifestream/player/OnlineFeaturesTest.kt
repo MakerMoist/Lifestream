@@ -36,6 +36,7 @@ class OnlineFeaturesTest {
         val deadline = System.currentTimeMillis() + 240_000
         while (SoundtrackIndex.tracks.value.size < 3 && System.currentTimeMillis() < deadline) Thread.sleep(1_000)
         val index = SoundtrackIndex.tracks.value
+        if (index.isEmpty()) Log.i("LSTEST", "SKIPPED soundtrack index: nothing loaded (${SoundtrackIndex.progress.value})")
         assumeTrue("YouTube Music unreachable from here", index.isNotEmpty())
 
         var songs = 0
@@ -91,6 +92,7 @@ class OnlineFeaturesTest {
         val release = try {
             Updater.fetchLatest()
         } catch (e: IOException) {
+            Log.i("LSTEST", "SKIPPED update check: ${e.message}")
             assumeTrue("GitHub unreachable or rate-limited: ${e.message}", false)
             return@runBlocking
         }

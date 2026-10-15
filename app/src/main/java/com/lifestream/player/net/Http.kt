@@ -36,6 +36,32 @@ object Http {
         return String(out.toByteArray(), charset)
     }
 
+    /** Where YouTube's metadata (search, albums, the player script) comes from. */
+    private val extractorDomains = listOf(
+        "youtube.com", "youtu.be", "googleapis.com", "google.com", "ytimg.com", "ggpht.com",
+        "googleusercontent.com", "googlevideo.com", "gstatic.com",
+    )
+
+    fun isExtractorHost(host: String?): Boolean {
+        val h = host?.lowercase() ?: return false
+        return extractorDomains.any { h == it || h.endsWith(".$it") }
+    }
+
+    /**
+     * The client the YouTube extractor uses: the same connections, but every hop (redirects
+     * included) must be HTTPS to YouTube's or Google's own servers, so nothing it parses can make
+     * the app contact another site or the local network.
+     */
+    val extractorClient: OkHttpClient by lazy {
+        client.newBuilder()
+            .addNetworkInterceptor { chain ->
+                val url = chain.request().url
+                if (!url.isHttps || !isExtractorHost(url.host)) throw IOException("Refusing request to ${url.host}")
+                chain.proceed(chain.request())
+            }
+            .build()
+    }
+
     val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .connectTimeout(20, TimeUnit.SECONDS)

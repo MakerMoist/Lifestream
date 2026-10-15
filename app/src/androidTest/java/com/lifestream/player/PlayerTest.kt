@@ -92,7 +92,7 @@ class PlayerTest {
         assertEquals(t.gameId, back.gameId)
         assertEquals(t.durationSec, back.durationSec)
         // Items from outside: anything but a real video id is refused, local artwork stripped.
-        assertNull(MediaItem.Builder().setMediaId("not-a-video").build().withPlayableUri())
+        assertNull(MediaItem.Builder().setMediaId("not a video id").build().withPlayableUri())
         val sneaky = MediaItem.Builder().setMediaId("dQw4w9WgXcQ").setMediaMetadata(
             androidx.media3.common.MediaMetadata.Builder()
                 .setArtworkUri(android.net.Uri.parse("file:///data/data/com.lifestream.player/files/playlists.json"))

@@ -65,8 +65,20 @@ object SoundtrackIndex {
 
     fun tracksFor(gameId: String): List<Track>? = _tracks.value[gameId]?.takeIf { it.isNotEmpty() }
 
-    /** A soundtrack's songs with one version of each (the original release's, which comes first). */
-    fun songsFor(gameId: String): List<Track>? = tracksFor(gameId)?.distinctBy { Matching.songKey(it) }
+    /**
+     * A soundtrack's songs with one version of each (the original release's, which comes first).
+     * Worked out once per index update and remembered, since title pages, Instant Playlist and
+     * Android Auto all ask for it.
+     */
+    fun songsFor(gameId: String): List<Track>? {
+        val current = _tracks.value
+        val list = current[gameId]?.takeIf { it.isNotEmpty() } ?: return null
+        val memo = oneEach?.takeIf { it.first === current }?.second
+            ?: java.util.concurrent.ConcurrentHashMap<String, List<Track>>().also { oneEach = current to it }
+        return memo.getOrPut(gameId) { list.distinctBy { Matching.songKey(it) } }
+    }
+
+    @Volatile private var oneEach: Pair<Map<String, List<Track>>, java.util.concurrent.ConcurrentHashMap<String, List<Track>>>? = null
 
     /** The soundtrack a song belongs to: from the song itself, or by finding it in the index. */
     fun gameOf(track: Track): Game? {
@@ -77,6 +89,7 @@ object SoundtrackIndex {
     /** Drops the track → title lookup table; it's rebuilt the next time it's needed. */
     fun trimCaches() {
         byTrack = null
+        oneEach = null
     }
 
     /**
