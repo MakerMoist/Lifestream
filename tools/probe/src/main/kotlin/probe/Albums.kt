@@ -17,6 +17,10 @@ fun runAlbums(only: Set<String>) {
         val queries = listOf(
             game.query, "${game.title} soundtrack", "${game.title} original soundtrack plus",
             "${game.title} original soundtrack vol 2", "${game.title} original soundtrack DLC",
+            "${game.title} special edition soundtrack", "${game.title} ultimate edition soundtrack",
+            "${game.title} international soundtrack", "${game.title} complete soundtrack",
+            "${game.title} expanded soundtrack", "${game.title} deluxe soundtrack",
+            "${game.title} remaster soundtrack",
         ) + game.albumQueries
         val seen = LinkedHashMap<String, com.lifestream.player.data.Album>()
         for (q in queries) {
