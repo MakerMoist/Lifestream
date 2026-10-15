@@ -9,6 +9,7 @@ import com.google.mlkit.nl.translate.TranslatorOptions
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.launch
 
 /**
  * Turns Japanese track, album and artist names into English, on the device (Google ML Kit's
@@ -45,6 +46,28 @@ object TitleTranslator {
     fun release() {
         client?.close()
         client = null
+    }
+
+    // The model is let go a minute after it was last used (e.g. after browsing a title that
+    // isn't in the song index yet), instead of staying in memory until the next index build.
+    private const val IDLE_RELEASE_MS = 60_000L
+    @Volatile private var lastUse = 0L
+    private val idleScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default)
+    @Volatile private var idleJob: kotlinx.coroutines.Job? = null
+
+    private fun touch() {
+        lastUse = System.currentTimeMillis()
+        if (idleJob?.isActive == true) return
+        idleJob = idleScope.launch {
+            while (true) {
+                val wait = lastUse + IDLE_RELEASE_MS - System.currentTimeMillis()
+                if (wait <= 0) {
+                    release()
+                    break
+                }
+                kotlinx.coroutines.delay(wait)
+            }
+        }
     }
 
     @Volatile private var modelReady = false
@@ -154,6 +177,7 @@ object TitleTranslator {
         val prepared = applyGlossary(text)
         if (!hasJapanese(prepared)) return tidy(prepared).also { cache[text] = it }
         if (!ensureModel()) return prepared
+        touch()
         val translated = try {
             Tasks.await(translator.translate(prepared), 5, TimeUnit.SECONDS)
         } catch (e: Exception) {
@@ -170,6 +194,7 @@ object TitleTranslator {
         // After a failure (offline, no Play services…) don't retry on every title.
         if (System.currentTimeMillis() - lastFailureAt < 5 * 60_000) return false
         return try {
+            touch()
             Tasks.await(translator.downloadModelIfNeeded(DownloadConditions.Builder().build()), 120, TimeUnit.SECONDS)
             modelReady = true
             true

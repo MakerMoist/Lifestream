@@ -29,7 +29,19 @@ class LifestreamApp : Application(), coil.ImageLoaderFactory {
                 .maxSizeBytes(64L * 1024 * 1024)
                 .build()
         }
-        .okHttpClient { Http.client }
+        // Same connection pool as the rest of the app, but every hop (redirects included) must
+        // stay on YouTube's image servers over HTTPS.
+        .okHttpClient {
+            Http.client.newBuilder()
+                .addNetworkInterceptor { chain ->
+                    val url = chain.request().url
+                    if (!url.isHttps || !com.lifestream.player.playback.SafeInput.isImageHost(url.host)) {
+                        throw java.io.IOException("Artwork from an unexpected host")
+                    }
+                    chain.proceed(chain.request())
+                }
+                .build()
+        }
         .allowRgb565(true)
         // Album art at a given address never changes; don't re-download it because of short
         // cache headers.
@@ -47,6 +59,7 @@ class LifestreamApp : Application(), coil.ImageLoaderFactory {
         SearchHistory.init(this)
         SongCache.init(this)
         SoundtrackIndex.init(this)
+        Thread({ runCatching { com.lifestream.player.update.Updater.cleanUpOldDownloads(this) } }, "update-cleanup").start()
     }
 
     /**

@@ -153,6 +153,17 @@ object Updater {
             target
         }
 
+    /**
+     * Deletes downloaded update files that are already installed (or older), so a 30+ MB APK
+     * doesn't sit in storage after updating. Call off the main thread.
+     */
+    fun cleanUpOldDownloads(context: Context) {
+        File(context.cacheDir, "updates").listFiles()?.forEach { f ->
+            val code = f.name.removePrefix("Lifestream-").substringBefore(".apk").toIntOrNull()
+            if (code == null || code <= currentVersionCode) f.delete()
+        }
+    }
+
     fun canInstall(context: Context): Boolean = context.packageManager.canRequestPackageInstalls()
 
     /** Opens the system screen where the user allows Lifestream to install updates. */

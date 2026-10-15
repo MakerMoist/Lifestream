@@ -2,6 +2,13 @@ package com.lifestream.player.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +25,7 @@ object Library {
     const val MAX_NAME_LENGTH = 40
     private const val MAX_TRACKS_PER_PLAYLIST = 1000
     private const val MAX_RECENTS = 50
+    private const val MAX_FILE_BYTES = 32L * 1024 * 1024
 
     private const val KEY_PLAYLISTS = "playlists"
     private const val KEY_RECENTS = "recents"
@@ -25,6 +33,19 @@ object Library {
     private const val KEY_LAST_PLAYLIST = "last_playlist"
 
     private lateinit var prefs: SharedPreferences
+
+    /**
+     * Playlists live in their own file, not in SharedPreferences: they can hold thousands of songs,
+     * and SharedPreferences reads everything on the main thread at start-up and rewrites all of it
+     * on every change. The file is written in the background, shortly after changes (several
+     * quick changes become one write), and atomically (a temporary file renamed over it).
+     */
+    private lateinit var playlistsFile: File
+    private val saveScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var saveJob: Job? = null
+    @Volatile private var saveWanted = false
+    private val playlistId = Regex("^[A-Za-z0-9-]{1,64}$")
+    private val whitespace = Regex("\\s+")
 
     private val _playlists = MutableStateFlow<List<Playlist>>(emptyList())
     val playlists: StateFlow<List<Playlist>> = _playlists.asStateFlow()
@@ -38,8 +59,10 @@ object Library {
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences("library", Context.MODE_PRIVATE)
+        playlistsFile = File(context.filesDir, "playlists.json")
         _recents.value = readTracks(prefs.getString(KEY_RECENTS, "[]"))
         _playlists.value = readPlaylists()
+        moveOutOfPreferences()
         migrateFavorites()
         _lastPlaylistId.value = prefs.getString(KEY_LAST_PLAYLIST, null)?.takeIf { id -> playlist(id) != null }
     }
@@ -134,33 +157,78 @@ object Library {
     }
 
     private fun cleanName(raw: String, fallback: String): String =
-        raw.replace(Regex("\\s+"), " ").trim().take(MAX_NAME_LENGTH).ifBlank { fallback }
+        raw.replace(whitespace, " ").trim().take(MAX_NAME_LENGTH).ifBlank { fallback }
 
+    /** From the playlists file, or (before 1.5.1) from SharedPreferences. */
     private fun readPlaylists(): List<Playlist> = runCatching {
-        val arr = JSONArray(prefs.getString(KEY_PLAYLISTS, "[]"))
-        (0 until arr.length()).map { i ->
-            val o = arr.getJSONObject(i)
+        val text = when {
+            // A damaged or runaway file is ignored rather than read into memory.
+            playlistsFile.exists() && playlistsFile.length() <= MAX_FILE_BYTES -> playlistsFile.readText()
+            playlistsFile.exists() -> "[]"
+            else -> prefs.getString(KEY_PLAYLISTS, "[]")
+        }
+        val arr = JSONArray(text)
+        (0 until arr.length()).mapNotNull { i ->
+            val o = arr.optJSONObject(i) ?: return@mapNotNull null
+            val id = o.optString("id").takeIf { playlistId.matches(it) } ?: return@mapNotNull null
             Playlist(
-                id = o.getString("id"),
+                id = id,
                 name = cleanName(o.optString("name"), "Playlist ${i + 1}"),
-                tracks = readTracks(o.optJSONArray("tracks")?.toString() ?: "[]").take(MAX_TRACKS_PER_PLAYLIST),
+                tracks = readTracks(o.optJSONArray("tracks")).take(MAX_TRACKS_PER_PLAYLIST),
             )
         }.distinctBy { it.id }.take(MAX_PLAYLISTS)
     }.getOrDefault(emptyList())
 
-    private fun savePlaylists() {
-        val arr = JSONArray()
-        _playlists.value.forEach { p ->
-            arr.put(JSONObject().put("id", p.id).put("name", p.name).put("tracks", JSONArray(writeTracks(p.tracks))))
-        }
-        prefs.edit().putString(KEY_PLAYLISTS, arr.toString()).apply()
+    /** One-time move of playlists from SharedPreferences into their own file. */
+    private fun moveOutOfPreferences() {
+        if (!prefs.contains(KEY_PLAYLISTS)) return
+        if (!playlistsFile.exists()) writePlaylistsFile(_playlists.value)
+        if (playlistsFile.exists()) prefs.edit().remove(KEY_PLAYLISTS).commit()
     }
 
-    private fun readTracks(json: String?): List<Track> = runCatching {
-        val arr = JSONArray(json ?: "[]")
-        (0 until arr.length()).mapNotNull { arr.optJSONObject(it)?.let(Track::fromJson)?.let(ArtistCredits::fix)?.let(OfficialTitles::fix) }
-            .distinctBy { it.id }
-    }.getOrDefault(emptyList())
+    private fun savePlaylists() {
+        saveWanted = true
+        synchronized(saveScope) {
+            if (saveJob != null) return // the running save picks up the latest playlists
+            saveJob = saveScope.launch {
+                while (true) {
+                    delay(250)
+                    saveWanted = false
+                    writePlaylistsFile(_playlists.value)
+                    synchronized(saveScope) {
+                        if (!saveWanted) {
+                            saveJob = null
+                            return@launch
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun writePlaylistsFile(playlists: List<Playlist>) {
+        runCatching {
+            val arr = JSONArray()
+            playlists.forEach { p ->
+                val tracks = JSONArray()
+                p.tracks.forEach { tracks.put(it.toJson()) }
+                arr.put(JSONObject().put("id", p.id).put("name", p.name).put("tracks", tracks))
+            }
+            val tmp = File(playlistsFile.parentFile, "playlists.json.tmp")
+            tmp.writeText(arr.toString())
+            if (!tmp.renameTo(playlistsFile)) tmp.delete()
+        }
+    }
+
+    private fun readTracks(json: String?): List<Track> =
+        runCatching { readTracks(JSONArray(json ?: "[]")) }.getOrDefault(emptyList())
+
+    private fun readTracks(arr: JSONArray?): List<Track> {
+        if (arr == null) return emptyList()
+        return (0 until arr.length()).mapNotNull {
+            arr.optJSONObject(it)?.let(Track::fromJson)?.let(ArtistCredits::fix)?.let(OfficialTitles::fix)
+        }.distinctBy { it.id }
+    }
 
     private fun writeTracks(tracks: List<Track>): String {
         val arr = JSONArray()
