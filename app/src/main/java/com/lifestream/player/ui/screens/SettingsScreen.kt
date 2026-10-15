@@ -275,6 +275,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
     val showQuotes by AppSettings.showQuotes.collectAsStateWithLifecycle()
     val levelVolume by AppSettings.levelVolume.collectAsStateWithLifecycle()
     val autoPlayAtEnd by AppSettings.autoPlayAtEnd.collectAsStateWithLifecycle()
+    val androidAuto by AppSettings.androidAuto.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
     val themeId by AppSettings.themeId.collectAsStateWithLifecycle()
@@ -400,8 +401,22 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
             }
         }
 
-        // System sits at the bottom: saved songs, then app updates last.
+        // System sits at the bottom: Android Auto, saved songs, then app updates last.
         SectionLabel("System", Modifier.padding(top = 8.dp))
+        SettingsCard {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Android Auto", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Show your titles, playlists and history in Android Auto, with its full-screen player.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = androidAuto, onCheckedChange = { AppSettings.setAndroidAuto(it) })
+            }
+        }
         SettingsCard {
             Text("Saved Songs", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))

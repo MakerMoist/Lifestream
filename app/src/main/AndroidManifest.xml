@@ -10,6 +10,11 @@
     <!-- Lets the Settings screen hand a downloaded update to Android's installer (the user still confirms). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- Lets the app confirm that a connecting "Android Auto" is the real, installed one. -->
+    <queries>
+        <package android:name="com.google.android.projection.gearhead" />
+    </queries>
+
     <application
         android:name=".LifestreamApp"
         android:allowBackup="false"
@@ -39,8 +44,16 @@
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>
                 <action android:name="androidx.media3.session.MediaSessionService" />
+                <action android:name="androidx.media3.session.MediaLibraryService" />
+                <!-- How Android Auto finds media apps to browse. -->
+                <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
+        <!-- Lists LifeStream as a media app in Android Auto (its library shows only when the
+             Android Auto setting is on). -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
         <!-- Shares only the downloaded update APK with the system installer. -->
         <provider
             android:name="androidx.core.content.FileProvider"

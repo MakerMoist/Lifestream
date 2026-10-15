@@ -83,7 +83,6 @@ class HomeViewModel : ViewModel() {
     var surpriseNote by mutableStateOf<String?>(null)
         private set
     private var lastSurprise: String? = null
-    private val SURPRISE_SIZE = 150
 
     fun surprise() {
         if (surprising) return
@@ -92,15 +91,7 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 // A random mix of songs from every soundtrack, once the song index has them.
-                val mix = withContext(Dispatchers.Default) {
-                    Catalog.games
-                        .mapNotNull { SoundtrackIndex.songsFor(it.id) }
-                        .flatten()
-                        .filterNot { Matching.isFillerTrack(it.title) || it.durationSec in 1L..44L }
-                        .shuffled()
-                        .distinctBy { it.id }
-                        .take(SURPRISE_SIZE)
-                }
+                val mix = withContext(Dispatchers.Default) { com.lifestream.player.data.Mixes.instant() }
                 val titles = mix.mapNotNull { it.gameId }.distinct().size
                 if (mix.size >= 20 && titles >= 3) {
                     PlayerConnection.playTracks(mix, instant = true)

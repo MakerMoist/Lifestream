@@ -23,8 +23,19 @@ import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.DefaultMediaNotificationProvider
+import androidx.media3.session.LibraryResult
+import androidx.media3.session.MediaLibraryService
+import androidx.media3.session.MediaLibraryService.LibraryParams
+import androidx.media3.session.MediaLibraryService.MediaLibrarySession
 import androidx.media3.session.MediaSession
-import androidx.media3.session.MediaSessionService
+import androidx.media3.session.SessionError
+import com.google.common.collect.ImmutableList
+import com.google.common.util.concurrent.MoreExecutors
+import java.util.concurrent.Executors
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 import android.os.Bundle
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
@@ -41,9 +52,13 @@ import com.lifestream.player.R
  * headset buttons and audio focus handling.
  */
 @OptIn(UnstableApi::class)
-class PlaybackService : MediaSessionService() {
+class PlaybackService : MediaLibraryService() {
 
-    private var session: MediaSession? = null
+    private var session: MediaLibrarySession? = null
+
+    /** Android Auto's library requests (lists, search) are worked out off the main thread. */
+    private val libraryExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor())
+    private val serviceScope = MainScope()
     private var otherAudio: OtherAudioListener? = null
     private var idleReleaser: IdleReleaser? = null
 
@@ -116,13 +131,19 @@ class PlaybackService : MediaSessionService() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
 
-        session = MediaSession.Builder(this, player)
+        session = MediaLibrarySession.Builder(this, player, SessionCallback())
             .setSessionActivity(openApp)
-            .setCallback(SessionCallback())
             .build()
+
+        // Turning Android Auto on or off in Settings refreshes the car's screens right away.
+        serviceScope.launch {
+            AppSettings.androidAuto.drop(1).collect {
+                session?.notifyChildrenChanged(AutoLibrary.ROOT, Int.MAX_VALUE, null)
+            }
+        }
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = session
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         // Keep playing in the background only if something is actually playing; a queue that
@@ -134,6 +155,8 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        serviceScope.cancel()
+        libraryExecutor.shutdownNow()
         otherAudio?.release()
         otherAudio = null
         idleReleaser?.cancel()
@@ -146,7 +169,7 @@ class PlaybackService : MediaSessionService() {
         super.onDestroy()
     }
 
-    private inner class SessionCallback : MediaSession.Callback {
+    private inner class SessionCallback : MediaLibrarySession.Callback {
         /**
          * The service has to be exported for system media controls, so check who's connecting:
          * Lifestream itself (UI + notification) and trusted system controllers (System UI media
@@ -167,7 +190,10 @@ class PlaybackService : MediaSessionService() {
                             .build()
                     )
                     .build()
-                controller.isTrusted -> MediaSession.ConnectionResult.AcceptedResultBuilder(session).build()
+                // System media controls, and Android Auto (which shows only a note while it's
+                // turned off in Settings).
+                controller.isTrusted || AutoLibrary.isAndroidAuto(this@PlaybackService, controller) ->
+                    MediaSession.ConnectionResult.AcceptedResultBuilder(session).build()
                 else -> MediaSession.ConnectionResult.reject()
             }
         }
@@ -197,6 +223,101 @@ class PlaybackService : MediaSessionService() {
             mediaItems: MutableList<MediaItem>,
         ): ListenableFuture<MutableList<MediaItem>> =
             Futures.immediateFuture(mediaItems.mapNotNull { it.withPlayableUri() }.toMutableList())
+
+        /**
+         * A song, Instant Playlist or voice request from Android Auto becomes a full queue; plain
+         * songs (from LifeStream itself) go through [onAddMediaItems] as before.
+         */
+        override fun onSetMediaItems(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            mediaItems: MutableList<MediaItem>,
+            startIndex: Int,
+            startPositionMs: Long,
+        ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
+            val fromLibrary = mediaItems.size == 1 && !SafeInput.isVideoId(mediaItems[0].mediaId)
+            if (fromLibrary) {
+                val request = AutoLibrary.resolve(mediaItems, startIndex)
+                    ?: return Futures.immediateFailedFuture(UnsupportedOperationException("Nothing to play"))
+                // Once the queue is in: shuffle (or not), starting from the chosen song.
+                val player = mediaSession.player
+                android.os.Handler(Looper.getMainLooper()).post {
+                    player.shuffleModeEnabled = false
+                    player.shuffleModeEnabled = request.shuffle
+                }
+                return Futures.immediateFuture(
+                    MediaSession.MediaItemsWithStartPosition(
+                        request.tracks.map { it.toMediaItem() },
+                        request.startIndex,
+                        C.TIME_UNSET,
+                    )
+                )
+            }
+            return super.onSetMediaItems(mediaSession, controller, mediaItems, startIndex, startPositionMs)
+        }
+
+        // ---- Android Auto's library ----
+
+        override fun onGetLibraryRoot(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            params: LibraryParams?,
+        ): ListenableFuture<LibraryResult<MediaItem>> =
+            Futures.immediateFuture(LibraryResult.ofItem(AutoLibrary.root(), params))
+
+        override fun onGetChildren(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            parentId: String,
+            page: Int,
+            pageSize: Int,
+            params: LibraryParams?,
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = libraryExecutor.submit(java.util.concurrent.Callable<LibraryResult<ImmutableList<MediaItem>>> {
+            val all = AutoLibrary.children(this@PlaybackService, parentId)
+            if (all == null) LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
+            else LibraryResult.ofItemList(pageOf(all, page, pageSize), params)
+        })
+
+        override fun onGetItem(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            mediaId: String,
+        ): ListenableFuture<LibraryResult<MediaItem>> = libraryExecutor.submit(java.util.concurrent.Callable<LibraryResult<MediaItem>> {
+            AutoLibrary.item(this@PlaybackService, mediaId)?.let { LibraryResult.ofItem(it, null) }
+                ?: LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
+        })
+
+        override fun onSearch(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            query: String,
+            params: LibraryParams?,
+        ): ListenableFuture<LibraryResult<Void>> = libraryExecutor.submit(java.util.concurrent.Callable<LibraryResult<Void>> {
+            val count = AutoLibrary.search(query)
+            // Session calls belong on the main thread.
+            android.os.Handler(Looper.getMainLooper()).post {
+                session.notifySearchResultChanged(browser, query, count, params)
+            }
+            LibraryResult.ofVoid(params)
+        })
+
+        override fun onGetSearchResult(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            query: String,
+            page: Int,
+            pageSize: Int,
+            params: LibraryParams?,
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = libraryExecutor.submit(java.util.concurrent.Callable<LibraryResult<ImmutableList<MediaItem>>> {
+            LibraryResult.ofItemList(pageOf(AutoLibrary.searchResults(), page, pageSize), params)
+        })
+
+        private fun pageOf(all: List<MediaItem>, page: Int, pageSize: Int): ImmutableList<MediaItem> {
+            if (page < 0 || pageSize <= 0 || pageSize == Int.MAX_VALUE) return ImmutableList.copyOf(all)
+            val from = page.toLong() * pageSize
+            if (from >= all.size) return ImmutableList.of()
+            return ImmutableList.copyOf(all.subList(from.toInt(), minOf(all.size, from.toInt() + pageSize)))
+        }
     }
 
     /**
