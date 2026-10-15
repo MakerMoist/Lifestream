@@ -1,6 +1,7 @@
 package com.lifestream.player.playback
 
 import android.net.Uri
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /** Validation for anything that ends up in a URL or comes from outside the app. */
 object SafeInput {
@@ -29,9 +30,19 @@ object SafeInput {
     /**
      * Artwork must be an HTTPS image on YouTube's image servers — never file://, content://,
      * a local address or some other site.
+     *
+     * Android's URL parser and OkHttp's (which downloads the image) read some unusual addresses
+     * differently ("https://other.site\@i.ytimg.com/" is ytimg to one and other.site to the
+     * other), so the address must be plain and both must agree on the host.
      */
-    fun safeArtwork(uri: Uri?): Uri? = uri?.takeIf { isHttps(it) && isImageHost(it.host) }
+    fun safeArtwork(url: String?): String? {
+        if (url == null || url.length > 2048) return null
+        if (url.any { it == '\\' || it == '@' || it.isWhitespace() || it.isISOControl() }) return null
+        val okHost = url.toHttpUrlOrNull()?.takeIf { it.isHttps }?.host ?: return null
+        val uri = Uri.parse(url)
+        if (!isHttps(uri) || !uri.host.equals(okHost, ignoreCase = true) || !isImageHost(okHost)) return null
+        return url
+    }
 
-    fun safeArtwork(url: String?): String? =
-        url?.takeIf { it.length <= 2048 }?.let { safeArtwork(Uri.parse(it))?.toString() }
+    fun safeArtwork(uri: Uri?): Uri? = uri?.takeIf { safeArtwork(it.toString()) != null }
 }

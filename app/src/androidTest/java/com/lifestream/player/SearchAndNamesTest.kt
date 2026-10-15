@@ -248,6 +248,11 @@ class SearchAndNamesTest {
         assertNull(SafeInput.safeArtwork("https://ytimg.com.evil.net/a.jpg"))
         assertNull(SafeInput.safeArtwork("file:///data/data/com.lifestream.player/a.jpg"))
         assertNull(SafeInput.safeArtwork("content://media/external/images/1"))
+        // Addresses the two URL parsers (Android's and OkHttp's) could read differently.
+        assertNull(SafeInput.safeArtwork("https://evil.example\\@i.ytimg.com/vi/x/hqdefault.jpg"))
+        assertNull(SafeInput.safeArtwork("https://user@i.ytimg.com/vi/x/hqdefault.jpg"))
+        assertNull(SafeInput.safeArtwork("https://i.ytimg.com /vi/x/hqdefault.jpg"))
+        assertNotNull(SafeInput.safeArtwork("https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg?sqp=-oay&rs=AOn"))
         assertEquals(
             "https://lh3.googleusercontent.com/abc=w544-h544-l90-rj",
             hiResArtwork("https://lh3.googleusercontent.com/abc=w120-h120-l90-rj", 544),

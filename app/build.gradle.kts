@@ -106,10 +106,8 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.9.0")
     implementation(platform("androidx.compose:compose-bom:2025.06.00"))
     implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
-    debugImplementation("androidx.compose.ui:ui-tooling")
 
     // Our own player engine: Media3 ExoPlayer + MediaSession (background + lock-screen controls)
     implementation("androidx.media3:media3-exoplayer:1.7.1")

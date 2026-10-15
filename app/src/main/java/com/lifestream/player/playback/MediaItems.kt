@@ -32,8 +32,9 @@ fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
 
 fun MediaItem.toTrack(): Track = Track(
     id = mediaId,
-    title = mediaMetadata.title?.toString() ?: "Unknown track",
-    artist = mediaMetadata.artist?.toString() ?: "",
+    // Capped like everything else that's stored (items can come from other controllers).
+    title = (mediaMetadata.title?.toString() ?: "Unknown track").take(Track.MAX_TEXT),
+    artist = (mediaMetadata.artist?.toString() ?: "").take(Track.MAX_TEXT),
     durationSec = mediaMetadata.extras?.getLong(EXTRA_DURATION, -1L) ?: -1L,
     thumbnail = mediaMetadata.artworkUri?.toString(),
     gameId = mediaMetadata.extras?.getString(EXTRA_GAME),
