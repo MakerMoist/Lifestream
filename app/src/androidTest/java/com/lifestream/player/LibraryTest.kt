@@ -95,6 +95,26 @@ class LibraryTest {
     }
 
     @Test
+    fun pullToRefreshUpdatesStoredSongs() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val names = org.json.JSONObject(context.assets.open("official_titles.json").bufferedReader().use { it.readText() })
+        val id = names.keys().next()
+        val before = Library.recents.value
+        try {
+            Library.clearRecents()
+            // Stored before official names and credits existed: a Japanese name and the label as artist.
+            Library.addRecent(Track(id, "日本語の曲名", "SQUARE ENIX MUSIC", 200, null, "ff7r"))
+            kotlinx.coroutines.runBlocking { Library.refresh() }
+            val t = Library.recents.value.first()
+            assertEquals(com.lifestream.player.data.OfficialTitles.forId(id), t.title)
+            assertEquals("Masashi Hamauzu & Mitsuto Suzuki", t.artist)
+        } finally {
+            Library.clearRecents()
+            before.reversed().forEach { Library.addRecent(it) }
+        }
+    }
+
+    @Test
     fun historyKeepsNewestFirstWithoutRepeats() {
         val before = Library.recents.value
         try {

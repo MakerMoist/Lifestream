@@ -59,13 +59,82 @@ if tap_text "Final Fantasy" || tap_text "Final Fantasy II"; then
     else
       echo "::warning::Playback didn't reach PLAYING: $state"
       adb logcat -d 2>/dev/null | grep -E "ExoPlayerImplInternal|AndroidRuntime" | grep -vE "^\S+ \S+ +[0-9]+ +[0-9]+ [A-Z] [A-Za-z]+: +at " \
-        | grep -v "^--" | sort -u -k6 | head -25 | cut -c1-500 | sed 's/^/::warning::/' || true
+        | grep -v "^--" | sort -u -k6 | head -4 | cut -c1-400 | sed 's/^/::warning::/' || true
     fi
   else
     echo "::warning::Couldn't find the Play all button"
   fi
 else
   echo "::warning::Couldn't find a soundtrack card. On screen: $(grep -oE 'text="[^"]+"' ui.xml 2>/dev/null | head -12 | tr '\n' ' ')"
+fi
+
+# Where an element is on screen: "x y top bottom" for the node whose text or description is $1.
+find_node() {
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+  adb pull /sdcard/ui.xml ui.xml >/dev/null 2>&1
+  python3 - "$1" <<'PY'
+import re, sys
+xml = open("ui.xml", encoding="utf-8", errors="ignore").read()
+for m in re.finditer(r'<node [^>]*>', xml):
+    node = m.group(0)
+    t = re.search(r'text="([^"]*)"', node)
+    d = re.search(r'content-desc="([^"]*)"', node)
+    if (t and t.group(1) == sys.argv[1]) or (d and d.group(1) == sys.argv[1]):
+        b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', node)
+        if b:
+            x1, y1, x2, y2 = map(int, b.groups())
+            print((x1 + x2) // 2, (y1 + y2) // 2, y1, y2)
+            break
+PY
+}
+
+# The song menu opens where it was opened from: at a song's ⋮ button, and where a row is held.
+dots=$(find_node "Song options")
+if [ -n "$dots" ]; then
+  set -- $dots; dx=$1; dy=$2
+  adb shell input tap "$dx" "$dy"; sleep 2
+  item=$(find_node "Add to playlist")
+  if [ -n "$item" ]; then
+    set -- $item; iy=$2
+    dist=$(( iy > dy ? iy - dy : dy - iy ))
+    echo "::notice::Song menu from ⋮ at y=$dy shows 'Add to playlist' at y=$iy (${dist}px away)"
+    [ "$dist" -gt 1200 ] && echo "::warning::Song menu opened far from the ⋮ button"
+    adb shell input keyevent KEYCODE_BACK; sleep 2
+    [ -n "$(find_node "Add to playlist")" ] && echo "::warning::Back didn't close the song menu"
+  else
+    echo "::warning::The ⋮ button didn't open the song menu"
+  fi
+  # Hold a row a little to the left of its ⋮ button.
+  hx=$(( dx / 2 ))
+  adb shell input swipe "$hx" "$dy" "$hx" "$dy" 900; sleep 2
+  item=$(find_node "Play next")
+  [ -z "$item" ] && item=$(find_node "Add to playlist")
+  if [ -n "$item" ]; then
+    set -- $item
+    echo "::notice::Holding a song at y=$dy opened its menu (first item at y=$2)"
+    adb shell input keyevent KEYCODE_BACK; sleep 1
+  else
+    echo "::warning::Holding a song didn't open its menu"
+  fi
+else
+  echo "::warning::No song rows on screen to try the song menu"
+fi
+
+# Library: swipe from Playlists to History and back with the Library tab.
+if tap_text "Library"; then
+  sleep 3
+  adb shell input swipe 900 1300 150 1300 300; sleep 2
+  if [ -n "$(find_node "Clear")" ] || [ -n "$(find_node "Nothing played yet")" ]; then
+    echo "::notice::Library: swiping left opens History"
+  else
+    echo "::warning::Library: swiping left didn't open History"
+  fi
+  tap_text "Library"; sleep 2
+  if [ -n "$(find_node "New playlist")" ]; then
+    echo "::notice::Library: tapping the Library tab returns to Playlists"
+  else
+    echo "::warning::Library: the Library tab didn't return to Playlists"
+  fi
 fi
 
 if ! adb shell pidof "$PKG" >/dev/null; then
