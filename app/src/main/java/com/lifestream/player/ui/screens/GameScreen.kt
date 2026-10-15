@@ -160,20 +160,20 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                                 // A title's own page plays in soundtrack order.
                                 onClick = { PlayerConnection.playTracks(tracks, shuffle = false) },
                                 enabled = tracks.isNotEmpty(),
-                                modifier = Modifier.weight(1f).height(52.dp),
+                                modifier = Modifier.weight(1f).height(44.dp),
                             ) {
-                                Icon(Icons.Rounded.PlayArrow, null, Modifier.size(22.dp))
+                                Icon(Icons.Rounded.PlayArrow, null, Modifier.size(20.dp))
                                 Spacer(Modifier.width(8.dp))
-                                Text("Play all", style = MaterialTheme.typography.titleMedium)
+                                Text("Play all", style = MaterialTheme.typography.titleSmall)
                             }
                             OutlinedButton(
                                 onClick = { PlayerConnection.playTracks(tracks, randomStart = true) },
                                 enabled = tracks.isNotEmpty(),
-                                modifier = Modifier.weight(1f).height(52.dp),
+                                modifier = Modifier.weight(1f).height(44.dp),
                             ) {
-                                Icon(Icons.Rounded.Shuffle, null, Modifier.size(22.dp))
+                                Icon(Icons.Rounded.Shuffle, null, Modifier.size(20.dp))
                                 Spacer(Modifier.width(8.dp))
-                                Text("Shuffle", style = MaterialTheme.typography.titleMedium)
+                                Text("Shuffle", style = MaterialTheme.typography.titleSmall)
                             }
                         }
                     }
