@@ -97,7 +97,7 @@ if [ -n "$dots" ]; then
   if [ -n "$item" ]; then
     set -- $item; iy=$2
     dist=$(( iy > dy ? iy - dy : dy - iy ))
-    echo "::notice::Song menu from ⋮ at y=$dy shows 'Add to playlist' at y=$iy (${dist}px away)"
+    echo "::notice::Song menu from ⋮ at y=$dy shows 'Add to playlist' at y=$iy (${dist}px away; screen $(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1))"
     [ "$dist" -gt 1200 ] && echo "::warning::Song menu opened far from the ⋮ button"
     adb shell input keyevent KEYCODE_BACK; sleep 2
     [ -n "$(find_node "Add to playlist")" ] && echo "::warning::Back didn't close the song menu"

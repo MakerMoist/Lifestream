@@ -3,7 +3,6 @@ package com.lifestream.player.ui.components
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -152,7 +151,18 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
         label = "menu",
         finishedListener = { if (it == 0f) shown = null },
     )
-    BackHandler(enabled = target != null) { TrackActions.dismiss() }
+    // Back closes the menu first. Registered at the moment the menu opens, so it comes before
+    // every other back action (the screen underneath, the navigation stack).
+    val backDispatcher = androidx.activity.compose.LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    val menuOpen = target != null
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(menuOpen, backDispatcher, lifecycleOwner) {
+        val callback = object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() = TrackActions.dismiss()
+        }
+        if (menuOpen) backDispatcher?.addCallback(lifecycleOwner, callback)
+        onDispose { callback.remove() }
+    }
 
     shown?.let { t ->
         SongMenu(
