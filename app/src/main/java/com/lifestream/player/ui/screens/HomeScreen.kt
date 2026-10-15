@@ -155,9 +155,12 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
             Recommendations.recommend(recents, index.filterKeys { it !in hidden }, seed) { t -> SoundtrackIndex.gameOf(t)?.id }
         }
     }
+    val updates = rememberUpdateViewModel()
     fun refresh() {
         if (refreshing) return
         refreshing = true
+        // With "Check automatically" on, a refresh also looks for a new version.
+        if (AppSettings.autoUpdate.value) updates.recheck()
         quoteIndex = VillainQuotes.next()
         seed = System.nanoTime()
         SoundtrackIndex.ensureBuilt()

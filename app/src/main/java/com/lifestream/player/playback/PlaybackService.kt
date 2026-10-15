@@ -97,9 +97,12 @@ class PlaybackService : MediaLibraryService() {
             // bursts and can sleep in between, instead of waking every few seconds.
             .setLoadControl(
                 DefaultLoadControl.Builder()
-                    // After running dry, wait for 5 s of audio before carrying on, so a slow
-                    // connection doesn't stutter (start-up still begins after 1.5 s).
-                    .setBufferDurationsMs(60_000, 180_000, 1_500, 5_000)
+                    // Reads well ahead of the playing song: always at least 5 minutes (most of a
+                    // song) and up to 15, so a slow or patchy connection doesn't pause it. After
+                    // running dry, wait for 8 s of audio before carrying on so it doesn't stutter
+                    // (start-up still begins after 1.5 s). Audio is small: 15 minutes is ~15-20 MB.
+                    .setBufferDurationsMs(300_000, 900_000, 1_500, 8_000)
+                    .setTargetBufferBytes(32 * 1024 * 1024)
                     .setPrioritizeTimeOverSizeThresholds(true)
                     .build()
             )

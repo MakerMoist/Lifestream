@@ -139,6 +139,8 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
     var choosingFor by remember { mutableStateOf<Track?>(null) }
     var namingFor by remember { mutableStateOf<Track?>(null) }
     var removingFor by remember { mutableStateOf<Track?>(null) }
+    // Asked before a song is taken out of a playlist.
+    var confirmRemove by remember { mutableStateOf<Pair<Track, com.lifestream.player.data.Playlist>?>(null) }
     var savingInstant by remember { mutableStateOf(false) }
 
     // The menu stays drawn while it fades out after closing.
@@ -170,6 +172,7 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
             onDismiss = { TrackActions.dismiss() },
             onAddToPlaylist = { choosingFor = it },
             onRemoveFromSeveral = { removingFor = it },
+            onRemoveFrom = { track, playlist -> confirmRemove = track to playlist },
             onSaveInstant = { savingInstant = true },
             onOpenGame = onOpenGame,
         )
@@ -189,7 +192,30 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
     if (savingInstant) SaveInstantPlaylistDialog(onDismiss = { savingInstant = false })
 
     removingFor?.let { track ->
-        RemoveFromPlaylistDialog(track = track, onDismiss = { removingFor = null })
+        RemoveFromPlaylistDialog(
+            track = track,
+            onDismiss = { removingFor = null },
+            onPick = { playlist ->
+                removingFor = null
+                confirmRemove = track to playlist
+            },
+        )
+    }
+
+    confirmRemove?.let { (track, playlist) ->
+        AlertDialog(
+            onDismissRequest = { confirmRemove = null },
+            title = { Text("Remove song?") },
+            text = { Text("Remove \u201C${track.title}\u201D from ${playlist.name}?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    Library.removeFromPlaylist(playlist.id, track.id)
+                    toast(context, "Removed from ${playlist.name}")
+                    confirmRemove = null
+                }) { Text("Remove", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { confirmRemove = null }) { Text("Cancel") } },
+        )
     }
 
     namingFor?.let { track ->
@@ -223,6 +249,7 @@ private fun SongMenu(
     onDismiss: () -> Unit,
     onAddToPlaylist: (Track) -> Unit,
     onRemoveFromSeveral: (Track) -> Unit,
+    onRemoveFrom: (Track, com.lifestream.player.data.Playlist) -> Unit,
     onSaveInstant: () -> Unit,
     onOpenGame: (Game) -> Unit,
 ) {
@@ -267,14 +294,12 @@ private fun SongMenu(
             val here = target.playlistId?.takeIf { pid -> containing.any { it.id == pid } }
             when {
                 here != null -> add(MenuItem(Icons.Rounded.RemoveCircleOutline, "Remove from this playlist", danger = true) {
-                    Library.removeFromPlaylist(here, track.id)
                     close()
+                    onRemoveFrom(track, containing.first { it.id == here })
                 })
                 containing.size == 1 -> add(MenuItem(Icons.Rounded.RemoveCircleOutline, "Remove from playlist", danger = true) {
-                    val p = containing.first()
-                    Library.removeFromPlaylist(p.id, track.id)
-                    toast(context, "Removed from ${p.name}")
                     close()
+                    onRemoveFrom(track, containing.first())
                 })
                 containing.size > 1 -> add(MenuItem(Icons.Rounded.RemoveCircleOutline, "Remove from playlist…", danger = true) {
                     close()
@@ -480,9 +505,8 @@ fun SaveInstantPlaylistDialog(onDismiss: () -> Unit) {
 
 /** Picks which playlist to take a song out of, when it's in more than one. */
 @Composable
-private fun RemoveFromPlaylistDialog(track: Track, onDismiss: () -> Unit) {
+private fun RemoveFromPlaylistDialog(track: Track, onDismiss: () -> Unit, onPick: (com.lifestream.player.data.Playlist) -> Unit) {
     val playlists by Library.playlists.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     val containing = playlists.filter { p -> p.tracks.any { it.id == track.id } }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -494,11 +518,7 @@ private fun RemoveFromPlaylistDialog(track: Track, onDismiss: () -> Unit) {
                     Row(
                         Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                Library.removeFromPlaylist(p.id, track.id)
-                                toast(context, "Removed from ${p.name}")
-                                onDismiss()
-                            }
+                            .clickable { onPick(p) }
                             .padding(vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {

@@ -12,6 +12,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
@@ -49,6 +52,11 @@ object Library {
 
     private val _playlists = MutableStateFlow<List<Playlist>>(emptyList())
     val playlists: StateFlow<List<Playlist>> = _playlists.asStateFlow()
+
+    /** Ids of every song that's in at least one playlist (for the in-a-playlist mark on song rows). */
+    val inPlaylists: StateFlow<Set<String>> = _playlists
+        .map { list -> list.flatMapTo(HashSet()) { p -> p.tracks.map { it.id } } }
+        .stateIn(CoroutineScope(SupervisorJob() + Dispatchers.Default), SharingStarted.Eagerly, emptySet())
 
     private val _recents = MutableStateFlow<List<Track>>(emptyList())
     val recents: StateFlow<List<Track>> = _recents.asStateFlow()
