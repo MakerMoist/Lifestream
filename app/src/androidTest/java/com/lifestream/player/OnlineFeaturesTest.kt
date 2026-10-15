@@ -69,7 +69,7 @@ class OnlineFeaturesTest {
         Log.i("LSTEST", "Soundtrack index: ${index.size} titles, $songs songs ($japanese still in Japanese); search finds every one of ${sample.size} songs checked by name")
 
         // Saved to the phone and read back exactly (the file is written and read piece by piece).
-        assertTrue("saved index reads back the same", SoundtrackIndex.savedCopyMatches())
+        assertEquals("saved index reads back the same", null, SoundtrackIndex.savedCopyDifference())
 
         // Instant Playlist and auto-play draw from it.
         val mix = Mixes.instant()

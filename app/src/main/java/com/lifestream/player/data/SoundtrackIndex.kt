@@ -304,11 +304,17 @@ object SoundtrackIndex {
      * For the on-device tests: saves the index, reads the file back and says whether it holds
      * exactly the songs in memory (the app itself never needs this).
      */
-    internal fun savedCopyMatches(): Boolean {
+    internal fun savedCopyDifference(): String? {
         val snapshot = _tracks.value
         writeToDisk(snapshot)
-        val saved = parseFile() ?: return false
-        return saved.tracks == snapshot
+        val saved = parseFile() ?: return "the saved file couldn't be read back"
+        if (saved.tracks.keys != snapshot.keys) return "titles ${snapshot.keys} vs ${saved.tracks.keys}"
+        for ((id, list) in snapshot) {
+            val back = saved.tracks.getValue(id)
+            if (back.size != list.size) return "$id: ${list.size} songs vs ${back.size}"
+            list.zip(back).firstOrNull { (a, b) -> a != b }?.let { (a, b) -> return "$id: $a vs $b" }
+        }
+        return null
     }
 
     private fun readGame(r: android.util.JsonReader, id: String): Pair<Long, List<Track>> {
