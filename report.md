@@ -1,0 +1,1287 @@
+# Compare
+
+## Final Fantasy XI
+
+### USED FINAL FANTASY XI Original Soundtrack (51)
+- `yKhBB2NIiLc` ”FFXI Opening Theme” — 407s
+- `4pr7pB-nJkg` Vana'diel March — 199s
+- `sZTtguGoips` The Kingdom of San d'Oria — 275s
+- `kNaOpYzKM68` Ronfaure — 298s
+- `auAYd1EN3jY` Battle Theme — 138s
+- `kU1DFmKT5LY` Chateau d'Oraguille — 274s
+- `P9C2FhoSEKo` Batallia Downs — 271s
+- `zuLsvPkKIdc` The Republic of Bastok — 174s
+- `9ISSVI8JW2w` Gustaberg — 253s
+- `Ynb6D7zGsiQ` Metalworks — 183s
+- `u8Yd3-Q6xmE` Rolanberry Fields — 148s
+- `63nFKKI6S3c` The Federation of Windurst — 193s
+- `i9loM6ayNmw` Heavens Tower — 386s
+- `Qexq4rGQaOc` Sarutabaruta — 168s
+- `RIw9MHrSKz0` Battle in the Dungeon — 148s
+- `4fibIUw_frI` Sauromugue Champaign — 324s
+- `WoNMEWhalxs` Mhaura — 172s
+- `Qk5P56YvVFE` Buccaneers — 116s
+- `JONfOZHJlkI` Battle Theme #2 — 148s
+- `oyU_6uVrc4I` Voyager — 135s
+- `MZmY0nB0BTw` Selbina — 138s
+- `UYfSwaF9pkE` Prelude — 79s
+- `b7BmWT5ecLE` Regeneracy — 71s
+- `2Iwz6rfmeU8` Hume Male — 114s
+- `OCyRRTOm0Dg` Hume Female — 67s
+- `PZnjI-FRRok` Elvaan Male — 113s
+- `qHMWQ2dnJ-c` Elvaan Female — 88s
+- `5QGyLEpOjL8` Tarutaru Male — 88s
+- `9jB0gjh4tDE` Tarutaru Female — 51s
+- `7LhvX4oFzB4` Mithra — 115s
+- `MXC19B-VNLQ` Galka — 101s
+- `nDH1hA2EL_c` Airship — 140s
+- `CnNM2i_jeAo` The Grand Duchy of Jeuno — 144s
+- `MwwQ1EyRR8U` Ru'Lude Gardens — 152s
+- `vgzXmBbinpU` Recollection — 190s
+- `NdyhxslhLnU` Anxiety — 165s
+- `wICBCPty3Fs` Battle in the Dungeon #2 — 94s
+- `gbMWKpe7bDY` Blackout — 44s
+- `SXdK5hrOwRc` Mog House — 210s
+- `T7D0V2JR0l8` Hopelessness — 114s
+- `fsKhrRVlPXk` Fury — 98s
+- `nL9kxhmuwss` Tough Battle — 181s
+- `kQOh4SEoDWk` Sorrow — 159s
+- `kZAWWl5ToNY` Sometime, Somewhere — 108s
+- `2JIVZ7-cFU4` Xarcabard — 270s
+- `ppij6LvACqw` Despair (Memoro de la S^tono) — 147s
+- `IqVTDG1aZyM` Castle Zvahl — 551s
+- `0WJ4oSxtYao` Shadow Lord — 112s
+- `S9M_3nNUufU` Awakening — 321s
+- `GkZeE1gySA8` Repression (Memoro de la S^tono) — 188s
+- `Rskax76-XLs` Vana'diel March #2 — 263s
+### USED FINAL FANTASY XI-Chains of Promathia(Original Soundtrack) (24)
+- `NQbEB1YEuSo` Unity — 110s
+- `1WVQyTr7qbI` Moblin Menagerie - Movalpolos — 277s
+- `vyzpQF03MBw` Depths of the Soul — 161s
+- `KYuHBEmlAyE` Faded Memories - Promyvion — 326s
+- `DnQ9w-o5c3Q` Currents of Time — 264s
+- `R-TofW_g04E` First Ode: Nocturne of the Gods — 57s
+- `p32APYX4Jps` A New Horizon - Tavnazian Archipelago — 213s
+- `kc1pSiLzudk` Onslaught — 144s
+- `1omGnKhDyLw` The Forgotten City - Tavnazian Safehold — 165s
+- `LKqZeNEF1os` Second Ode: Distant Promises — 152s
+- `QUi-__J_gXk` The Ruler of the Skies — 92s
+- `qVO92y14NLY` Turmoil — 140s
+- `Gi75a8Usb-I` Third Ode: Memoria de la S^tona — 53s
+- `B-ZhXT6cJ44` Happily Ever After — 161s
+- `cgp_Tf2VkRo` Conflict: You Want to Live Forever? — 235s
+- `cU7Bv-0Bbok` Conflict: March of the Hero — 211s
+- `nNVJbVASvlM` Fourth Ode: Clouded Dawn — 104s
+- `ZjmABFutnnU` Words Unspoken - Pso'Xja — 255s
+- `Isa4qc0LpiA` Fifth Ode: A Time for Prayer — 100s
+- `KLnjkQC44Mk` The Celestial Capital - Al'Taieu — 446s
+- `Nwo_SQq2ecE` Gates of Paradise - The Garden of Ru'Hmet — 395s
+- `xsq0NZEcu8Y` Dusk and Dawn — 162s
+- `FuWFd97EIh8` A New Morning — 275s
+- `L9xeySvNPUM` Gustaberg (Bonus Track) — 214s
+### USED FINAL FANTASY XI Original Soundtrack -PLUS- (40)
+- `jz4C9qzL_lg` Wings of Dawn — 139s
+- `O1TJdn7fu08` Echoes of Creation — 376s
+- `r_K1Pu3RcbY` Main Theme - FINAL FANTASY XI Version — 378s
+- `h4t8W4c42Gw` Luck of the Mog — 234s
+- `UIvhaqiEyYQ` Feast of the Ladies — 208s
+- `UVRU8wIAEZU` Abyssea - Scarlet Skies, Shadowed Plains — 514s
+- `n4-yiZpK81g` Melodies Errant — 205s
+- `x_XQmblQl3Q` Shinryu — 352s
+- `ddQN2fnwlds` Summers Lost — 281s
+- `mU6KeUUIlH4` Goddess Divine — 350s
+- `-J7-TrMpc9E` Everlasting Bonds — 232s
+- `m9C4cuu1mJM` An Ode to Heroes Fallen — 154s
+- `QksAnFht2eQ` POL OPENING — 54s
+- `StRF4hfCSSM` Space — 162s
+- `rXwNVR3dw70` Jazz 1 — 123s
+- `t_2op_ABy1g` Gin no kaichudokei — 176s
+- `6-OFqTuKEmA` Yousei no odori — 163s
+- `PoTU0HeXDMg` Yasuragi — 158s
+- `mNasGop_Cjs` Jungle — 145s
+- `oJwh4lpV_xM` Henbyoushi — 107s
+- `C0uF0B8Ek58` Dance — 182s
+- `cc8u0aXp83g` Honobono — 211s
+- `wbsXC2xdKUw` Jazz 2 — 127s
+- `MFtaPCimSpg` Dolphin — 210s
+- `N3wlpa9aKy4` Daikoukai — 232s
+- `XwFlmWb-ODU` Fuwafuwa — 191s
+- `h3QKg0OBTmQ` Funky monkey — 229s
+- `o_0jyo0AjHA` Solid wax — 199s
+- `j6j_mWUlBjw` Filter branch — 203s
+- `JleT3mM_Wj8` Baby Herbie — 129s
+- `ggWFnEpJPnw` Technorider — 132s
+- `p8MbhRFf43w` P'z — 128s
+- `s6zv32te4Z8` Foster Family — 207s
+- `p_cUmlJKhEM` Kemushi — 89s
+- `pzHb4qaKn0A` Oka no mukouni — 205s
+- `57F43fNyS8Q` Payload Pacific — 199s
+- `RKZapcQSWw4` Tsuioku — 168s
+- `KVucmk6iGdQ` Hikari — 207s
+- `U06k4NacLUI` Megumi — 192s
+- `w-E1zEyb9tw` Minori — 206s
+### USED FINAL FANTASY XI - Rise of the Zilart Original Soundtrack (19)
+- `KgSmPSGQh88` Kazham — 159s
+- `caH2-UzKN4s` Yuhtunga Jungle — 497s
+- `dLuEP_VzX9U` Battle Theme #3 — 137s
+- `vSWnOg44AlY` ”Dash de Chocobo” — 210s
+- `CwYtrxjNqSQ` Rabao — 270s
+- `yR5QHmoRMu0` Altepa Desert — 260s
+- `B4DzA0fsuXg` Battle in the Dungeon #3 — 131s
+- `sez_0E7_-Ro` Grav'iton — 111s
+- `whp6AToySME` Norg — 204s
+- `b-iwM-R5GOM` Tough Battle #2 — 167s
+- `smJrVboIOjA` The Sanctuary of Zi'Tah — 254s
+- `Wlzc_yWIXR8` Ro'Maeve — 267s
+- `PBQ-PEpKZQQ` Hall of the Gods — 274s
+- `4mLq11SLOxQ` Fighters of the Crystal — 213s
+- `jIDS44uhdNg` Tu'Lia — 236s
+- `EzTmuGStDg8` Ve'Lugannon Palace — 343s
+- `Xhzs6e3bLfk` Eald'narche — 114s
+- `Vp-XC5G52-Q` Belief — 210s
+- `8vST0LRr-18` End Theme — 164s
+### USED Forever Today: FINAL FANTASY XI Seekers of Adoulin Original Soundtrack PLUS (8)
+- `pajtGgmXBDM` Forever Today — 329s
+- `cOHZolZjSqQ` Worlds Away — 159s
+- `du_9TfUI5yM` Monstrosity — 209s
+- `4lbIw-v2h44` Clouds Over Ulbuka — 136s
+- `mIzd4u_mmho` The Price — 221s
+- `doQjGbwzKWw` Forever Today ep ver. — 325s
+- `OJy4uyHvXOM` The Serpentine Labyrinth — 243s
+- `zZ8fpfSgAaM` The Divine — 280s
+### USED FINAL FANTASY XI-Treasures of Aht Urhgan(Original Soundtrack) (21)
+- `na5lAIJ2CHI` Bustle of the Capital — 250s
+- `C6qXjfP7bt8` Eastward Bound… — 237s
+- `t19DfCpp-h8` Bandits' Market — 251s
+- `ra8eSRoMQgI` Illusions in the Mist — 286s
+- `Nuq847z9NeI` Mercenaries' Delight — 141s
+- `XkD4jnvvV5A` Jeweled Boughs — 253s
+- `UtRGomV6LWI` Ululations from Beyond — 311s
+- `QGaPK-hjhcw` Rapid Onslaught -Assault- — 183s
+- `lSfPriE19iQ` Fated Strife -Besieged- — 114s
+- `kgIkG3EdmSg` Delve — 105s
+- `zii_YXVVaJ4` Whispers of the Gods — 178s
+- `2gGTgP8zdYk` Circuit de Chocobo — 224s
+- `_fxqjb1LZ4g` Run Chocobo, Run! — 91s
+- `x1gXAh3wa80` The Colosseum — 158s
+- `ifqD7HKZsBQ` Black Coffin — 233s
+- `5MYBVlGOvr0` A Puppet's Slumber — 95s
+- `73QdJy3wmcM` Ever-Turning Wheels — 147s
+- `M3VAQlt8K8s` Forbidden Seal — 270s
+- `QGIEjBByxrg` Hellriders — 189s
+- `-MzmQ-FdJOk` Eternal Gravestone — 71s
+- `DTZuu-XFRZE` Vana'diel March #4 — 122s
+### USED FINAL FANTASY XI Seekers of Adoulin Original Soundtrack (13)
+- `qIwNix59ijc` A New Direction — 112s
+- `NI3xwa7ZTHc` Breaking Ground — 342s
+- `hfeaToi2Zsw` The Pioneers — 204s
+- `rxUNWkuX0Y4` The Sacred City of Adoulin — 214s
+- `Ek2iu_ZUlMU` Into Lands Primeval - Ulbuka — 236s
+- `-C5ODnH52Qs` Steel Sings, Blades Dance — 167s
+- `AdVbYglYulA` Arciela — 120s
+- `SFA3XvMlkXI` Mog Resort — 334s
+- `hPzSUU14vPU` Water's Umbral Knell — 306s
+- `0uNqxyxhtpg` Hades — 284s
+- `hiraUWcOrVQ` Keepers of the Wild — 219s
+- `iNDbw-8pLIo` Where it All Begins — 267s
+- `VvCSOy43HmA` Provenance Watcher — 216s
+### USED FINAL FANTASY XI Wings of the Goddess Original Soundtrack (25)
+- `0Us2sIZCMyE` March of the Allied Forces — 182s
+- `yfapfgb3iKg` Flowers on the Battlefield — 211s
+- `JKwgcqpGenk` Roar of the Battle Drums — 176s
+- `FlscFPLfPPk` Autumn Footfalls — 173s
+- `Ylll7UiH7PA` Griffons Never Die — 191s
+- `E7ssZdsZBMY` Clash of Standards — 116s
+- `uTkCMDy0jqw` Echoes of a Zephyr — 241s
+- `Uc_8E8Ym5x4` Thunder of the March — 267s
+- `eyLu8iyGTRc` Encampment Dreams — 248s
+- `giolVdArf1M` The Cosmic Wheel — 252s
+- `qSaBvtXxAqM` Stargazing — 228s
+- `yD_2nReyLWU` On this Blade — 145s
+- `J27mvnnPmow` Young Griffons in Flight — 105s
+- `WouaHyXeNU4` Run Maggot, Run! — 270s
+- `7SrfBWWDOaA` Cloister of Time and Souls — 94s
+- `oPq_dYDZt40` Royal Wanderlust — 96s
+- `jH8Uw-gXJCA` Under a Clouded Moon — 178s
+- `AFsUhlvcup8` Where Lords Rule Not — 211s
+- `qp8shTML0bs` Kindred Cry — 205s
+- `gB4_8bvpGQE` Snowdrift Waltz — 194s
+- `2BmGDrf6OWc` Troubled Shadows — 320s
+- `Dms-pZixhJk` Wings of the Goddess — 199s
+- `-tsAf-xfOvk` Iron Colossus — 138s
+- `UehvdgLoTWA` Ragnarok — 173s
+- `WlNEwZFxIXQ` An Invisible Crown — 76s
+### USED FINAL FANTASY XI Gifts from Vana'diel: Songs of Rebirth Soundtrack (14)
+- `InQCyVJZem4` For a Friend — 229s
+- `ziTIxyYuRT0` Full Speed Ahead! — 163s
+- `yORV_e5Dqd0` Times Grow Tense — 255s
+- `CJ7hWar43TE` Between Dreams and Reality — 267s
+- `RI7L7h81eUE` Disjoined One — 271s
+- `wS03KTFokwc` Winds of Change — 212s
+- `MIk-fNYuxus` Forever Today (instrumental Version) — 334s
+- `K5JUNMHe1wk` Distant Worlds (instrumental Version) — 323s
+- `BBSnUHqGntU` Rhapsodies of Vana'diel ep ver. — 629s
+- `rVKnljU1Bgg` Iroha — 165s
+- `InmmiSURH1M` The Boundless Black — 188s
+- `uA-d3VkV0To` Isle of the Gods — 258s
+- `gFhPVxk86V8` Wail of the Void — 299s
+- `TzEaCgcv2Bw` ヴァナ・ディールの星唄 -Rhapsodies of Vana'diel — 632s
+### USED FINAL FANTASY XI Gifts from Vana'diel: Prime Memories Soundtrack (14)
+- `r9IrtudNeWs` We Are Vana'diel — 147s
+- `gRLc5mEr-kc` Goddesspeed — 225s
+- `FPLfGXMd_eA` Good Fortune — 157s
+- `2GCD5SW_XAc` The Voracious Resurgence — 229s
+- `SRIyti-xRsY` The Devoured — 155s
+- `s4PLI1cmApc` The Destiny Destroyers — 73s
+- `BFhx587vpqs` All Smiles — 89s
+- `x09sMQw-_yA` Sojourner — 218s
+- `HOWKINBZT90` Black Stars Rise — 135s
+- `8Run4wNjIJk` Devils' Delight — 246s
+- `tiNiO8Q9UGw` Valhalla — 266s
+- `9b-TVM0RyDo` Encroaching Perils — 148s
+- `6uUuRFPwtbo` All-Consuming Chaos — 207s
+- `jUebw4Qu-FQ` Your Choice — 326s
+### FINAL 225 songs; merged as the same song:
+- `Gustaberg (Bonus Track)` [FINAL FANTASY XI-Chains of Promathia(Ori] → kept `Gustaberg  [FINAL FANTASY XI Original Soundtrack]`
+- `Forever Today ep ver.` [Forever Today: FINAL FANTASY XI Seekers ] → kept `Forever Today  [Forever Today: FINAL FANTASY XI Seekers ]`
+- `Forever Today (instrumental Version)` [FINAL FANTASY XI Gifts from Vana'diel: S] → kept `Forever Today  [Forever Today: FINAL FANTASY XI Seekers ]`
+- `ヴァナ・ディールの星唄 -Rhapsodies of Vana'diel` [FINAL FANTASY XI Gifts from Vana'diel: S] → kept `Rhapsodies of Vana'diel ep ver.  [FINAL FANTASY XI Gifts from Vana'diel: S]`
+
+- song search "FINAL FANTASY XI Gifts from Vana'diel": [same-id] `8Run4wNjIJk` Devils' Delight — Naoshi Mizuta — 246s
+- song search "FINAL FANTASY XI Gifts from Vana'diel": [same-id] `TzEaCgcv2Bw` ヴァナ・ディールの星唄 -Rhapsodies of Vana'diel — Phantasmagoric — 632s
+- song search "FINAL FANTASY XI Gifts from Vana'diel": [same-id] `vgzXmBbinpU` Recollection — Nobuo Uematsu — 190s
+- song search "FINAL FANTASY XI Gifts from Vana'diel": [same-id] `kZAWWl5ToNY` Sometime, Somewhere — Nobuo Uematsu — 108s
+- song search "FINAL FANTASY XI Gifts from Vana'diel": [NEW] `Dr9JA2i0HAs` Memoro De La Stono​~​Distant Worlds (Final Fantasy XI) — Arnie Roth — 522s
+- song search "FINAL FANTASY XI Gifts from Vana'diel": [same-id] `9ISSVI8JW2w` Gustaberg — Kumi Tanioka — 253s
+- song search "FINAL FANTASY XI Gifts from Vana'diel": [same-id] `u8Yd3-Q6xmE` Rolanberry Fields — Naoshi Mizuta — 148s
+- song search "FINAL FANTASY XI Gifts from Vana'diel": [same-id] `qHMWQ2dnJ-c` Elvaan Female — Kumi Tanioka — 88s
+- song search "Gifts from Vana'diel Songs of Rebirth": [same-id] `8Run4wNjIJk` Devils' Delight — Naoshi Mizuta — 246s
+- song search "Gifts from Vana'diel Songs of Rebirth": [same-id] `TzEaCgcv2Bw` ヴァナ・ディールの星唄 -Rhapsodies of Vana'diel — Phantasmagoric — 632s
+- song search "Gifts from Vana'diel Songs of Rebirth": [same-id] `r9IrtudNeWs` We Are Vana'diel — Naoshi Mizuta — 147s
+- song search "Gifts from Vana'diel Songs of Rebirth": [same-id] `tiNiO8Q9UGw` Valhalla — Naoshi Mizuta — 266s
+- song search "Gifts from Vana'diel Songs of Rebirth": [same-id] `uA-d3VkV0To` Isle of the Gods — Naoshi Mizuta — 258s
+- song search "Gifts from Vana'diel Songs of Rebirth": [same-id] `BBSnUHqGntU` Rhapsodies of Vana'diel ep ver. — Phantasmagoric — 629s
+- song search "Gifts from Vana'diel Songs of Rebirth": [same-id] `wS03KTFokwc` Winds of Change — Naoshi Mizuta — 212s
+- song search "Gifts from Vana'diel Songs of Rebirth": [same-id] `InQCyVJZem4` For a Friend — Naoshi Mizuta — 229s
+- song search "Gifts from Vana'diel Prime Memories": [same-id] `8Run4wNjIJk` Devils' Delight — Naoshi Mizuta — 246s
+- song search "Gifts from Vana'diel Prime Memories": [same-id] `tiNiO8Q9UGw` Valhalla — Naoshi Mizuta — 266s
+- song search "Gifts from Vana'diel Prime Memories": [same-id] `x09sMQw-_yA` Sojourner — Naoshi Mizuta — 218s
+- song search "Gifts from Vana'diel Prime Memories": [same-id] `r9IrtudNeWs` We Are Vana'diel — Naoshi Mizuta — 147s
+- song search "Gifts from Vana'diel Prime Memories": [same-id] `MIk-fNYuxus` Forever Today (instrumental version) — Naoshi Mizuta — 334s
+- song search "Gifts from Vana'diel Prime Memories": [same-id] `FPLfGXMd_eA` Good Fortune — Naoshi Mizuta — 157s
+- song search "Gifts from Vana'diel Prime Memories": [same-id] `jUebw4Qu-FQ` Your Choice — Naoshi Mizuta — 326s
+- song search "Gifts from Vana'diel Prime Memories": [same-id] `6uUuRFPwtbo` All-Consuming Chaos — Naoshi Mizuta — 207s
+
+## Final Fantasy XIV
+
+### USED A REALM REBORN: FINAL FANTASY XIV Original Soundtrack (119)
+- `zb2L-zwvtqE` プレリュード ～再誕の煌めき～ — 77s
+- `QK-kOJs3aso` 天より降りし力 — 312s
+- `KkNNM0uM1N8` プレリュード ～冒険の序章～ — 631s
+- `rF4t-x8xN3E` 希望の都 — 685s
+- `N43KJhWPrK8` 灼熱の地へ — 395s
+- `0rgW-Cbbtc0` 荒野の鼓動 — 185s
+- `Zxx3bSKX6t8` 生命の賜物 — 68s
+- `jQbTfqfwwG0` もう一杯! — 137s
+- `p__uF4z-rGw` 宿命 — 253s
+- `hUSR2JzEauI` レンタル de チョコボ — 118s
+- `aU3q08jC6os` 夢見る女王陛下 — 426s
+- `fV-lVkV6ZJg` 無常の喜び — 117s
+- `yB2WQrRfcvU` 不穏な気配 — 86s
+- `jQTJD9f8KRA` 不屈の闘志 — 306s
+- `It09J-8aOq4` 英雄の凱旋 — 137s
+- `2JTtZsVjCFI` そして世界へ — 219s
+- `B-tDrYUaAns` 偉大なる母港 — 839s
+- `M69fgk13Dg0` 西風に乗せて — 320s
+- `0KVJravl_Ew` 大地の鼓動 — 185s
+- `udPZTAZCe5U` 潮風香る街 — 110s
+- `5B8G9PoUKMQ` 爆ぜよ耐熱装備 — 140s
+- `ayazprlxbyk` エオルゼア de チョコボ — 154s
+- `JfbtVpNfQ4A` 船乗りは眠らない — 466s
+- `f9zktl7V5W4` 潮流 — 52s
+- `GXVuizEdxG0` 戦友 — 392s
+- `5N5Zjgh0AwA` 水車の調べ — 687s
+- `4DzZIqJkb6s` 静穏の森 — 353s
+- `PmMOqNfvOKI` 森の鼓動 — 170s
+- `-PHOhHb_YvM` 黒き悪魔 — 122s
+- `WCWF7bnUZ_E` その背に揺られて — 199s
+- `gCu9Vq2TbUE` 蛍たちの舞踏会 — 265s
+- `EDMSiBo06lc` 精霊の意思 — 84s
+- `QNgcCnGR_3E` 仄暗い底から — 95s
+- `ph83TTJr0Sk` 隠し財宝を求めて — 229s
+- `hvgzF4BtY34` 妨げられた眠り — 75s
+- `tFpQmiH2ZZw` 名誉に賭けて — 192s
+- `sAdbSY8LW8o` 地下坑道 — 97s
+- `TNWC4kTynNQ` ネメシス — 293s
+- `xw8nOFNMbPE` 勝利のファンファーレ ～新生 (フル) ～ — 102s
+- `GzkVQxK0Q88` 砂の家 — 251s
+- `1rLpeqDzB-E` 燻る灰 — 90s
+- `RUfT-aUJGmE` 炎獄の火種 — 117s
+- `0nMg0yTnHCo` 血脈 — 117s
+- `r1qPdyG_kX8` 原始の審判 — 186s
+- `HxFlsiFwM5E` 星の囁き — 37s
+- `mSMWdUgPsh0` 心温まる場所 — 160s
+- `T4Te9sa7QlM` 体暖まる場所 — 322s
+- `dzjewdFEwjo` 戦闘シーン1.X — 211s
+- `1V8W8lqzSY4` 堂々巡り — 128s
+- `xNEKvweJ_zk` 事件屋のアレ — 105s
+- `ooQL3eqgDv8` 闘士の修練所 — 86s
+- `jy1FMV9U1Ug` イタズラっ子たち — 107s
+- `P2bbcrNpzSg` 世にも奇妙な厄介者 — 115s
+- `jE1N6RZDhq8` 千の悲鳴 — 59s
+- `B6BAOZ0flnk` 我が魂を捧げて — 129s
+- `iD3Q-O-PzFY` 豪勇の士 — 262s
+- `zBPACp94-58` 乙女の哀歌 — 81s
+- `o-InYxXXknI` 輝く太陽 — 238s
+- `aL1ENv0Wh-Y` 野営地のお調子者 — 69s
+- `DwYNdvSgUVQ` 昔日の残響 — 56s
+- `fo_7QUxLZL0` 憎悪 — 63s
+- `_tQPeWLzXec` 疾きこと銀の如く、硬きこと石の如く — 151s
+- `Iq_g0uIvoBw` タイタンの慟哭 — 101s
+- `BGHdY0Q6tg0` タイタンの憤怒 — 173s
+- `HNS8ZbPG5ns` タイタンの激震 — 96s
+- `Xp8bEeXMNyk` タイタンの心核 — 137s
+- `6PGrJczAO-A` 過重圧殺! ～蛮神タイタン討滅戦～ — 695s
+- `KE3mZnfGXSI` 永遠の離別 — 179s
+- `QAFMW-ZGmaI` 忠義 — 214s
+- `gr1LAEmivZA` 鋼の信仰 — 56s
+- `gRBfejewFBA` 雪山の鼓動 — 200s
+- `vAUYLvTkRkg` 竜の葬送歌 — 62s
+- `XuFZiIYZzdk` 極寒戦線 — 63s
+- `RByT0zRy8tA` ゼーメル要塞 — 73s
+- `ipVNS2DtOxY` 守銭奴の愚行 — 70s
+- `wCK7jLGcN7I` 雷鳴 — 305s
+- `SsbZUjJHMAY` 混沌の予感 — 104s
+- `oFjUxkvo_n8` 猛き嵐の剣に — 156s
+- `XBJUTYQfUCc` 儚き光彩 — 98s
+- `2J-bPsJUjUw` 蒼き翼 — 217s
+- `0NQHJfaLWgM` 破滅 — 64s
+- `_9EYQ6brwpo` 堕天せし者 — 271s
+- `tF0YfNdzZ8A` フロンティア — 206s
+- `Ns1meSkFpbw` リフレクション — 129s
+- `SpmkpZrjEao` 交錯 — 213s
+- `CefspGlIlEE` 水晶の鼓動 — 186s
+- `BYwDsXAnyIs` クリスタルの雨 — 56s
+- `GL3vQUWBkq8` 薄闇に射す光 — 114s
+- `jMjb5ev8RRs` 五里霧中 — 24s
+- `8SwPB2-NAVg` 善王モグル･モグXII世 — 194s
+- `pe-AGviZ82U` トンベリの涙 — 65s
+- `Echt4HeUXSw` 戦士の直感 — 176s
+- `_PPVgzKQmy0` 古城にて…… — 76s
+- `dASBSY30oIk` 奸計 — 134s
+- `X8qUpoh5-O0` 極限を超えて — 120s
+- `PCzk_-CAWwo` 闇の抱擁 — 121s
+- `L1oBub-kng8` 闇の口付 — 123s
+- `Uc2X1WW8u9Q` 傲慢 — 353s
+- `iBGEdwCyqsU` 天上へ — 361s
+- `j5HyqLBH6zw` 奈落へ — 407s
+- `NtLpBa_klEQ` エオルゼアの守護者 — 141s
+- `9-5yhHLlNiY` 軍議 — 89s
+- `MwDmdiHa82c` 不調和 — 22s
+- `S_w5S1UqAAU` 魔導の軍勢 — 507s
+- `f20JhfRDxk4` 未知の領域へ — 14s
+- `9ZLsJ_TsV0M` ただひとつの道 — 60s
+- `VETYSUtX6PY` 魔導城プラエトリウム — 859s
+- `Qw3q1PJUpO8` 漆黒の王狼、咆吼せり — 277s
+- `uHmFVkIxEKU` 神なき世界 — 172s
+- `K-9c17fbTxY` 究極幻想 — 431s
+- `gkfBXa-HAjU` 光の加護 — 65s
+- `Dwl9DaaGUdM` 終局 — 76s
+- `juDl5hy3mbQ` 第七星暦 — 301s
+- `DAbdQlO1aCw` 新時代の暁 — 68s
+- `Cln4Sm2lgtE` And You! ～新生エオルゼアメドレー～ — 161s
+- `19E5p4od1vc` 斬 — 651s
+- `_HqdjvWhkJU` 真実を求めて — 392s
+- `gDOBP-T4ORE` 螺旋 — 415s
+- `PL2D4l1Ppy8` 試練を超える力 — 489s
+### USED Before Meteor: FINAL FANTASY XIV Original Soundtrack (104)
+- `Abnc8aSX5ic` プレリュード ～追憶の煌めき～ — 351s
+- `4vR0wo911N0` オープニングテーマ — 356s
+- `mlpdgioe2aY` 潮風の集う街 ～リムサ･ロミンサのテーマ～ — 237s
+- `TQE2ns7cV9g` 自由なる風に吹かれて — 330s
+- `kfvbUVS4mDI` ラノシアの疾風 — 318s
+- `oC8ei478StU` 天楔 — 197s
+- `28LbG4L0z-c` 旭影を追いかけ — 209s
+- `TcQdO4s_EEQ` セイレーンの呼び声 — 125s
+- `ma2rRkE_OZI` 木々のさざめく街 ～グリダニアのテーマ～ — 303s
+- `_KN07NHn-_w` 冥き地の底に — 329s
+- `SmtYRLsb0Hs` 黒衣の迷宮 — 213s
+- `dZ5O6c7oFRo` 鳴動 — 184s
+- `fdMu0StIiBk` 草藪を掻きわけ — 208s
+- `-r4EPE719Es` モーグリ行進曲 — 44s
+- `rThNaoLGau8` 運命の交わる街 ～ウルダハのテーマ～ — 332s
+- `V1H0x41kGj8` ザナラーンの黄昏 — 252s
+- `Ceu0iq6sieU` 深き海の淵に — 205s
+- `WBArl2jW2aU` 砂塵 — 278s
+- `ufSw1jZRmrM` 砂礫を踏みしめ — 200s
+- `pzGqon33whQ` クルザスの静寂 — 193s
+- `PJ8oZWqrxEk` 槍旗 — 361s
+- `0oTBGqAKZYI` 桟道を上りて — 230s
+- `ynnPqIK4qAk` モードゥナの涙雨 — 268s
+- `xPnXZwbkkK0` 幽境 — 320s
+- `JmAgIwSPMiE` 街路の雑踏 — 105s
+- `p7qbE-oItdI` 安らぎの部屋 — 208s
+- `6ehMA6fq8wE` 地平線の彼方 — 171s
+- `uLhOJDJwOtM` ノー･クォーター — 245s
+- `I7CJS-a0DnY` 紅蓮の戦旗の下に — 350s
+- `RvXCe_TgkOw` すべてはこの手から — 178s
+- `_lEcvCyDY5c` バイデザイン — 141s
+- `jLOdZxUTwss` 自然の賜物 — 142s
+- `5Q6nasSwgXo` 汗を流して — 149s
+- `rOrruHErdJI` 駆け引き — 150s
+- `ZvqAuie-3s8` 栄光の賛歌 — 12s
+- `HLf0OXOfe8g` 心の故郷 — 154s
+- `MBOVy_o1SHg` 聖なる助言者 — 279s
+- `1-rgIfXBs0E` エーテルのまどろみ — 198s
+- `qyJdmjqMBLY` 追憶の迷路 — 106s
+- `XlSykT5NIo4` 前触れ — 152s
+- `zkNAxllpxZQ` 日溜り — 107s
+- `dRE5CYzbKNQ` 哀愁 — 178s
+- `sRxgSE0hbcs` 清浄なる心 — 197s
+- `JXxtvNy220E` 焦燥の旅路 — 79s
+- `xSiA9O8nEog` 帰るべき場所 — 148s
+- `ktbMiDA5UPE` また、ここから — 194s
+- `nCIO16pTFZ0` 永遠の欠片 — 143s
+- `sTTRa1Et3jU` 静かなる一刻 — 129s
+- `d3OXXnu_vWM` 疑惑の廻廊 — 128s
+- `1wpmpu4iLT8` 永遠の誓い — 158s
+- `Ss7kUZUZBD8` 降神祭 — 267s
+- `wt8mA6j7IZU` 紅蓮祭 — 203s
+- `vP4lg2fuVqI` 守護天節 — 195s
+- `R0naQZKI2Xg` 星芒祭 — 365s
+- `j9etk7aWOZI` 紅き焔の熱に — 302s
+- `a4TLKXNp4k0` エッグハントの英雄 — 7s
+- `j85y3Lii03k` 淡き光の夢に — 242s
+- `JB5uo6b8KMc` 蛮勇 — 242s
+- `qrDKKn2iR0U` レンタル de チョコボ — 174s
+- `ewjzN9rbC4w` 憤怒 — 319s
+- `EPvlKBG_K6Y` 試練の戦い — 341s
+- `-DjFLNJX5Kk` 勝利のファンファーレ ～凱歌～ (ショート) — 11s
+- `pY2xyUJbI3k` 忍び寄る闇 — 189s
+- `rySBhoOulXk` 祈りの歌 — 79s
+- `Wd_utvo4wpY` 怒れる神々 — 231s
+- `Idued9Al7eU` 原始の審判 — 307s
+- `gvkuuz8rvvM` 夢はいまも…… — 212s
+- `2pB5OG2nyLA` 闇の抱擁 — 213s
+- `vsC41TL7y9M` 闇の口付 — 209s
+- `w67RHXcFlS8` ネメシス — 294s
+- `o0ybjhRHavg` 勝利のファンファーレ ～凱歌～ (ロング) — 41s
+- `khzH9lWzYGA` 黒渦団軍令部 — 351s
+- `NDrKRqLf-ws` 双蛇党統合司令部 — 301s
+- `PzuM8_MQuWM` 不滅隊作戦本部 — 274s
+- `5HDdWSVE0R8` 名誉と義務 — 9s
+- `fE-XCE9_AfI` エオルゼア de チョコボ — 264s
+- `r4tyeMuIGb8` 洋上の小波 — 76s
+- `w8zceKuRE7I` 砂の機密 — 90s
+- `rlOFB-zgUrw` 露の玉、月の光 — 105s
+- `T9xlp84WGWg` 夢見るは遙かなる空 — 80s
+- `VPFgdUigpfo` 大空へ — 29s
+- `EeX9U6PhwGA` キャラバン護衛 — 85s
+- `MVMzecleSzI` とんずら! — 113s
+- `WwkWrV9bh0s` 疾きこと銀の如く、硬きこと石の如く — 300s
+- `petUUrVMJJY` 猛き嵐の剣に — 255s
+- `s0iPw_uT1yE` 炎獄の火種 — 176s
+- `qXEZawp6z8o` 隠し財宝を求めて — 229s
+- `N2_nkFkkNCg` メテオ — 247s
+- `hkLTnvL64o0` 七匹の道化たち — 183s
+- `yJaNpV_vDwE` 善王モグル･モグXII世 — 338s
+- `PW3IEqJvZ3I` その背に揺られて — 200s
+- `vvAOfnnYSmQ` 極限を超えて — 200s
+- `cB0z1QM34jM` 古のジョブ — 118s
+- `JyT0lpDPxxM` 時神に誘われて — 12s
+- `SyPQR5vZFlM` 事件屋のアレ — 164s
+- `zGdUwemAvoo` 運命の導き — 271s
+- `GE34Mvb71pQ` 全隊前へ! — 393s
+- `JUqvA2QK-Xg` 帝国の意志 — 309s
+- `hxloV6X0vfE` 鋼の理念 — 257s
+- `VrFgXm9RN1Y` インペリウム — 389s
+- `itfj1PUmpiU` 堕天せし者 — 429s
+- `sFKL3uEWcyg` 戦乱 — 472s
+- `MgHcg_UOPCw` 白銀の凶鳥、飛翔せり — 352s
+- `p86icWXs0CQ` Answers — 429s
+### USED Heavensward: FINAL FANTASY XIV Original Soundtrack (58)
+- `Xy3d56W6pWc` Heavensward — 259s
+- `AMx8_RD5wlY` 雪風 — 104s
+- `AVpztv1wp4w` 堅牢 ～イシュガルド下層:昼～ — 802s
+- `KLcYmGAdihc` 風に向かって ～クルザス西部高地:昼～ — 129s
+- `8uSGdQDuk6o` 熱戦 ～イシュガルド地方:戦闘～ — 197s
+- `18XWUayJUjA` 堕落 ～廃砦捜索 ダスクヴィジル～ — 297s
+- `DKZfLGxo32I` 不吉なる前兆 — 255s
+- `mrTtGYy7Lgw` 黒闇と白雪 ～クルザス西部高地:夜～ — 149s
+- `6tzDsxQCZEQ` ノブレス･スリープス ～イシュガルド上層:夜～ — 631s
+- `T9MRfeNVjiE` 国境なき空 — 403s
+- `xYJv8-Mtdrc` 旅の宿 — 68s
+- `lIEbvPITYj0` 雲に隠れて ～アバラシア雲海:昼～ — 263s
+- `tkuU_oeym1I` 大らかな家 — 331s
+- `mnDGQz71S1g` 夏の雨の如く ～神域浮島 ネバーリープ～ — 352s
+- `f8IeUMKQyS0` 天上の世界 ～アバラシア雲海:夜～ — 298s
+- `08NOT-0N7QI` 宝石 ～雲海探索 ディアデム諸島～ — 193s
+- `wbLuoNyGzUM` 天のため — 258s
+- `04lRHZc1YSw` みんなでいれば怖くない — 95s
+- `srR-tcTFbmg` 彩られし山麓 ～高地ドラヴァニア:昼～ — 330s
+- `h-B1aXv3RdY` 武神降臨 ～蛮神ラーヴァナ前哨戦～ — 188s
+- `wYUADZ_px_w` 曲がらぬ刃 ～蛮神ラーヴァナ討滅戦～ — 445s
+- `8Hu-3_R_MOQ` 彩られし夜空 ～高地ドラヴァニア:夜～ — 233s
+- `6IT45ckcZZE` 永遠の眠り ～霊峰踏破 ソーム･アル～ — 345s
+- `pKEJb-OVs_8` ランドロード ～ドラヴァニア雲海:昼～ — 285s
+- `W6-0PKL2c8Q` それは愛くぽ? — 76s
+- `dt1qmqsBCVU` 邪竜の咆吼 ～邪竜血戦 ドラゴンズエアリー～ — 270s
+- `1frjKV_QWhc` スカイロード ～ドラヴァニア雲海:夜～ — 265s
+- `Gna_PhhjPlI` 闘争 — 202s
+- `rAlbiexrW60` ノブレス･オブリージュ ～イシュガルド上層:昼～ — 561s
+- `ZkImOevwprw` 聖座 ～強硬突入 イシュガルド教皇庁～ — 170s
+- `t8HKFnZfLMo` 蒼天騎士団 — 195s
+- `UTRXsHxcvis` 雲霧街の夜霧 ～イシュガルド下層:夜～ — 614s
+- `K7BuPr1oZhM` 雷雨の如く — 161s
+- `Z4EZ97iyIUs` 果てなき蒼 ～蛮神ビスマルク前哨戦～ — 218s
+- `ZxjxIhcaIu8` 狂気なる災厄 ～蛮神ビスマルク討滅戦～ — 308s
+- `WpvTGPBd-_w` 誤想 — 298s
+- `zLG0hYxzD78` 欠けた頁 ～低地ドラヴァニア:昼～ — 191s
+- `c_XuBDw_btU` 約束の地 — 239s
+- `UhMxpT1Pt6k` マトーヤの洞窟 ～蒼天～ — 176s
+- `-I5AcC2-mdc` 万世の言葉 ～禁書回収 グブラ幻想図書館～ — 335s
+- `FXjRBoMO9go` ホームステッド — 173s
+- `lj-yN0j_LXU` 静寂の星空 ～低地ドラヴァニア:夜～ — 214s
+- `Ul4EYiGaGI8` 有毒植物 ～草木庭園 聖モシャーヌ植物園～ — 364s
+- `SXzUDHPbBpA` 座礁 ～制圧巨塔 シリウス大灯台～ — 727s
+- `TPPLpDuWCJE` エーテル圏 ～魔航船ヴォイドアーク～ — 222s
+- `16P4xd-Et3M` 深淵に潜む者 ～魔航船ヴォイドアーク～ — 305s
+- `Z3R2v1ncAbc` ヴォイドの棺 ～魔航船ヴォイドアーク～ — 285s
+- `dVh-rev5Jq8` 石と鋼 — 279s
+- `DH4C8pTW6jI` 未解読法則 ～魔大陸アジス･ラー～ — 663s
+- `iHSs_uVrP_0` アンブレーカブル ～博物戦艦 フラクタル･コンティニアム～ — 295s
+- `oYZRX0Aq1SA` イマジネーション ～蒼天聖戦 魔科学研究所～ — 223s
+- `hbkD2c5_-CU` 英傑は死なず ～蒼天幻想 ナイツ･オブ･ラウンド討滅戦～ — 480s
+- `Bc4dKPZqvD4` 英傑 ～ナイツ･オブ･ラウンド討滅戦～ — 230s
+- `w8PHPSBbIS8` 発端 — 67s
+- `rRmrzSseKGw` Dragonsong — 343s
+- `WwOaA7wpqTw` 製造者責任 ～機工城アレキサンダー:起動編～ — 163s
+- `b8JMG-RhL4U` ローカス ～機工城アレキサンダー:起動編～ — 536s
+- `YFQbYbpDKgI` メタル ～機工城アレキサンダー:起動編～ — 331s
+### USED Before the Fall: FINAL FANTASY XIV Original Soundtrack (61)
+- `w0t830unC_c` 船乗りには難破を ～蛮神リヴァイアサン前哨戦～ — 120s
+- `RGoiFB5SxWI` 混沌の渦動 ～蛮神リヴァイアサン討滅戦～ — 449s
+- `ctfDEcasJNs` 魔大戦の傷跡 ～腐敗遺跡 古アムダプール市街～ — 289s
+- `RERj_5JKoRY` 不屈の挑戦 — 97s
+- `cg51UJzoXd4` 怒れる神々 — 156s
+- `rIdOHSZGRFs` ノォヴ一味 — 141s
+- `QcJBMRcysa8` クズテツどもの歌 — 101s
+- `L3WWShvrIDo` 憤怒 ～盟友支援 ブレイフロクスの野営地～ — 156s
+- `iISFBMJlZe8` Pa-Paya — 281s
+- `34afG8QvdLQ` キャラバン護衛 ～剣闘領域 ハラタリ修練所～ — 80s
+- `HpdYfPCdNtY` 紅蓮の戦旗の下に ～剣闘領域 ハラタリ修練所～ — 172s
+- `Y2TlsYlOeoE` でぶチョコボ騎乗 — 155s
+- `MJVuXfpns4I` ビッグブリッヂの死闘 ～新生～ — 266s
+- `geDtqev_vKY` 混沌の渦動 ～蛮神リヴァイアサン討滅戦:女性版～ — 450s
+- `g47TJsJ5p4c` メテオ — 136s
+- `0dBcCOw-ly4` 剣と剣 ～大迷宮 バハムート侵攻編～ — 370s
+- `cq_d9P4pH6U` 戦乱 — 377s
+- `ELkj96pZJGc` 白銀の凶鳥、飛翔せり — 186s
+- `sLKSjZhaRiw` 地平線の彼方 ～財宝伝説 ハルブレーカー･アイル～ — 187s
+- `0RxT_v-m8EM` 何よりも高く — 102s
+- `EbC533ytjZ8` 漆黒の誓い ～惨劇霊殿 タムタラの墓所～ — 277s
+- `DX7Doyjkrag` Answers - Reprise — 117s
+- `Rn8bylpP65c` 雷光雷鳴 ～蛮神ラムウ討滅戦～ — 638s
+- `0tX8MBI9seI` 紅蓮祭 — 125s
+- `mIdbIzJmoyA` 刃、厚いほどに — 129s
+- `wdrN4_heT5Q` 作戦会議室 — 242s
+- `cxR_oEoyjQs` 総員抜剣! — 171s
+- `YxmOQVUpYqk` 血で血を洗って — 209s
+- `T9BhX7Np-8I` 卵が先か? — 20s
+- `fW1p_v2ThgE` ゲーム理論 — 159s
+- `vSdNxRKyc2s` ドーガとウネの心 — 126s
+- `CejdxG5HfcA` 絢爛 ～クリスタルタワー:シルクスの塔～ — 319s
+- `_JFkoMUp6yg` 破砕 ～クリスタルタワー:シルクスの塔～ — 321s
+- `GFqtpATE6To` 時はこぼれ落ちて — 101s
+- `Xskwr6OoxeI` 教皇 — 69s
+- `3ccCBslaMjg` 嵐の中の灯火 ～怪鳥巨塔 シリウス大灯台～ — 489s
+- `dKN_bhzYzCU` 潮衝 ～逆襲要害 サスタシャ浸食洞～ — 419s
+- `oZV3KsTmG0E` 忍びの刃 — 127s
+- `hIlVLP5Fea8` 落日の遺跡 ～遺跡救援 カルン埋没寺院～ — 414s
+- `E35GeZFA1vc` 槍旗 — 238s
+- `Vk-fK4lMaoc` 秘密坑道 ～氷結潜窟 スノークローク大氷壁～ — 435s
+- `9tWWl__gZ0s` 雪上の足跡 ～蛮神シヴァ前哨戦～ — 421s
+- `NdZVse2WKns` 忘却の彼方 ～蛮神シヴァ討滅戦～ — 480s
+- `kpYcqYxANvU` 永遠の誓い — 312s
+- `uQgonzC8MXg` 灰より生まれし者 — 386s
+- `4CofNw00fY4` 侵攻 — 84s
+- `kPTE2UusEIA` マンダヴィル･ゴールドソーサー — 252s
+- `wFl0hZpftAo` 天国の扉 — 240s
+- `O0-De5OjWfo` チョコボレース — 164s
+- `dmzSCp8wVUQ` 戦禍 ～邪念排撃 古城アムダプール～ — 384s
+- `ZNvq3rE7hPo` 聖域の罠 ～武装聖域 ワンダラーパレス～ — 363s
+- `EbircLWPhM0` 魔導仕掛けの友 — 218s
+- `B3Zy2_owRe8` 薄闇 ～クリスタルタワー:闇の世界～ — 320s
+- `kpHuFoI-HoE` 暗闇 ～クリスタルタワー:闇の世界～ — 309s
+- `wTQPsssKtVk` 死闘の序曲 — 39s
+- `w7qsTN9F5Aw` 最後の死闘 ～新生～ — 269s
+- `W_mtc2VMF-g` 悠久の風 ～新生～ — 160s
+- `yMRr-flfDb4` 戦神の教義 ～皇都イシュガルド防衛戦～ — 510s
+- `otzOF6psZso` 仇敵 ～皇都イシュガルド防衛戦～ — 143s
+- `8ctyuJx31RU` 銀の涙 ～幻龍残骸 黙約の塔～ — 298s
+- `NuGgl-E8soM` 始祖たる幻龍 — 454s
+### USED THE FAR EDGE OF FATE:FINAL FANTASY XIV Original Soundtrack (50)
+- `MfNoBEb0ul8` 魔神 ～魔神セフィロト討滅戦～ — 497s
+- `rqlxbTfKsAg` 上り階段をくだれ ～星海観測 逆さの塔～ — 269s
+- `f1VafzJx2KE` 踊る人形カルコブリーナ ～蒼天～ — 139s
+- `hSF67DheS04` 逆襲の咆哮 — 310s
+- `EBVAn4EASZg` 分かたれし者たち — 173s
+- `oINFCTGJ0vo` 繋がりし者たち — 143s
+- `ce0prjUOSE4` 純愛の口づけ — 153s
+- `RHlHvf7ux9Q` 餓えた狼 ～ザ･フィースト～ — 379s
+- `M3qOGQWAxKE` 古の都 ～神聖遺跡 古アムダプール市街～ — 278s
+- `Ixvb2ZJZERU` メタル:ブルートジャスティスモード ～機工城アレキサンダー:律動編～ — 274s
+- `S0Vved7ERFw` 聖なる助言者 — 280s
+- `TZoZ5VjbYho` 詫言の詩 ～天竜宮殿 ソール･カイ～ — 251s
+- `o8PENa83pjQ` 戦神の教義 ～皇都イシュガルド防衛戦～ — 513s
+- `-Txmw8nbBCQ` 始祖たる幻龍 — 452s
+- `sA_KyvoI2fk` 邪竜の急襲 ～ニーズヘッグ征竜戦～ — 260s
+- `kJ6wCX4P90k` 最期の咆哮 ～ニーズヘッグ征竜戦～ — 215s
+- `m965X3_xlRY` ただ死者のみが見る — 75s
+- `m6F7y4nrJaw` 自由なる風に吹かれて — 331s
+- `KougG5laf4Q` 雨と涙に濡れて ～禁忌都市マハ～ — 288s
+- `AIxIdnyGWbM` 豪雨に打たれて ～禁忌都市マハ～ — 274s
+- `qBssyR2cze0` 幾千の顔 ～禁忌都市マハ～ — 88s
+- `ddse7wYNKlI` 漆黒のエッダ — 289s
+- `xVHfBCuXqmk` メリー･ワンダラー･ワルツ — 216s
+- `6gURY6gVKZQ` 黒衣の迷宮 — 214s
+- `AvqFh1lr_mM` 淡き光の夢に — 243s
+- `AHqnZ5Mcaww` モードゥナの涙雨 — 269s
+- `yGPyS5Lpijg` トイレに行けない夜 — 283s
+- `_WYkjgzsyXs` 死亡報告 — 161s
+- `ClyGkj3FJOc` 笛吹大魔王 — 152s
+- `xSBY4xo7O0U` ガントレット — 210s
+- `-09Nf84SlqQ` ハイパーレインボーZ — 107s
+- `fGCv4ELDOGc` 朝まで大騒ぎ — 134s
+- `-XINRqyp2-o` 地殻 ～峻厳渓谷 ゼルファトル～ — 292s
+- `9aYpI5IbV5c` ビブリオフォビア ～稀書回収 グブラ幻想図書館～ — 292s
+- `Bf0wHXtXmsU` 指数崩壊 ～機工城アレキサンダー:天動編～ — 386s
+- `he6VC2e_2Mk` 刻の外側 ～機工城アレキサンダー:天動編～ — 284s
+- `eMj6q37HhNI` メビウス ～機工城アレキサンダー:天動編～ — 261s
+- `vkQmPHkL3rg` 無限停止 ～機工城アレキサンダー:天動編～ — 89s
+- `XO2F7Oqr4wk` ライズ ～機工城アレキサンダー:天動編～ — 260s
+- `dfUkpExh3yY` 永遠の欠片 — 144s
+- `FaNYvw2y7VA` 勝利への猛攻 — 415s
+- `0Cgn2OYtvDc` 死闘 ～蒼天～ — 369s
+- `JhW51WVmugM` 女神 ～女神ソフィア討滅戦～ — 407s
+- `uGi8dBV_1vc` 約束の地 ～影の国ダン･スカー～ — 273s
+- `jvdJmMT7RjY` 影法師 ～影の国ダン･スカー～ — 315s
+- `shOXxktcgcU` 砂塵 — 279s
+- `yzfBTUbXYgA` ペンウルティマニア ～鬼神ズルワーン討滅戦～ — 228s
+- `NrsVADCNt2g` 鬼神 ～鬼神ズルワーン討滅戦～ — 201s
+- `5goQEOS83Os` アナザーブリック ～巨大防壁 バエサルの長城～ — 239s
+- `BI0FV4n10SQ` 銀鱗と鋼鉄 — 266s
+### USED STORMBLOOD: FINAL FANTASY XIV Original Soundtrack (105)
+- `o-n8oiGRUVE` 血の嵐 — 239s
+- `mwJFl57Jky0` 紅蓮のプレリュード — 73s
+- `D1WDRPk34gs` 衝撃 ～ラールガーズリーチ:昼～ — 329s
+- `f5LUgbbFVC8` 壁の向こう側 ～ギラバニア辺境地帯:昼～ — 217s
+- `OiAj33L0mX0` 辺境の乱戦 — 178s
+- `3gq89dzHoSE` 余光 ～ラールガーズリーチ:夜～ — 302s
+- `dOAA_bCCT_g` 燃えよクァール ～壊神修行 星導山寺院～ — 272s
+- `6gWbPtMo8OM` 高みより ～ギラバニア山岳地帯:昼～ — 161s
+- `gyfeAKJnCrg` 巨峰の眼下にて — 70s
+- `bD0krOh44jM` 我らが支配圏 — 136s
+- `GAhavny-n84` 平和への道のり — 136s
+- `h5x_0bnHkA8` 夜明けに向かって ～漂流海域 セイレーン海～ — 188s
+- `mJ3zdmDKnJ4` 鬨の声 — 195s
+- `UFBpmIXGQs8` 紅の夜明け ～クガネ:昼～ — 695s
+- `dHCdTMARshk` 焔の海 ～紅玉海:昼～ — 172s
+- `YQO9DwVek4c` 祈りの翼 — 120s
+- `9JGR27wPut8` 揺り籠 — 160s
+- `iIt3rOv2UgE` 開けられた玉手箱 ～海底宮殿 紫水宮～ — 236s
+- `89Feonbam6U` 宵の海 ～紅玉海:夜～ — 142s
+- `qeNF29BCnMA` 東方の地 — 117s
+- `T4zb2SQxDXM` 戦場の甲羅 — 123s
+- `KU_BB4midl8` 啓示 ～蛮神スサノオ討滅戦～ — 146s
+- `S0dt5KJe2GI` 祭りである ～蛮神スサノオ討滅戦～ — 87s
+- `TN6tzTASyn0` 終始 ～蛮神スサノオ討滅戦～ — 305s
+- `pYTSjM_IfMI` 調和 — 78s
+- `cN-6TmRGObE` 父の誇り ～ヤンサ:昼～ — 173s
+- `4XshpaH5jk0` 地平線に沈め ～アジムステップ:昼～ — 120s
+- `EAXFkjpjGj4` カイエンのテーマ ～紅蓮～ — 257s
+- `aUHd6vF-lnA` 地平線より昇れ ～アジムステップ:夜～ — 175s
+- `4UhX8oiPHxk` 英雄ならざる者 ～伝統試練 バルダム覇道～ — 174s
+- `Ne07nHYAC3w` 血嵐の勇士 — 273s
+- `2yAbKMmVvpA` 母の誇り ～ヤンサ:夜～ — 187s
+- `n1_xTUR7d0M` 月亮門 ～解放決戦 ドマ城～ — 301s
+- `GRoLAMuUKYM` 別れ — 92s
+- `rN1amYS7TE4` 紅の夜更け ～クガネ:夜～ — 310s
+- `PCoBeJz4FzA` 策謀 ～悪党成敗 クガネ城～ — 242s
+- `t8Sm22SSmdM` 忘れられた希望 ～ギラバニア辺境地帯:夜～ — 130s
+- `U_Ebye5vJi0` 美の謀略 ～蛮神ラクシュミ討滅戦～ — 346s
+- `zgqQeVrc9QY` 石の記憶 ～ギラバニア山岳地帯:夜～ — 130s
+- `VUaj-VeDma0` アリエヌス ～巨砲要塞 カストルム･アバニア～ — 191s
+- `59azuM10N_I` 古傷 ～ギラバニア湖畔地帯:夜～ — 424s
+- `EH0C6a9xtxM` 塩と苦難の歌 ～ギラバニア湖畔地帯:昼～ — 568s
+- `zbGijc_uJVM` 自由か死か ～紅蓮決戦 アラミゴ～ — 186s
+- `kNe-ZNBHWWM` 龍の尾 ～神龍討滅戦～ — 299s
+- `fR7e3SUDfWM` 壊神の拳が届く場所 — 133s
+- `rk4xBUj30CU` Revolutions — 425s
+- `GTzY2hSpGUc` デルタスケープ ～次元の狭間オメガ:デルタ編～ — 187s
+- `25PFJYo5OV0` バトル2 ～次元の狭間オメガ:デルタ編～ — 302s
+- `dex0cgcSpYM` 決戦 ～次元の狭間オメガ:デルタ編～ — 326s
+- `ui7hpUFrpkg` 最後の闘い ～次元の狭間オメガ:デルタ編～ — 241s
+- `Nk-2wL2ZEEc` うぃざーどりー — 276s
+- `RrwJepo07kk` 星芒の扉 — 172s
+- `HokvxeI87Xk` 美の謀略 (Oasis Mix) ～蛮神ラクシュミ討滅戦～ — 256s
+- `RKw8BmnKg1A` 故郷より離れて ～水没遺構 スカラ～ — 258s
+- `2dTcexRdqvU` 硬き者たち — 241s
+- `nx8K9mwPPv0` ライバルウィングズ ～アストラガロス機工戦～ — 294s
+- `QBWHx1y8dDA` 鳥たちの饗宴 ～ライバルウィングズ～ — 302s
+- `H1-Jc3llPeI` 転生の炎 ～絶バハムート討滅戦～ — 34s
+- `DAe3Q4W5Xc4` 贖いの果て ～絶バハムート討滅戦～ — 146s
+- `2RSl9f-av80` プレイヤーメイク — 163s
+- `6wP3E6RGTpg` データ画面 — 77s
+- `bmWnA_rSUQI` 主人公のテーマ — 68s
+- `QWmiuueiIzM` Backborn Story — 140s
+- `7O23nHAC3cY` Trisection — 157s
+- `6TGy2m6ZmZo` 橋上の戦い — 249s
+- `DqRtqhBHYuA` 敵兵襲撃 — 79s
+- `kxkhA38SwQ8` Ultema the Nice Body — 256s
+- `1-3eY6AiHOw` 戦闘終了 — 35s
+- `A7cpHGcWqQ0` 鬼の棲む島 ～紅玉火山 獄之蓋～ — 247s
+- `PssDWbHKKU0` Iroha — 228s
+- `lieUd3aFAlQ` 天つ雷 ～白虎前哨戦～ — 140s
+- `1wT6j1heDs8` 轟 ～白虎征魂戦～ — 125s
+- `JPydZlOCyJU` 天つ風 ～白虎征魂戦～ — 332s
+- `Xb8IrJ47jDE` 我ら国境警備隊 — 230s
+- `MDWk7md-wfE` アンブレーカブル (Duality) ～博物戦艦 フラクタル･コンティニアム～ — 237s
+- `AxTQ8zCotlA` 魔列車 ～次元の狭間オメガ:シグマ編～ — 28s
+- `IOukdWKrAWk` 決戦 ～次元の狭間オメガ:シグマ編～ — 250s
+- `WuJzestF-3U` 妖星乱舞 第1楽章 ～次元の狭間オメガ:シグマ編～ — 255s
+- `0OHcHtUUVdk` 妖星乱舞 第2楽章 ～次元の狭間オメガ:シグマ編～ — 219s
+- `LflkmSqD8P8` 妖星乱舞 第3楽章 ～次元の狭間オメガ:シグマ編～ — 228s
+- `LepoYu7gZGA` 妖星乱舞 第4楽章 ～次元の狭間オメガ:シグマ編～ — 514s
+- `awrSq5BTINs` 乱風の囁き ～禁断の地 エウレカ:アネモス編～ — 233s
+- `zPoLsgydiqU` 呪われたサレコウベ — 242s
+- `_NxKYpVKLh8` ノー･クォーター — 171s
+- `6k8dZVWwhXY` セイレーンの呼び声 — 124s
+- `2ip7V4FJh2Q` Pa-Paya Demastered — 122s
+- `h200olFSAi4` 天晴大鯰音頭 — 125s
+- `2zj25h4Q2m8` わっしょいわっしょい — 74s
+- `OR1HgNLw9UI` 危険なる妙技 — 358s
+- `W_urn_2SuYg` 地風水 ～風水霊殿 ガンエン廟～ — 227s
+- `VMpASeBf9Ds` 堕天せし者 (From Astral to Umbral) ～蛮神ガルーダ討伐戦～ — 252s
+- `CnoN-GacB8Q` 原始の審判 (From Astral to Umbral) ～蛮神イフリート討伐戦～ — 172s
+- `P7DPJyQv3IY` 過重圧殺! (From Astral to Umbral) ～蛮神タイタン討滅戦～ — 315s
+- `whqHpkVlbPQ` 究極幻想 (Orchestral Version) — 302s
+- `UqbdssEHGik` ワールドマップ — 66s
+- `ugAFD0ljTTY` A Chapel — 102s
+- `_e54Zcc1rRg` 頂上へ — 153s
+- `1ixQdTqOCdE` ボス戦 — 201s
+- `0uIZY96ZhnM` ギルヴェガンの謎 — 128s
+- `RueAoNGOyVA` Apoplexy — 282s
+- `hHuO7HZoKrk` 剣の一閃 — 161s
+- `mhCx43_VTTo` 勝利のファンファーレ ～FFXIIバージョン～ — 41s
+- `o0n8v4QmMHk` 月下美人 ～蛮神ツクヨミ前哨戦～ — 254s
+- `h3HtWXgAjB0` 狂える月夜 ～蛮神ツクヨミ討滅戦～ — 161s
+- `xx10iSmVMo0` 月下彼岸花 ～蛮神ツクヨミ討滅戦～ — 352s
+### USED SHADOWBRINGERS: FINAL FANTASY XIV Original Soundtrack (88)
+- `9AsQqGmWXLU` 死の大地 ～永久焦土 ザ･バーン～ — 265s
+- `HgIvgo9eVPI` 不穏の淵 — 117s
+- `CTCiD5Ra1G4` 戦闘シーン ～次元の狭間オメガ:アルファ編～ — 213s
+- `xRHVX2A8L5s` エスケープ ～次元の狭間オメガ:アルファ編～ — 291s
+- `ZYcNR4OchzI` 何処でもない何処か — 82s
+- `gukPjbRtK6E` 心を持たぬ者 ～次元の狭間オメガ:アルファ編～ — 395s
+- `IRpKZkPjC2g` 空より現れし者 ～次元の狭間オメガ:アルファ編～ — 636s
+- `KX_woxHZORo` 翼に夢を — 247s
+- `DV9peC4PZ0U` エンディング — 107s
+- `iHS1sOSdX4g` 泥中の蓮 ～草木汚染 聖モシャーヌ植物園～ — 442s
+- `D3ruv9kior8` 千年の誰そ彼 ～朱雀征魂戦～ — 142s
+- `YZB3vI6svJ4` 千年の暁 ～朱雀征魂戦～ — 290s
+- `Jc6zy-NZdBc` 星芒の歌 — 66s
+- `M_QG3_XjYKQ` 絶望の歌 — 67s
+- `YT6YagKGoYg` 東方遊戯 — 220s
+- `MyQWSBSz2dY` Gates of Paradise - The Garden of Ru'Hmet — 457s
+- `oEu4Wr9HE4E` Onslaught — 178s
+- `xe0E-u77kzg` Turmoil — 181s
+- `NBNfRQDsq-Y` Under The Stars — 130s
+- `RNi26jQ4alo` 緊迫1 — 144s
+- `feClf2yg2IY` Antipyretic — 146s
+- `c3mk3zPQ_l8` Bloody Excrement — 156s
+- `h0CUH8atq9w` 異形の者 — 187s
+- `t46GljXz3Kg` 聖アジョラのテーマ — 137s
+- `-eMCgNZZuUA` 降臨 — 114s
+- `BODBOFanYvk` Ultema The Perfect Body! — 277s
+- `tTfHqG5BxbE` ラスト戦闘終了 — 24s
+- `Rf05kDpkJNA` 礼拝堂 — 67s
+- `aavxcP0Vhg4` ブレイブストーリー — 70s
+- `T1DW8W00ppc` アルマのテーマ — 119s
+- `4aWKVhx2J4A` 毛皮骨肉商 — 105s
+- `LTH0LpWA6Qo` Epilogue Movie — 104s
+- `WvXk92sef8w` Staff Credit — 428s
+- `QQg1tg8Wiuw` 謀略 — 113s
+- `6yFvNEi9KPw` 雲蒸龍変 ～青龍征魂戦～ — 567s
+- `4zxGLZZ2bck` 黒煙の戦い ～境界戦線 ギムリトダーク～ — 306s
+- `6ugtWT_iNqw` Shadowbringers — 385s
+- `S_aKIR3Y7bs` 四重の見聞を経て — 183s
+- `8dB1_38ztdU` 世界を照らす闇 ～クリスタリウム:昼～ — 334s
+- `45P8BsNKIb8` 合わないピース — 457s
+- `qXq7K0bkNHM` 対峙 — 198s
+- `yAU2qWrhuz0` それなりの暮らし — 52s
+- `M3ibCPj34Rk` 享楽の痛み — 251s
+- `skj2Wx6ylvo` 琥珀の砂漠 ～アム･アレーン:昼～ — 192s
+- `CrNPZQDZwYE` 言い尽くせぬ悲哀 — 296s
+- `dQmm3z4N3qE` 天上の窮地 — 275s
+- `3PxHoZ75u1o` 始まりの湖 ～レイクランド:昼～ — 148s
+- `6fnEvuMU1aQ` 炎と剣によりて ～殺戮郷村 ホルミンスター～ — 284s
+- `18q19BPYEJE` 貪欲 — 306s
+- `dewEScFPVwE` 不変と変化 ～レイクランド:夜～ — 268s
+- `5kAfKeERf2s` 運命の旅 — 271s
+- `J4m105zF9q4` 知恵は眠らず ～クリスタリウム:夜～ — 518s
+- `XGhBEsyIb64` 大逆 — 303s
+- `uWasGGDHqsw` 残忍と自由 ～イル･メグ:昼～ — 163s
+- `ITSQ1KU5KBE` 生きる理由 — 68s
+- `rDhj4VUhrXg` 虚構 ～水妖幻園 ドォーヌ･メグ～ — 286s
+- `hUVAJ60Erfo` 目覚めの御使い ～ティターニア討滅戦～ — 323s
+- `iDT9mYU-XVw` 妖精の輪 ～イル･メグ:夜～ — 224s
+- `E1nIlwcMZQQ` シヴィライゼーションズ ～ラケティカ大森林:昼～ — 180s
+- `8O_-ZFERhcE` 紐解かれしもの ～古跡探索 キタンナ神影洞～ — 287s
+- `VRwORBo3EB4` 望みなき競争 ～ラケティカ大森林:夜～ — 226s
+- `mCaUSmyURHY` 反復する明日 — 216s
+- `B8xPNfyf_9c` 深き底 ～爽涼離宮 マリカの大井戸～ — 378s
+- `BnLbNNbfImk` 鮮血の砂漠 ～アム･アレーン:夜～ — 261s
+- `aeEZL5f0nCI` より良き明日 — 219s
+- `RjYIhpgFMqI` 危険な言葉 — 187s
+- `ghUp26i60c0` 獣の腹 ～偽造天界 グルグ火山～ — 378s
+- `cMTRc9oAJog` インサニティー ～イノセンス討滅戦～ — 438s
+- `ll8iUzD0yf0` 雨の中の涙 — 222s
+- `9sHIJdadA0k` 五尋の深み ～テンペスト:浅部～ — 414s
+- `hNSKDpEXqnM` 冥き水底 ～テンペスト:深部～ — 344s
+- `-mmf9iBJDy8` 驚嘆の真実 — 176s
+- `B_Vfik0OVTk` 死の刻 ～終末幻想 アーモロート～ — 284s
+- `RlriIMunwJQ` 影をもたらす者 ～ハーデス前哨戦～ — 566s
+- `ATJwVBcpJ0Q` 砕けぬ思い ～ハーデス討滅戦～ — 362s
+- `_4lJsmCqvCI` Tomorrow and Tomorrow — 272s
+- `8ha4asgxSKE` クイックウェイ ～コルシア島:夜～ — 255s
+- `-wUsG4gAFC0` 分かたれし世界 ～コルシア島:昼～ — 228s
+- `4HTYhiw3DzA` Vamo' alla Flamenco ～漆黒～ — 214s
+- `qYbN5UYBDBM` 仮面舞踏会 ～ユールモア:夜～ — 333s
+- `luEc51tt6bw` 耽溺 ～ユールモア:昼～ — 211s
+- `JT4QLe_XH2s` 影なき影 ～創造機関 アナイダアカデミア～ — 224s
+- `4W2UVwG55Fs` ロングフォール ～異界遺構 シルクス･ツイニング～ — 293s
+- `qzlf1G9gBpo` ノアのリュート ～漆黒～ — 65s
+- `vwcBykxZOpM` Blue Fields ～漆黒～ — 187s
+- `6DyHx3YlYbo` Force Your Way ～漆黒～ — 483s
+- `j4PE_UWh4r8` 輝ける蒼 ～希望の園エデン:覚醒編～ — 444s
+- `HYmLtTRWym4` ランドスライド ～希望の園エデン:覚醒編～ — 469s
+### USED DEATH UNTO DAWN: FINAL FANTASY XIV Original Soundtrack (84)
+- `NlqTypXycT0` ローカス (Duality) ～機工城アレキサンダー：起動編～ — 284s
+- `54JJp1YjRx0` メタル：ブルートジャスティスモード (Journeys)... — 219s
+- `Om1-wCDcT9U` ライズ (Journeys) ～機工城アレキサンダー：天動編～ — 229s
+- `eOEHgaSwN8A` メビウス (Orchestral Version) ～機工城アレキサンダー：天動編～ — 250s
+- `_ka6xCP8_MA` 戦士の守勢 ～PvPフロントライン～ — 259s
+- `qPWLn9AvFHw` 戦士の攻勢 ～PvPフロントライン～ — 263s
+- `luWZOiXJSuM` リェー・メグの門 — 256s
+- `YvPAZk8UsQ0` 花の館 ～魔法宮殿 グラン・コスモス～ — 279s
+- `f1gk8wgGO1A` 名も無き者たちの情熱 ～蒼天街復興～ — 323s
+- `H0xTLczYxJA` スターライト de チョコボ — 63s
+- `aRZKKrF2Nfg` スターライト de チョコボ？ — 60s
+- `0sNk_AZXYd8` 意味／無 (From NieR:Automata) — 78s
+- `LmXmAs-0ha0` 曖昧ナ希望／氷雨 (From NieR:Automata) — 218s
+- `o0mGitt_8Wg` 崩壊ノ虚妄 (From NieR:Automata) — 201s
+- `t0cBY9kIRPM` 顕現シタ異物 (From NieR:Automata) — 278s
+- `a6EHphuIGlo` イニシエノウタ／贖罪 (From NieR:Automata) — 322s
+- `2qao3EsYgDg` 双極ノ悪夢 (From NieR:Automata) — 313s
+- `gPSOaSwdEaE` Weight of the World／Prelude Version — 159s
+- `LQCUZeSLQeQ` 澱ンダ祈リ／暁風 (From NieR:Automata) — 138s
+- `V1AACvkUDYo` 還ラナイ声／ギター (From NieR:Automata) — 209s
+- `iuR1REQenI4` 底に潜みし者 ～黒風海底 アニドラス・アナムネーシス～ — 298s
+- `RZhztWL9QzA` 貪欲 (Scions & Sinners) — 327s
+- `T4G5pKsuJ4M` ホパル古盤 — 273s
+- `3k4HC9FSjYU` 究極幻想 (Scions & Sinners) — 227s
+- `bI3LcQqK2Tc` 白銀の凶鳥、飛翔せり (Orchestral Version) — 209s
+- `_LoPky_fjdQ` 蒼き日常 ～蒼天街復興～ — 324s
+- `g0PsTVTHn-o` 雷轟電撃 ～希望の園エデン：共鳴編～ — 353s
+- `7zej7VMbcMk` 原始の堕天使 ～希望の園エデン：共鳴編～ — 254s
+- `oSq__aFIlZk` 雪上の足跡 ～蛮神シヴァ前哨戦～ — 421s
+- `8rJYRGGhGIg` 分割された光 ～希望の園エデン：共鳴編～ — 119s
+- `wfgfFKNlRKk` 忘却の此方 ～希望の園エデン：共鳴編～ — 336s
+- `6_D0l1SlMdI` ガンゴッシュ — 381s
+- `PJ4R1EByZyk` ボズヤの微風 — 294s
+- `t20RfxiZd0A` ボズヤの血風 — 307s
+- `Z1h96nM-XjE` 騒乱 (Zodiac Age Version) — 97s
+- `xMW5UGljqa0` 動乱 帝国バージョン (Zodiac Age Version) — 168s
+- `z9s1YgcygzU` 潜入 (Zodiac Age Version) — 213s
+- `CrdVr1gL8ng` 召喚獣戦 (Zodiac Age Version) — 147s
+- `PYV4fyLVOh4` 死闘 (Zodiac Age Version) — 112s
+- `BZKfyapcTX4` ワッツハンマー・ガレージ — 211s
+- `HHNN0nDYo8g` 常夏の島 — 56s
+- `JWyTKRMZqPw` すべての道が至る場所 ～漆黒決戦 ノルヴラント～ — 276s
+- `EAtelq7Sp3U` 暗がりに響く音 — 95s
+- `6IiG4vo9k9U` To the Edge — 452s
+- `D0eIO32QuH8` 悠久の風 ～漆黒～ — 254s
+- `CFr86vf_2UU` 遊園施設 (From NieR:Automata) — 154s
+- `pJYQqB6VqHQ` 偽リノ城塞 (From NieR:Automata) — 168s
+- `uef7K6qzcmM` オバアチャン／破壊 (From NieR:Automata) — 269s
+- `9TkrORjWgzU` 異形ノ末路 (From NieR:Automata) — 300s
+- `I7a--TmXUFU` 天より降りし力～全テヲ破壊スル黒キ巨人／Medley Version — 399s
+- `zoI-3yQwm9Y` 割レタ心 (From NieR:Automata) — 137s
+- `JFLOjcsCMH4` 祝いの調べ ～蒼天街復興～ — 65s
+- `aPdbWyBn4ls` 祝いの調べ：熱演 ～蒼天街復興～ — 65s
+- `0gsJ0_m4Hkk` ゴゴのテーマ — 143s
+- `zTXcQWD_MKQ` 焼き立てポークシー ～魔術工房 マトーヤのアトリエ～ — 268s
+- `SmPQ5jE3eDE` 漆黒の王狼、再び ～エメラルドウェポン破壊作戦～ — 703s
+- `Qpwnu6feoeU` Don’t be Afraid ～漆黒～ — 164s
+- `STF4_NQnH3U` The Legendary Beast ～漆黒～ — 360s
+- `vJla3R4h6wY` 美しき思い出 ～希望の園エデン：再生編～ — 133s
+- `zQ4xWbsi42s` 消せない約束 ～希望の園エデン：再生編～ — 319s
+- `cpJwyd0AEvA` The Extreme ～漆黒～ — 401s
+- `QXlZc_UH4hE` Ami ～漆黒～ — 290s
+- `YXcrTETl-d4` Shuffle or Boogie ～漆黒～ — 172s
+- `GZ8zoxiV58w` ソーヘン地下宮殿 (Zodiac Age Version) — 146s
+- `WVz0HpmgsPE` 言葉無き戦い (Zodiac Age Version) — 103s
+- `Sga4RAPvB3A` 復活の女王 ～グンヒルド・ディルーブラム～ — 461s
+- `evvIy1tJ58E` 怒れる悪魔 ～旗艦ダル・リアータ攻略戦～ — 320s
+- `sS8xR3n5lTo` 蒼天街復興祝祭 — 354s
+- `rSRb0fHdiIA` 還ラナイ声／通常 (From NieR:Automata) — 211s
+- `Mb6kiygNJmQ` 沈痛ノ色 (From NieR:Automata) — 63s
+- `p-05SLBwMek` 茫洋タル病 (From NieR:Automata) — 111s
+- `yPiAU9MUk1k` エミール／絶望 (From NieR:Automata) — 286s
+- `f8ZEsEc1_XY` 追悼 (From NieR:Automata) — 179s
+- `lV1HW6o1yQU` 終ワリノ音 (From NieR:Automata) — 282s
+- `-A7WSA6aXBs` 終ワリノ音：丁 (From NieR:Automata) — 170s
+- `hrEei5uMlsU` 取リ憑イタ業病 (From NieR:Automata) — 311s
+- `aBXP1VQsXGA` カイネ／Final Fantasy Main Theme Version — 297s
+- `4aS8PPXRaCw` Weight of the World／Instrumental Version (From NieR:Automata) — 337s
+- `0izwOgErAnI` 遺サレタ場所／斜光 (From NieR:Automata) — 132s
+- `uc5Tg3wsZ-A` 炎の七部族 ～黄金平原 パガルザン～ — 280s
+- `jCzYc9a_--U` 愛を求める者たち — 329s
+- `qOIlKosR0bA` 孤児たちの戦い ～ダイヤウェポン捕獲作戦～ — 401s
+- `5XP2XDR7hr0` ひとりじゃない — 149s
+- `cEC7an0kzXc` 魔導船 ～漆黒～ — 216s
+### USED ENDWALKER: FINAL FANTASY XIV Original Soundtrack (63)
+- `-vJn7MXRBX4` Endwalker - Footfalls — 353s
+- `lnR4RjoDQeo` 暁月のプレリュード — 177s
+- `osjOGbC0BfQ` 知恵の水瓶 ～オールド・シャーレアン：昼～ — 519s
+- `tZlKV8sZPKE` 語り継がれる言葉 — 276s
+- `bkSzaeZ5HLA` いつの日かきっと ～暁月～ — 218s
+- `QyVh5GFQpuA` 知恵の巻貝 ～オールド・シャーレアン：夜～ — 353s
+- `Pd_d2sLLGBc` 迷宮 ～ラヴィリンソス：昼～ — 149s
+- `B2G3NMna__I` 上り階段をくだれ ～星海観測 逆さの塔～ — 268s
+- `kdXL4CUWRII` 抗戦 — 146s
+- `FQIhnjBhKDw` 迷夢 ～ラヴィリンソス：夜～ — 234s
+- `zBi7oAq4p4c` 微笑む幽霊 — 191s
+- `XQ5OxtezxJA` 神々の訓え ～サベネア島：昼～ — 147s
+- `oglFtGeL9-I` 落日の都 ～ラザハン～ — 322s
+- `luImcaIKDQs` ゾットの塔 ～暁月～ — 182s
+- `aSJOc9pPBcU` 震える刃 — 272s
+- `yImo0cSVqA8` 人々の祈り ～サベネア島：夜～ — 219s
+- `awQiWtwbYPA` 白雪と黒鉄 ～ガレマルド：昼～ — 172s
+- `QMoWeGM0FUE` 護るべき営み — 111s
+- `Qx8X2cziexo` 帰らん、地平の彼方へ — 244s
+- `0sGyvaBFXbo` 黒闇と黒鉄 ～ガレマルド：夜～ — 229s
+- `f741Dr3W5Hk` 恐怖の波動 — 90s
+- `0YbaC6JWVLI` 小さな命 — 230s
+- `CWmv0JRP-Xc` ガレマルド急行 ～ 魔導神門 バブイルの塔～ — 253s
+- `xoJSAClwLc4` 終の戦 — 267s
+- `sKgDNNGAG4w` 小さな一歩 ～嘆きの海～ — 430s
+- `FiMcWOLS7vo` 冥き水底 (Scions & Sinners) ～テンペスト：深部～ — 377s
+- `GFulM_9OSSg` ENDCALLER ～ゾディアーク討滅戦～ — 361s
+- `O7RxTRBvnQI` イマジネーション (Duality) ～蒼天聖戦 魔科学研究所～ — 289s
+- `4DkZrl7h8LM` 街のテーマ ～暁月～ — 253s
+- `qU3rYSqnt3g` バトル1 from FINAL FANTASY IV — 120s
+- `EtF_rqp5EDY` 絶望の果て — 359s
+- `86Dc26yBsgw` 空が燃える日 ～終末樹海 ヴァナスパティ～ — 267s
+- `XA8ncCzAPh0` 英雄に続け — 281s
+- `juP1bNEiifI` 古の空 ～エルピス：昼～ — 155s
+- `tC_nYXvzJ-8` Flow Together — 264s
+- `jVvPH3cLVT4` 創造の奇跡 ～創造環境 ヒュペルボレア造物院～ — 317s
+- `j6UurE_5J0s` 古の星空 ～エルピス：夜～ — 221s
+- `SkKCgCraMus` 地より昇りし力 — 124s
+- `VwbL29gmZP8` 灰より生まれし者 — 386s
+- `lSVu11piESg` Answers — 429s
+- `0zQsOU1MYmE` 星の海 ～星海潜航 アイティオン星晶鏡～ — 288s
+- `2N0G2wHcq8o` Your Answer ～ハイデリン討滅戦～ — 375s
+- `QGMJ0G58UNE` Answers - Piano — 274s
+- `2LHue8M12_Q` ラストスタンド — 214s
+- `iZBLGM45TOY` Echoes in the Distance — 230s
+- `iTY4dCbl-ec` Close in the Distance - Instrumental — 231s
+- `dEsSlg39CQ0` Close in the Distance — 450s
+- `oWlxof6nGZI` デュナミスの欠片 — 240s
+- `BrXo3K-2t00` 先ゆく星々 ～最終幻想 レムナント～ — 301s
+- `-R87yV59fW4` 終焉の戦い — 428s
+- `P5_zzXmKG-4` 想いが動かす力 — 335s
+- `rqbLbYGJb8I` Flow — 329s
+- `2izeleaXxJo` Endwalker — 176s
+- `WDmfjZwlEcY` 星と命を巡る物語 — 303s
+- `AYnlrsis9-w` 多彩なる都 ～ラザハン：昼～ — 291s
+- `jNtkOVAQ1uQ` 薫香の都 ～ラザハン：夜～ — 282s
+- `J1X3u_k4Wik` ハピネスキャロット ～楽園都市 スマイルトン～ — 313s
+- `aq02oj93Yzw` エスケープ (Journeys) ～次元の狭間オメガ：アルファ編～ — 255s
+- `HJck43ENcRs` 旅を駆け抜けて — 170s
+- `9sHd0lMTi-I` 魔のすべて — 323s
+- `oIw66A7cTu8` 縛めの鎖 ～万魔殿パンデモニウム：辺獄編～ — 393s
+- `7K4UhkfHiG4` 此処に獅子あり ～万魔殿パンデモニウム：辺獄編～ — 278s
+- `DW8FFEMrE7U` Endwalker (Chiptune Version) — 92s
+### USED GROWING LIGHT: FINAL FANTASY XIV Original Soundtrack (93)
+- `66mVngZ16No` 始まりの幻域 — 276s
+- `8WE6jacmwWE` 巡礼者の道 ～輝ける神域 アグライア～ — 403s
+- `yJYph0aVsss` 威光 ～輝ける神域 アグライア～ — 314s
+- `m87C0xmcqgw` 命の天秤 ～輝ける神域 アグライア～ — 270s
+- `ePIIsNG8m7I` 万世の言葉 (Journeys) ～禁書回収 グブラ幻想図書館～ — 190s
+- `kc9EGdoAhOM` 地図を広げて ～近東秘宝 アルザダール海底遺跡群～ — 266s
+- `MJmKYBp7gm8` ヒッポライダーズ — 193s
+- `DptqLOMJ6_U` トロイア国 ～暁月～ — 336s
+- `QAun_D8ASys` バトル２ (FINAL FANTASY IV) ～暁月～ — 278s
+- `OFx4YMMGDTw` 一方その頃 ～蠢く野心～ — 226s
+- `Uon5udYRLo4` ゴルベーザ四天王とのバトル ～禁断の記憶～ — 379s
+- `Jxud8v9nq7E` 灼熱の地へ (From Astral to Umbral) ～ザナラーンフィールド～ — 435s
+- `exave9PbZIE` 震える刃 — 272s
+- `ot0ExVeejL8` 終の戦 — 267s
+- `uVkZY-fs_uE` 英雄に続け — 281s
+- `6HMp3tkfDx4` ザナラーンの熱砂 ～異聞シラディハ水道～ — 251s
+- `XzbZrw-sDKc` 冒険者の休息 ～無人島開拓～ — 253s
+- `AIZvKF_bbIU` 豊かなる島 ～無人島開拓～ — 134s
+- `t4hPQGyeu3w` 涼やかなる洞窟 ～無人島開拓～ — 202s
+- `PW30bxUI704` 揺籃の輝星 — 371s
+- `lwIR8s8FoXQ` Silent Scream ～万魔殿パンデモニウム：煉獄編～ — 271s
+- `h8tIHASlAgc` Scream ～万魔殿パンデモニウム：煉獄編～ — 260s
+- `0D2fTCnHAT4` Embers ～万魔殿パンデモニウム：煉獄編～ — 403s
+- `_DJawjle1HE` White Stone Black ～万魔殿パンデモニウム：煉獄編～ — 383s
+- `Bq4D6E-TYss` ウォーミングアップ ～クリスタルコンフリクト～ — 130s
+- `xJhYgZimlhI` ハンターチャンス ～暁月～ — 292s
+- `mGLsfNRnqew` 走れ！ ～暁月～ — 169s
+- `ggJszVt40eM` 蒼天騎士団 — 195s
+- `MXFx3dvxXX0` 英傑 ～ナイツ・オブ・ラウンド討滅戦～ — 230s
+- `c-8_LdwW9OI` 邪竜の急襲 ～ニーズヘッグ征竜戦～ — 260s
+- `fu1fs-sMxRQ` 闘争 — 203s
+- `n31t8RlcIAI` 聖座 ～強硬突入 イシュガルド教皇庁～ — 170s
+- `FjOXeanXTcQ` Heavensward — 259s
+- `1V3eW5MKfAQ` Dragonsong — 342s
+- `bwY1ncMAdWY` 始祖たる幻龍 — 453s
+- `hhaWWFkvTYo` 逆襲の咆哮 (Orchestral Version) — 278s
+- `-VnhXgiH-xo` 神々の寵愛 ～喜びの神域 エウプロシュネ～ — 302s
+- `QZJQww8TMLc` 躍動する大地 ～喜びの神域 エウプロシュネ～ — 261s
+- `h1QY2WXLkx0` 月満ちる夜 ～喜びの神域 エウプロシュネ～ — 333s
+- `5MSwJ95dGJE` Dreamwalker — 330s
+- `C5eA_9CeBP8` 退路なき苦境 — 262s
+- `M7rpvessin0` 青が灯る洞 ～雪山冥洞 ラピス・マナリス～ — 267s
+- `YB2JVeFIDag` Forged in Crimson ～紅蓮の求道者～ — 379s
+- `OcP8uoYeGNY` 禁断の地 エウレカ ～暁月～ — 237s
+- `SB1B_Tj9BAk` 女神 (Pulse) ～女神ソフィア討滅戦～ — 139s
+- `vDIQBZUa0XQ` 忘却の彼方 (Pulse) ～蛮神シヴァ討滅戦～ — 143s
+- `5vwH8Zm1xFM` ロングフォール (Pulse) ～異界遺構 シルクス・ツイニング～ — 197s
+- `I__CIi5AH7A` 冥き水底 (Pulse) ～テンペスト：深部～ — 216s
+- `gHzqXjh-zbk` デルタスケープ ～次元の狭間オメガ：デルタ編～ — 192s
+- `MCM_vKIeNeg` 心を持たぬ者 ～次元の狭間オメガ：アルファ編～ — 397s
+- `zSIqfqKdTio` 空より現れし者 (Orchestral Version) ～次元の狭間オメガ：アルファ編～ — 277s
+- `LxO4TwLTtAQ` エスケープ ～次元の狭間オメガ：アルファ編～ — 289s
+- `m6uctU7rLkQ` 天より降りし力 (Concert Version) — 247s
+- `6QxZtyw6-74` プレリュード Demastered — 103s
+- `vqQ7SD-sRLE` 新生の鼓動 — 90s
+- `KccgV1pZrIs` 天より降りしポンポン — 130s
+- `P9V4yJKO95w` 勝利のファンファーレ Demastered — 55s
+- `z8FcPV5npD0` バトル２ from FINAL FANTASY III — 114s
+- `2aa2iHtr1EY` インペリウム — 389s
+- `6zhfaKTBvNw` One Amongst the Weary ～万魔殿パンデモニウム：天獄編～ — 313s
+- `xTVxJVRFZ9Y` Fleeting Moment ～万魔殿パンデモニウム：天獄編～ — 446s
+- `-VLUPO2yLkA` Athena, the Tireless One ～万魔殿パンデモニウム：天獄編～ — 343s
+- `ZMs4_9bSudI` Ultema The Perfect Body! ～暁月～ — 277s
+- `pl0xFHZ0DgA` 紅の夜更け (Journeys) ～クガネ：夜～ — 345s
+- `OEod5-XuJVg` 辺境の乱戦 — 180s
+- `GI-m8Q2o_Rk` 血の嵐 — 238s
+- `lEKBQR52Tgs` 鬨の声 — 196s
+- `iyfQP3gqqLw` 紅のリッジライン ～異聞六根山～ — 321s
+- `lK2R0ODlnaE` 星のため息 ～星霊間欠 ハーム島～ — 399s
+- `WHQtJYpHDW8` もう一つの月 ～暁月～ — 260s
+- `dri0mYfoJJE` ヴォイドの救済者 — 443s
+- `Eph8-LBrHmE` 哀しみのテーマ ～暁月～ — 387s
+- `L41Llt4JbLc` バロン王国 ～暁月～ — 387s
+- `5KtnKde7p9g` 最後の闘い (FINAL FANTASY IV) ～暁月～ — 262s
+- `jEWz5_c2pUY` 赤い翼 ～暁月～ — 161s
+- `_OSo2Dz2l-g` Tonitrua ex Machina — 64s
+- `zTxCW_yCVwI` Idylls of the Empire — 175s
+- `t3ZStuRmZ44` Forevermore - The Grand Duchy of Rosaria — 187s
+- `70YZvrFEeSc` The State of the Realm — 156s
+- `CFC9YJ6yRng` Before the Storm - Caer Norvent — 323s
+- `I1dlB-mU1UM` Away (Refrain) — 91s
+- `MhWUn-JD42o` To Sail Forbidden Seas — 364s
+- `fHFIcwf5gks` Find the Flame — 214s
+- `hmaJ1LxyTVo` Who I Really Am — 67s
+- `EOwgOfnbUuA` Land of Eikons — 148s
+- `ve0Al1U_zPU` 神子の微睡み ～アロアロ島～ — 328s
+- `iw92e-r9vgo` 神子の狩猟祭 ～異聞アロアロ島～ — 310s
+- `CEX5kW32Fek` 異星人はかく語りき — 33s
+- `XGG6T5fzVnw` 古き良き事件屋のテーマ — 146s
+- `XdW_v3USuqk` ときめき紳士エスコート — 53s
+- `B_-4IgDfFKk` 願いは追い風となりて ～華めく神域 タレイア～ — 349s
+- `xjivoxA0e5o` 熱情の奔流 ～華めく神域 タレイア～ — 269s
+- `sJV1KhfAPSk` Myths of the Realm ～華めく神域 タレイア～ — 317s
+### USED DAWNTRAIL: FINAL FANTASY XIV Original Soundtrack (66)
+- `TnevVo2JP5k` Dawntrail — 334s
+- `UOPKW7mtlOc` 黄金のプレリュード — 70s
+- `S17ghgIzTFA` タコスでパーティー！ — 175s
+- `UUYzsaJk0Qw` 金煌なる民 〜トライヨラ：昼〜 — 563s
+- `4qnCb0zioKM` 笑顔を護るために — 263s
+- `acdpgBPPlI0` 山峡の涼風 〜オルコ・パチャ：昼〜 — 167s
+- `27AGn_plX4Y` 心躍る駆け引き — 151s
+- `FK67SdgAe-A` 愉快な暮らし — 118s
+- `H5XK_b1fi8o` 陽気な大騒動 — 159s
+- `Z8Hsr0Vwb4g` 山峡の夜風 〜オルコ・パチャ：夜〜 — 335s
+- `HdeRYEk7fzs` 極彩色の羽根 〜コザマル・カ：昼〜 — 166s
+- `sx3TgfV1kyw` お茶目な戯れ — 214s
+- `H2vgBEqqkrI` プヌティーの川上り 〜濁流遡上 イフイカ・トゥム〜 — 282s
+- `JAKCQlM3q6U` 路を遮るもの — 243s
+- `YPSPkJ3wWd4` 極彩色の宝飾品 〜コザマル・カ：夜〜 — 304s
+- `f2YUCCY2QOs` 積み重ねる日々 — 171s
+- `D6_v7YSbdN4` 雲衝く高峰 〜山嶺登頂 ウォーコー・ゾーモー〜 — 269s
+- `sY8F0wTKKg8` 刻まれた記憶 — 275s
+- `yP1skR3eRKI` The Skyruin 〜ヴァリガルマンダ討滅戦〜 — 453s
+- `2i_WW3xfca8` Dawntrail (Instrumental) — 334s
+- `a27Ic6_ULPw` 空と森の境界 〜ヤクテル樹海：昼〜 — 164s
+- `zaqg4nIzMf4` コーヒーブレイク — 346s
+- `LdY0YITJHY4` 森と地底の境界 〜ヤクテル樹海：夜〜 — 293s
+- `2hD4D2n8ZB4` 樹海に沈む夢 〜遺産踏査 天深きセノーテ〜 — 273s
+- `a2N6ifzmrqk` 路を拓くもの — 284s
+- `gBKbDygUWso` 金煌なる夜明け 〜トライヨラ：夜〜 — 406s
+- `MskKgznHGb4` 硝煙に青炎 〜シャーローニ荒野：昼〜 — 199s
+- `oOqA6q7g1a8` 荒野に生きる人々 — 179s
+- `HsCsLcDhwUE` 硝煙に緑陰 〜シャーローニ荒野：夜〜 — 291s
+- `-sLPOvfomqo` 暗夜の礫 — 257s
+- `mFmpNVj_FPc` 踏みにじられた心 — 224s
+- `shD6O_JSHH0` 火花と閃光 〜外征前哨 ヴァンガード〜 — 264s
+- `f1xHWNVIOvQ` 迸る雷光 〜ヘリテージファウンド：昼〜 — 152s
+- `1p-ZExRQes4` プリマビスタ楽団 — 107s
+- `WHSuaJy4OA8` タンタラスのテーマ 〜黄金〜 — 265s
+- `BepDSfnfvVQ` 暗き雷雲 〜ヘリテージファウンド：夜〜 — 197s
+- `hNAG7MNVN0Y` 星なき摩天楼 〜ソリューション・ナイン〜 — 306s
+- `oiisbyMWXQQ` あなたのぬくもり — 36s
+- `EmY2vdrdc_g` Endwalker – Footfalls（Extended） — 449s
+- `vw0yBRThWyw` 生命の解体 〜魂魄工廠 オリジェニクス〜 — 266s
+- `Nh69pw1PmyE` レゾンデートル 〜ゾラージャ討滅戦〜 — 516s
+- `WP3zbQqYBuY` 遠き日の思い出 〜リビング・メモリー：開園〜 — 473s
+- `SX4w8v9Zpc0` とけた魔法と心 — 232s
+- `D7ailCh7168` 明けの空を見上げて — 284s
+- `k2saxeEfCkc` 限りある時間（とき） — 187s
+- `zV6pThqBl-s` 今宵 — 19s
+- `IFUfTtsnWrc` この刃に懸けて — 164s
+- `FDw_3J5tCV8` 守るべきもの — 144s
+- `TCPO9yAw49g` 消えぬ悲しみ — 211s
+- `9r_pVTwKEzE` 終わりなき軌跡 〜記憶幻想 アレクサンドリア〜 — 406s
+- `5lLPH-peQ04` ひとつの路 〜エターナルクイーン討滅戦〜 — 464s
+- `YLJzjt0LdNE` ふたりの路 〜エターナルクイーン討滅戦〜 — 364s
+- `rDKZ8m8_Xo8` それぞれの旅路へ — 306s
+- `2ulx4YhvY-k` Smile — 275s
+- `0B04O-dtsBo` Open Sky - The Theme from Dawntrail — 194s
+- `PYhBv5F3k1k` 遠き日の残響 〜リビング・メモリー：閉園〜 — 242s
+- `NC0pNbUtt-I` バトル1 from FINAL FANTASY IX — 163s
+- `F05xrw5b288` フェアリーバトル — 150s
+- `mMoInXoxWOc` 赤き大地の恵み 〜荒野秘境 サボテンダーバレー〜 — 348s
+- `itYlyyhh8As` 月なきみそらの道化師たち 〜黄金〜 — 258s
+- `VIAEqFRFfok` The Ring's Reprieve — 348s
+- `9aZDfNsMiyE` It's Showtime! 〜至天の座アルカディア：ライトヘビー級〜 — 324s
+- `yATUTJPC3XY` Bee My Honey 〜至天の座アルカディア：ライトヘビー級〜 — 270s
+- `ooKTFwRHMWM` Burning Souls 〜至天の座アルカディア：ライトヘビー級〜 — 325s
+- `9Fzso0nXWdg` Give it All 〜至天の座アルカディア：ライトヘビー級〜 — 336s
+- `82xjFFCRXvQ` A Risky Bet 〜至天の座アルカディア：ライトヘビー級〜 — 344s
+### FINAL 785 songs; merged as the same song:
+- `プレリュード ～冒険の序章～` [A REALM REBORN: FINAL FANTASY XIV Origin] → kept `プレリュード ～再誕の煌めき～  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `プレリュード ～追憶の煌めき～` [Before Meteor: FINAL FANTASY XIV Origina] → kept `プレリュード ～再誕の煌めき～  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `レンタル de チョコボ` [Before Meteor: FINAL FANTASY XIV Origina] → kept `レンタル de チョコボ  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `勝利のファンファーレ ～凱歌～ (ショート)` [Before Meteor: FINAL FANTASY XIV Origina] → kept `勝利のファンファーレ ～新生 (フル) ～  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `原始の審判` [Before Meteor: FINAL FANTASY XIV Origina] → kept `原始の審判  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `闇の抱擁` [Before Meteor: FINAL FANTASY XIV Origina] → kept `闇の抱擁  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `闇の口付` [Before Meteor: FINAL FANTASY XIV Origina] → kept `闇の口付  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `ネメシス` [Before Meteor: FINAL FANTASY XIV Origina] → kept `ネメシス  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `勝利のファンファーレ ～凱歌～ (ロング)` [Before Meteor: FINAL FANTASY XIV Origina] → kept `勝利のファンファーレ ～新生 (フル) ～  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `エオルゼア de チョコボ` [Before Meteor: FINAL FANTASY XIV Origina] → kept `エオルゼア de チョコボ  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `疾きこと銀の如く、硬きこと石の如く` [Before Meteor: FINAL FANTASY XIV Origina] → kept `疾きこと銀の如く、硬きこと石の如く  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `猛き嵐の剣に` [Before Meteor: FINAL FANTASY XIV Origina] → kept `猛き嵐の剣に  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `炎獄の火種` [Before Meteor: FINAL FANTASY XIV Origina] → kept `炎獄の火種  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `隠し財宝を求めて` [Before Meteor: FINAL FANTASY XIV Origina] → kept `隠し財宝を求めて  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `善王モグル･モグXII世` [Before Meteor: FINAL FANTASY XIV Origina] → kept `善王モグル･モグXII世  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `その背に揺られて` [Before Meteor: FINAL FANTASY XIV Origina] → kept `その背に揺られて  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `極限を超えて` [Before Meteor: FINAL FANTASY XIV Origina] → kept `極限を超えて  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `事件屋のアレ` [Before Meteor: FINAL FANTASY XIV Origina] → kept `事件屋のアレ  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `堕天せし者` [Before Meteor: FINAL FANTASY XIV Origina] → kept `堕天せし者  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `怒れる神々` [Before the Fall: FINAL FANTASY XIV Origi] → kept `怒れる神々  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `憤怒 ～盟友支援 ブレイフロクスの野営地～` [Before the Fall: FINAL FANTASY XIV Origi] → kept `憤怒  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `キャラバン護衛 ～剣闘領域 ハラタリ修練所～` [Before the Fall: FINAL FANTASY XIV Origi] → kept `キャラバン護衛  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `紅蓮の戦旗の下に ～剣闘領域 ハラタリ修練所～` [Before the Fall: FINAL FANTASY XIV Origi] → kept `紅蓮の戦旗の下に  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `混沌の渦動 ～蛮神リヴァイアサン討滅戦:女性版～` [Before the Fall: FINAL FANTASY XIV Origi] → kept `混沌の渦動 ～蛮神リヴァイアサン討滅戦～  [Before the Fall: FINAL FANTASY XIV Origi]`
+- `メテオ` [Before the Fall: FINAL FANTASY XIV Origi] → kept `メテオ  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `戦乱` [Before the Fall: FINAL FANTASY XIV Origi] → kept `戦乱  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `白銀の凶鳥、飛翔せり` [Before the Fall: FINAL FANTASY XIV Origi] → kept `白銀の凶鳥、飛翔せり  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `地平線の彼方 ～財宝伝説 ハルブレーカー･アイル～` [Before the Fall: FINAL FANTASY XIV Origi] → kept `地平線の彼方  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `Answers - Reprise` [Before the Fall: FINAL FANTASY XIV Origi] → kept `Answers  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `紅蓮祭` [Before the Fall: FINAL FANTASY XIV Origi] → kept `紅蓮祭  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `槍旗` [Before the Fall: FINAL FANTASY XIV Origi] → kept `槍旗  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `永遠の誓い` [Before the Fall: FINAL FANTASY XIV Origi] → kept `永遠の誓い  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `聖なる助言者` [THE FAR EDGE OF FATE:FINAL FANTASY XIV O] → kept `聖なる助言者  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `戦神の教義 ～皇都イシュガルド防衛戦～` [THE FAR EDGE OF FATE:FINAL FANTASY XIV O] → kept `戦神の教義 ～皇都イシュガルド防衛戦～  [Before the Fall: FINAL FANTASY XIV Origi]`
+- `始祖たる幻龍` [THE FAR EDGE OF FATE:FINAL FANTASY XIV O] → kept `始祖たる幻龍  [Before the Fall: FINAL FANTASY XIV Origi]`
+- `自由なる風に吹かれて` [THE FAR EDGE OF FATE:FINAL FANTASY XIV O] → kept `自由なる風に吹かれて  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `黒衣の迷宮` [THE FAR EDGE OF FATE:FINAL FANTASY XIV O] → kept `黒衣の迷宮  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `淡き光の夢に` [THE FAR EDGE OF FATE:FINAL FANTASY XIV O] → kept `淡き光の夢に  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `モードゥナの涙雨` [THE FAR EDGE OF FATE:FINAL FANTASY XIV O] → kept `モードゥナの涙雨  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `永遠の欠片` [THE FAR EDGE OF FATE:FINAL FANTASY XIV O] → kept `永遠の欠片  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `約束の地 ～影の国ダン･スカー～` [THE FAR EDGE OF FATE:FINAL FANTASY XIV O] → kept `約束の地  [Heavensward: FINAL FANTASY XIV Original ]`
+- `砂塵` [THE FAR EDGE OF FATE:FINAL FANTASY XIV O] → kept `砂塵  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `美の謀略 (Oasis Mix) ～蛮神ラクシュミ討滅戦～` [STORMBLOOD: FINAL FANTASY XIV Original S] → kept `美の謀略 ～蛮神ラクシュミ討滅戦～  [STORMBLOOD: FINAL FANTASY XIV Original S]`
+- `アンブレーカブル (Duality) ～博物戦艦 フラクタル･コンティニアム～` [STORMBLOOD: FINAL FANTASY XIV Original S] → kept `アンブレーカブル ～博物戦艦 フラクタル･コンティニアム～  [Heavensward: FINAL FANTASY XIV Original ]`
+- `決戦 ～次元の狭間オメガ:シグマ編～` [STORMBLOOD: FINAL FANTASY XIV Original S] → kept `決戦 ～次元の狭間オメガ:デルタ編～  [STORMBLOOD: FINAL FANTASY XIV Original S]`
+- `ノー･クォーター` [STORMBLOOD: FINAL FANTASY XIV Original S] → kept `ノー･クォーター  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `セイレーンの呼び声` [STORMBLOOD: FINAL FANTASY XIV Original S] → kept `セイレーンの呼び声  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `堕天せし者 (From Astral to Umbral) ～蛮神ガルーダ討伐戦～` [STORMBLOOD: FINAL FANTASY XIV Original S] → kept `堕天せし者  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `原始の審判 (From Astral to Umbral) ～蛮神イフリート討伐戦～` [STORMBLOOD: FINAL FANTASY XIV Original S] → kept `原始の審判  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `過重圧殺! (From Astral to Umbral) ～蛮神タイタン討滅戦～` [STORMBLOOD: FINAL FANTASY XIV Original S] → kept `過重圧殺! ～蛮神タイタン討滅戦～  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `究極幻想 (Orchestral Version)` [STORMBLOOD: FINAL FANTASY XIV Original S] → kept `究極幻想  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `勝利のファンファーレ ～FFXIIバージョン～` [STORMBLOOD: FINAL FANTASY XIV Original S] → kept `勝利のファンファーレ ～新生 (フル) ～  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `ローカス (Duality) ～機工城アレキサンダー：起動編～` [DEATH UNTO DAWN: FINAL FANTASY XIV Origi] → kept `ローカス ～機工城アレキサンダー:起動編～  [Heavensward: FINAL FANTASY XIV Original ]`
+- `メタル：ブルートジャスティスモード (Journeys)...` [DEATH UNTO DAWN: FINAL FANTASY XIV Origi] → kept `メタル:ブルートジャスティスモード ～機工城アレキサンダー:律動編～  [THE FAR EDGE OF FATE:FINAL FANTASY XIV O]`
+- `ライズ (Journeys) ～機工城アレキサンダー：天動編～` [DEATH UNTO DAWN: FINAL FANTASY XIV Origi] → kept `ライズ ～機工城アレキサンダー:天動編～  [THE FAR EDGE OF FATE:FINAL FANTASY XIV O]`
+- `メビウス (Orchestral Version) ～機工城アレキサンダー：天動編～` [DEATH UNTO DAWN: FINAL FANTASY XIV Origi] → kept `メビウス ～機工城アレキサンダー:天動編～  [THE FAR EDGE OF FATE:FINAL FANTASY XIV O]`
+- `スターライト de チョコボ？` [DEATH UNTO DAWN: FINAL FANTASY XIV Origi] → kept `スターライト de チョコボ  [DEATH UNTO DAWN: FINAL FANTASY XIV Origi]`
+- `貪欲 (Scions & Sinners)` [DEATH UNTO DAWN: FINAL FANTASY XIV Origi] → kept `貪欲  [SHADOWBRINGERS: FINAL FANTASY XIV Origin]`
+- `究極幻想 (Scions & Sinners)` [DEATH UNTO DAWN: FINAL FANTASY XIV Origi] → kept `究極幻想  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `白銀の凶鳥、飛翔せり (Orchestral Version)` [DEATH UNTO DAWN: FINAL FANTASY XIV Origi] → kept `白銀の凶鳥、飛翔せり  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `雪上の足跡 ～蛮神シヴァ前哨戦～` [DEATH UNTO DAWN: FINAL FANTASY XIV Origi] → kept `雪上の足跡 ～蛮神シヴァ前哨戦～  [Before the Fall: FINAL FANTASY XIV Origi]`
+- `死闘 (Zodiac Age Version)` [DEATH UNTO DAWN: FINAL FANTASY XIV Origi] → kept `死闘 ～蒼天～  [THE FAR EDGE OF FATE:FINAL FANTASY XIV O]`
+- `悠久の風 ～漆黒～` [DEATH UNTO DAWN: FINAL FANTASY XIV Origi] → kept `悠久の風 ～新生～  [Before the Fall: FINAL FANTASY XIV Origi]`
+- `上り階段をくだれ ～星海観測 逆さの塔～` [ENDWALKER: FINAL FANTASY XIV Original So] → kept `上り階段をくだれ ～星海観測 逆さの塔～  [THE FAR EDGE OF FATE:FINAL FANTASY XIV O]`
+- `冥き水底 (Scions & Sinners) ～テンペスト：深部～` [ENDWALKER: FINAL FANTASY XIV Original So] → kept `冥き水底 ～テンペスト:深部～  [SHADOWBRINGERS: FINAL FANTASY XIV Origin]`
+- `イマジネーション (Duality) ～蒼天聖戦 魔科学研究所～` [ENDWALKER: FINAL FANTASY XIV Original So] → kept `イマジネーション ～蒼天聖戦 魔科学研究所～  [Heavensward: FINAL FANTASY XIV Original ]`
+- `灰より生まれし者` [ENDWALKER: FINAL FANTASY XIV Original So] → kept `灰より生まれし者  [Before the Fall: FINAL FANTASY XIV Origi]`
+- `Answers` [ENDWALKER: FINAL FANTASY XIV Original So] → kept `Answers  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `Answers - Piano` [ENDWALKER: FINAL FANTASY XIV Original So] → kept `Answers  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `Close in the Distance` [ENDWALKER: FINAL FANTASY XIV Original So] → kept `Close in the Distance - Instrumental  [ENDWALKER: FINAL FANTASY XIV Original So]`
+- `Endwalker` [ENDWALKER: FINAL FANTASY XIV Original So] → kept `Endwalker - Footfalls  [ENDWALKER: FINAL FANTASY XIV Original So]`
+- `エスケープ (Journeys) ～次元の狭間オメガ：アルファ編～` [ENDWALKER: FINAL FANTASY XIV Original So] → kept `エスケープ ～次元の狭間オメガ:アルファ編～  [SHADOWBRINGERS: FINAL FANTASY XIV Origin]`
+- `Endwalker (Chiptune Version)` [ENDWALKER: FINAL FANTASY XIV Original So] → kept `Endwalker - Footfalls  [ENDWALKER: FINAL FANTASY XIV Original So]`
+- `万世の言葉 (Journeys) ～禁書回収 グブラ幻想図書館～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `万世の言葉 ～禁書回収 グブラ幻想図書館～  [Heavensward: FINAL FANTASY XIV Original ]`
+- `バトル２ (FINAL FANTASY IV) ～暁月～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `バトル2 ～次元の狭間オメガ:デルタ編～  [STORMBLOOD: FINAL FANTASY XIV Original S]`
+- `灼熱の地へ (From Astral to Umbral) ～ザナラーンフィールド～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `灼熱の地へ  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `震える刃` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `震える刃  [ENDWALKER: FINAL FANTASY XIV Original So]`
+- `終の戦` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `終の戦  [ENDWALKER: FINAL FANTASY XIV Original So]`
+- `英雄に続け` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `英雄に続け  [ENDWALKER: FINAL FANTASY XIV Original So]`
+- `蒼天騎士団` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `蒼天騎士団  [Heavensward: FINAL FANTASY XIV Original ]`
+- `英傑 ～ナイツ・オブ・ラウンド討滅戦～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `英傑 ～ナイツ･オブ･ラウンド討滅戦～  [Heavensward: FINAL FANTASY XIV Original ]`
+- `邪竜の急襲 ～ニーズヘッグ征竜戦～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `邪竜の急襲 ～ニーズヘッグ征竜戦～  [THE FAR EDGE OF FATE:FINAL FANTASY XIV O]`
+- `闘争` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `闘争  [Heavensward: FINAL FANTASY XIV Original ]`
+- `聖座 ～強硬突入 イシュガルド教皇庁～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `聖座 ～強硬突入 イシュガルド教皇庁～  [Heavensward: FINAL FANTASY XIV Original ]`
+- `Heavensward` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `Heavensward  [Heavensward: FINAL FANTASY XIV Original ]`
+- `Dragonsong` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `Dragonsong  [Heavensward: FINAL FANTASY XIV Original ]`
+- `始祖たる幻龍` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `始祖たる幻龍  [Before the Fall: FINAL FANTASY XIV Origi]`
+- `逆襲の咆哮 (Orchestral Version)` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `逆襲の咆哮  [THE FAR EDGE OF FATE:FINAL FANTASY XIV O]`
+- `女神 (Pulse) ～女神ソフィア討滅戦～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `女神 ～女神ソフィア討滅戦～  [THE FAR EDGE OF FATE:FINAL FANTASY XIV O]`
+- `忘却の彼方 (Pulse) ～蛮神シヴァ討滅戦～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `忘却の彼方 ～蛮神シヴァ討滅戦～  [Before the Fall: FINAL FANTASY XIV Origi]`
+- `ロングフォール (Pulse) ～異界遺構 シルクス・ツイニング～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `ロングフォール ～異界遺構 シルクス･ツイニング～  [SHADOWBRINGERS: FINAL FANTASY XIV Origin]`
+- `冥き水底 (Pulse) ～テンペスト：深部～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `冥き水底 ～テンペスト:深部～  [SHADOWBRINGERS: FINAL FANTASY XIV Origin]`
+- `デルタスケープ ～次元の狭間オメガ：デルタ編～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `デルタスケープ ～次元の狭間オメガ:デルタ編～  [STORMBLOOD: FINAL FANTASY XIV Original S]`
+- `心を持たぬ者 ～次元の狭間オメガ：アルファ編～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `心を持たぬ者 ～次元の狭間オメガ:アルファ編～  [SHADOWBRINGERS: FINAL FANTASY XIV Origin]`
+- `空より現れし者 (Orchestral Version) ～次元の狭間オメガ：アルファ編～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `空より現れし者 ～次元の狭間オメガ:アルファ編～  [SHADOWBRINGERS: FINAL FANTASY XIV Origin]`
+- `エスケープ ～次元の狭間オメガ：アルファ編～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `エスケープ ～次元の狭間オメガ:アルファ編～  [SHADOWBRINGERS: FINAL FANTASY XIV Origin]`
+- `天より降りし力 (Concert Version)` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `天より降りし力  [A REALM REBORN: FINAL FANTASY XIV Origin]`
+- `インペリウム` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `インペリウム  [Before Meteor: FINAL FANTASY XIV Origina]`
+- `Ultema The Perfect Body! ～暁月～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `Ultema The Perfect Body!  [SHADOWBRINGERS: FINAL FANTASY XIV Origin]`
+- `紅の夜更け (Journeys) ～クガネ：夜～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `紅の夜更け ～クガネ:夜～  [STORMBLOOD: FINAL FANTASY XIV Original S]`
+- `辺境の乱戦` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `辺境の乱戦  [STORMBLOOD: FINAL FANTASY XIV Original S]`
+- `血の嵐` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `血の嵐  [STORMBLOOD: FINAL FANTASY XIV Original S]`
+- `鬨の声` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `鬨の声  [STORMBLOOD: FINAL FANTASY XIV Original S]`
+- `最後の闘い (FINAL FANTASY IV) ～暁月～` [GROWING LIGHT: FINAL FANTASY XIV Origina] → kept `最後の闘い ～次元の狭間オメガ:デルタ編～  [STORMBLOOD: FINAL FANTASY XIV Original S]`
+- `Dawntrail (Instrumental)` [DAWNTRAIL: FINAL FANTASY XIV Original So] → kept `Dawntrail  [DAWNTRAIL: FINAL FANTASY XIV Original So]`
+- `Endwalker – Footfalls（Extended）` [DAWNTRAIL: FINAL FANTASY XIV Original So] → kept `Endwalker - Footfalls  [ENDWALKER: FINAL FANTASY XIV Original So]`
+
+
