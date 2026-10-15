@@ -135,7 +135,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
         SlimSearchField(
             value = vm.input,
             onValueChange = { vm.input = it.take(100) }, // song names are short; keeps matching cheap
-            placeholder = "Search any title\\name\\game...",
+            placeholder = "Search any title/name/game…",
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp)

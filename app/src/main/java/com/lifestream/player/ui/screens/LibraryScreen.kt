@@ -127,7 +127,7 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
                                 item(key = "empty") {
                                     EmptyState(
                                         "No playlists yet",
-                                        "Make one with the button below, or press and hold any song and choose Add to playlist.",
+                                        "Make one with the button below, or press and hold any song and choose \"Add to playlist\".",
                                     )
                                 }
                             }
@@ -308,7 +308,7 @@ fun PlaylistScreen(playlistId: String, onBack: () -> Unit) {
         }
         if (playlist.tracks.isEmpty()) {
             item(key = "empty") {
-                EmptyState("This playlist is empty", "Press and hold any song and choose Add to playlist.")
+                EmptyState("This playlist is empty", "Press and hold any song and choose \"Add to playlist\".")
             }
         }
         itemsIndexed(playlist.tracks, key = { _, t -> t.id }) { index, track ->
@@ -336,7 +336,7 @@ fun PlaylistScreen(playlistId: String, onBack: () -> Unit) {
         AlertDialog(
             onDismissRequest = { deleting = false },
             title = { Text("Delete \"${playlist.name}\"?") },
-            text = { Text("The playlist is removed. The songs stay in their soundtracks.") },
+            text = { Text("This removes the playlist. Its songs stay in their soundtracks.") },
             confirmButton = {
                 TextButton(onClick = {
                     deleting = false

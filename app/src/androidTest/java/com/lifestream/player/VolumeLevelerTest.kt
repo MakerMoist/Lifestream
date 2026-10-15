@@ -19,7 +19,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.sin
 
-/** "Even Out Volume": quiet songs come up, loud ones down, nothing clips, off means untouched. */
+/** "Volume Equalizer": quiet songs come up, loud ones down, nothing clips, off means untouched. */
 @RunWith(AndroidJUnit4::class)
 class VolumeLevelerTest {
     private val rate = 48_000
@@ -137,6 +137,6 @@ class VolumeLevelerTest {
         } finally {
             AppSettings.setLevelVolume(was)
         }
-        Log.i("LSTEST", "Even Out Volume: raises quiet songs, lowers loud ones, never clips")
+        Log.i("LSTEST", "Volume Equalizer: raises quiet songs, lowers loud ones, never clips")
     }
 }

@@ -110,7 +110,7 @@ object Updater {
                         requireGitHub(response.request.url.toString()) // where redirects actually landed
                         val body = response.body ?: throw IOException("Download failed (empty response).")
                         val total = body.contentLength().takeIf { it > 0 } ?: release.apkSize
-                        if (total > MAX_APK_BYTES) throw IOException("Update is unexpectedly large.")
+                        if (total > MAX_APK_BYTES) throw IOException("The update is unexpectedly large.")
                         val digest = MessageDigest.getInstance("SHA-256")
                         var read = 0L
                         var lastPercent = -1
@@ -121,7 +121,7 @@ object Updater {
                                     val n = input.read(buf)
                                     if (n < 0) break
                                     read += n
-                                    if (read > MAX_APK_BYTES) throw IOException("Update is unexpectedly large.")
+                                    if (read > MAX_APK_BYTES) throw IOException("The update is unexpectedly large.")
                                     digest.update(buf, 0, n)
                                     out.write(buf, 0, n)
                                     if (total > 0) {

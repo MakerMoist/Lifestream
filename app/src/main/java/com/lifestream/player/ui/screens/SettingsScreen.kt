@@ -373,26 +373,13 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
                 Column(Modifier.weight(1f)) {
                     Text("Pause On Zero Volume", style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "When lowering the volume to zero, the current song pauses. Resumes playing after the volume increases.",
+                        "When you lower the volume to zero, the current song pauses. It resumes playing when the volume goes back up.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = pauseAtZeroVolume, onCheckedChange = { AppSettings.setPauseAtZeroVolume(it) })
-            }
-            Spacer(Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Even Out Volume", style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        "Raises quiet songs and lowers loud ones so every song plays at a similar volume.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Spacer(Modifier.width(12.dp))
-                Switch(checked = levelVolume, onCheckedChange = { AppSettings.setLevelVolume(it) })
             }
             Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -412,7 +399,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
                 Column(Modifier.weight(1f)) {
                     Text("Playlist Stays Open", style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "When toggled, the last played playlist/Queue will continue after re-opening the app.",
+                        "When toggled on, the last-played playlist/queue continues after you reopen the app.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -422,6 +409,19 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
                     AppSettings.setKeepQueue(it)
                     if (it) com.lifestream.player.playback.PlayerConnection.saveQueue() else com.lifestream.player.playback.PlayerConnection.forgetSavedQueue()
                 })
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Volume Equalizer", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Raises quiet songs and lowers loud ones so every song plays at a similar volume.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = levelVolume, onCheckedChange = { AppSettings.setLevelVolume(it) })
             }
         }
         // Which titles appear on Home, in Search and in New Game (a page of its own, like Themes).
@@ -436,7 +436,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
         SettingsCard {
             Text("Song List Order", style = MaterialTheme.typography.bodyLarge)
             Text(
-                "Changes how the songs are organized when opening the title.",
+                "Changes how songs are ordered when you open a title.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -483,7 +483,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
                 Column(Modifier.weight(1f)) {
                     Text("Android Auto", style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "Show your titles, playlists and history in Android Auto, with its full-screen player.",
+                        "Show your titles, playlists and history in Android Auto.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -498,7 +498,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
                 Column(Modifier.weight(1f)) {
                     Text("Close Fully From Recent Apps", style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "Swiping the app closed in your recent app list force closes it.",
+                        "Swiping the app closed in your recent apps list force-closes it.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -510,7 +510,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
         SettingsCard {
             Text("Saved Songs", style = MaterialTheme.typography.bodyLarge)
             Text(
-                "Cache recently streamed songs locally instead of using data. Speeds up listening but uses more storage.",
+                "Caches recently streamed songs locally so they don't use data again. This speeds up listening but uses more storage.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -707,7 +707,7 @@ private fun AndroidAutoSetupHint(context: Context) {
         "Open Android Auto's settings (button below, then \"Additional settings in the app\").",
         "Scroll down and tap \"Version and permission info\" 10 times to unlock developer mode.",
         "Open the ⋮ menu → Developer settings, and turn on \"Unknown sources\".",
-        "Reconnect your phone to the car. LifeStream then appears in the car's app list.",
+        "Reconnect your phone to the car. LifeStream will then appear in the car's app list.",
     ).forEachIndexed { i, step ->
         Text(
             "${i + 1}. $step",

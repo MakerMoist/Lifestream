@@ -97,7 +97,7 @@ class OkHttpDownloader(private val client: OkHttpClient) : Downloader() {
 
         client.newCall(builder.build()).execute().use { response ->
             if (response.code == 429) {
-                throw ReCaptchaException("Rate limited by YouTube (HTTP 429)", request.url())
+                throw ReCaptchaException("Rate-limited by YouTube (HTTP 429)", request.url())
             }
             return Response(
                 response.code,
