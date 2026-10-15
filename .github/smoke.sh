@@ -123,7 +123,9 @@ fi
 # Library: swipe from Playlists to History and back with the Library tab.
 if tap_text "Library"; then
   sleep 3
-  adb shell input swipe 900 1300 150 1300 300; sleep 2
+  size=$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1)
+  sw=${size%x*}; sh=${size#*x}
+  adb shell input swipe $(( sw * 85 / 100 )) $(( sh * 55 / 100 )) $(( sw * 15 / 100 )) $(( sh * 55 / 100 )) 300; sleep 2
   if [ -n "$(find_node "Clear")" ] || [ -n "$(find_node "Nothing played yet")" ]; then
     echo "::notice::Library: swiping left opens History"
   else

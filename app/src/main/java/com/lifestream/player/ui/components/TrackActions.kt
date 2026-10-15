@@ -430,7 +430,8 @@ private fun MenuRow(item: MenuItem) {
     Row(
         Modifier
             .fillMaxWidth()
-            .clickable(onClick = item.onClick)
+            // Ignored while the menu is already closing (a second quick tap mustn't repeat it).
+            .clickable { if (TrackActions.target.value != null) item.onClick() }
             .padding(horizontal = 16.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
