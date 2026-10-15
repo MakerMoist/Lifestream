@@ -212,10 +212,12 @@ object Matching {
         val (_, q, phrase) = forQuery(query)
         if (q.isEmpty()) return null
         val normTitle = normalizedTitle(title)
-        val words = normTitle.split(' ').filter { it.isNotEmpty() }
+        // Numbers are compared the way the query has them: the query's "2" became "II" (so "ff 7"
+        // finds VII), so a song called "Battle 2" must count as "Battle II" too.
+        val words = normTitle.split(' ').filter { it.isNotEmpty() }.map(::canonical)
         val all = words + extraTokens
         val compactQuery = q.joinToString("")
-        val compactTitle = normTitle.replace(" ", "")
+        val compactTitle = words.joinToString("")
 
         var score = when {
             q.all { w -> words.any { it.startsWith(w) } } -> 6

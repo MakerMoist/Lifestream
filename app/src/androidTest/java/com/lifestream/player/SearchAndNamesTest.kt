@@ -73,6 +73,12 @@ class SearchAndNamesTest {
         assertNotNull(Matching.searchScore("air buster", "Airbuster"))
         assertNotNull(Matching.searchScore("liberifatali", "Liberi Fatali"))
         assertNull(Matching.searchScore("chocobo", "One-Winged Angel"))
+        // Numbered songs, typed either way.
+        assertNotNull(Matching.searchScore("Battle 2", "Battle 2"))
+        assertNotNull(Matching.searchScore("battle 2", "Battle II"))
+        assertNotNull(Matching.searchScore("Fanfare 2", "Fanfare 2"))
+        assertNotNull(Matching.searchScore("track 17", "Track 17"))
+        assertTrue(Matching.searchScore("Battle 2", "Battle 2")!! > (Matching.searchScore("Battle 2", "Battle 1") ?: 0))
         // Exact names rank above partial ones.
         val exact = Matching.searchScore("prelude", "Prelude")!!
         val partial = Matching.searchScore("prelude", "Prelude to the Battle")!!

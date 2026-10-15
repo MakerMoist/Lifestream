@@ -43,5 +43,7 @@ for path in glob.glob("app/build/outputs/androidTest-results/**/TEST-*.xml", rec
 print(f"::notice title=Feature tests::{passed} passed, {failed} failed, {skipped} skipped")
 PY
 
-grep -E "LSTEST" "$RUNNER_TEMP/notes.txt" | sed -E 's/^[^:]*: //' | sort -u | head -20 | sed 's/^/::notice::/' || true
+# One annotation for all notes (GitHub shows only ten notices per step).
+notes=$(grep -E "LSTEST" "$RUNNER_TEMP/notes.txt" | sed -E 's/^[^:]*: //' | sort -u | head -40 | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')
+[ -n "$notes" ] && echo "::notice title=Feature notes::$notes"
 exit $status
