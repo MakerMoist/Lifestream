@@ -20,6 +20,7 @@ object Catalog {
     )
 
     val games: List<Game> = listOf(
+
         // Main series
         Game("ff1", "I", "Final Fantasy", 1987, "Nobuo Uematsu",
             "Final Fantasy I original soundtrack", c(0xFF1E3A8A), c(0xFF60A5FA),
@@ -39,6 +40,13 @@ object Catalog {
             "Final Fantasy V original soundtrack", c(0xFF134E4A), c(0xFF5EEAD4), match = num("V"), art = R.drawable.art_ff5),
         Game("ff6", "VI", "Final Fantasy VI", 1994, "Nobuo Uematsu",
             "Final Fantasy VI original soundtrack", c(0xFF4A044E), c(0xFFE879F9), match = num("VI"), art = R.drawable.art_ff6),
+        Game("ccr", "CC·R", "Crisis Core: Reunion", 2022, "Takeharu Ishimoto",
+            "Crisis Core Final Fantasy VII Reunion original soundtrack", c(0xFF172554), c(0xFF93C5FD),
+            match = MatchSpec(allOf = listOf("CRISIS CORE", "REUNION")), art = R.drawable.art_ccr,
+            aliases = listOf("CCR", "CCFF7", "CCFFVII", "CCFF7R"),
+            // Reunion's soundtrack isn't on YouTube Music; its songs show Square Enix's official
+            // Crisis Core soundtrack cover (the game's logo) instead of the uploader's thumbnails.
+            coverArt = "https://yt3.googleusercontent.com/NUroKdpFTlpUapk0E2XKyYWogJie3XlaXlalTiEBLmhLdZUEWu1ZWz2bebbfIeX1_AKjq3BR3rcasEoW=w544-h544-s-l90-rj"),
         Game("ff7", "VII", "Final Fantasy VII", 1997, "Nobuo Uematsu",
             "Final Fantasy VII original soundtrack", c(0xFF052E16), c(0xFF6EF2B5),
             match = num("VII", exclude = notOriginalVII), art = R.drawable.art_ff7),
@@ -47,13 +55,6 @@ object Catalog {
             match = MatchSpec(allOf = listOf("TACTICS"), exclude = listOf("ADVANCE", "A2")), art = R.drawable.art_fft,
             aliases = listOf("FFT"),
         ),
-        Game("ccr", "CC·R", "Crisis Core: Reunion", 2022, "Takeharu Ishimoto",
-            "Crisis Core Final Fantasy VII Reunion original soundtrack", c(0xFF172554), c(0xFF93C5FD),
-            match = MatchSpec(allOf = listOf("CRISIS CORE", "REUNION")), art = R.drawable.art_ccr,
-            aliases = listOf("CCR", "CCFF7", "CCFFVII", "CCFF7R"),
-            // Reunion's soundtrack isn't on YouTube Music; its songs show Square Enix's official
-            // Crisis Core soundtrack cover (the game's logo) instead of the uploader's thumbnails.
-            coverArt = "https://yt3.googleusercontent.com/NUroKdpFTlpUapk0E2XKyYWogJie3XlaXlalTiEBLmhLdZUEWu1ZWz2bebbfIeX1_AKjq3BR3rcasEoW=w544-h544-s-l90-rj"),
         // Includes Intergrade's INTERmission episode (DLC): its soundtrack is part of Remake's.
         Game("ff7r", "VII·R", "Final Fantasy VII Remake", 2020, "Hamauzu · Suzuki · Uematsu",
             "Final Fantasy VII Remake original soundtrack", c(0xFF022C22), c(0xFF34D399),
@@ -149,6 +150,11 @@ object Catalog {
             ), art = R.drawable.art_coe33, fullSongTitles = true,
             aliases = listOf("E33", "COE33", "CO33", "CO E33"),
             albumQueries = listOf("Clair Obscur Expedition 33 Verso's Drafts original soundtrack")),
+        Game("lo", "LO", "Lost Odyssey", 2007, "Nobuo Uematsu",
+            "Lost Odyssey original soundtrack", c(0xFF292524), c(0xFFE7B76B), Series.SPINOFF,
+            match = MatchSpec(allOf = listOf("LOST ODYSSEY"), requireFinalFantasy = false), art = R.drawable.art_lo,
+            aliases = listOf("LO"),
+        ),
         Game("ct", "CT", "Chrono Trigger", 1995, "Yasunori Mitsuda · Nobuo Uematsu",
             "Chrono Trigger original soundtrack", c(0xFF1E3A5F), c(0xFFFFD166), Series.SPINOFF,
             match = MatchSpec(allOf = listOf("CHRONO", "TRIGGER"), requireFinalFantasy = false), art = R.drawable.art_ct,
@@ -158,11 +164,6 @@ object Catalog {
             "Chrono Cross original soundtrack", c(0xFF083344), c(0xFF22D3EE), Series.SPINOFF,
             match = MatchSpec(allOf = listOf("CHRONO", "CROSS"), requireFinalFantasy = false), art = R.drawable.art_cx,
             aliases = listOf("CC"),
-        ),
-        Game("lo", "LO", "Lost Odyssey", 2007, "Nobuo Uematsu",
-            "Lost Odyssey original soundtrack", c(0xFF292524), c(0xFFE7B76B), Series.SPINOFF,
-            match = MatchSpec(allOf = listOf("LOST ODYSSEY"), requireFinalFantasy = false), art = R.drawable.art_lo,
-            aliases = listOf("LO"),
         ),
     )
 
