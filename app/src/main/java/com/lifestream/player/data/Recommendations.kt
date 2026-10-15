@@ -13,7 +13,7 @@ object Recommendations {
     private val families = listOf(
         setOf("ff7", "ff7r", "ff7rb", "ccr"),
         setOf("ff10", "ff10-2"),
-        setOf("ff13", "ff13-2"),
+        setOf("ff13", "ff13-2", "lr"),
         setOf("ct", "cx"),
     )
 
@@ -71,14 +71,14 @@ object Recommendations {
 
         // Songs you've already played, by id and by name (one version of each song).
         val heardIds = history.map { it.id }.toSet()
-        val heardKeys = history.map { Matching.songKey(it.title) }.toSet()
+        val heardKeys = history.map { Matching.songKey(it) }.toSet()
 
         val perGame = maxOf(2, ceil(limit / games.size.toDouble()).toInt())
         val pools = games.associateWith { game ->
             index[game].orEmpty()
-                .filter { it.id !in heardIds && Matching.songKey(it.title) !in heardKeys }
+                .filter { it.id !in heardIds && Matching.songKey(it) !in heardKeys }
                 .filterNot { Matching.isFillerTrack(it.title) || it.durationSec in 1L..44L }
-                .distinctBy { Matching.songKey(it.title) }
+                .distinctBy { Matching.songKey(it) }
                 .shuffled(random)
                 .take(perGame)
                 .map { if (it.gameId == null) it.copy(gameId = game) else it }

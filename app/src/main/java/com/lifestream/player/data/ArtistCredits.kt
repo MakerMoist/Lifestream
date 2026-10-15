@@ -35,6 +35,8 @@ object ArtistCredits {
         "ff16" to listOf("Masayoshi Soken"),
         "fft" to listOf("Hitoshi Sakimoto", "Masaharu Iwata"),
         "ccr" to listOf("Takeharu Ishimoto"),
+        "lr" to listOf("Masashi Hamauzu", "Naoshi Mizuta", "Mitsuto Suzuki"),
+        "coe33" to listOf("Lorien Testard"),
         "ct" to listOf("Yasunori Mitsuda"),
         "cx" to listOf("Yasunori Mitsuda"),
         "lo" to listOf("Nobuo Uematsu"),

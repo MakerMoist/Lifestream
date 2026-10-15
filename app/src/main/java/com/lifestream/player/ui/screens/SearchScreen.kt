@@ -260,7 +260,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
                                 val rest = (SoundtrackIndex.songsFor(hit.game.id) ?: emptyList())
                                     .filter {
                                         it.id != hit.track.id &&
-                                            Matching.songKey(it.title) != Matching.songKey(hit.track.title)
+                                            Matching.songKey(it) != Matching.songKey(hit.track)
                                     }
                                     .shuffled()
                                 PlayerConnection.playTracks(listOf(hit.track) + rest, 0)

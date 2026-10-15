@@ -40,6 +40,15 @@ object Catalog {
         Game("ff7", "VII", "Final Fantasy VII", 1997, "Nobuo Uematsu",
             "Final Fantasy VII original soundtrack", c(0xFF052E16), c(0xFF6EF2B5),
             match = num("VII", exclude = notOriginalVII), art = R.drawable.art_ff7),
+        Game("fft", "T", "Final Fantasy Tactics", 1997, "Hitoshi Sakimoto · Masaharu Iwata",
+            "Final Fantasy Tactics original soundtrack", c(0xFF3F2A14), c(0xFFE7C78A),
+            match = MatchSpec(allOf = listOf("TACTICS"), exclude = listOf("ADVANCE", "A2")), art = R.drawable.art_fft),
+        Game("ccr", "CC·R", "Crisis Core: Reunion", 2022, "Takeharu Ishimoto",
+            "Crisis Core Final Fantasy VII Reunion original soundtrack", c(0xFF172554), c(0xFF93C5FD),
+            match = MatchSpec(allOf = listOf("CRISIS CORE", "REUNION")), art = R.drawable.art_ccr,
+            // Reunion's soundtrack isn't on YouTube Music; its songs show Square Enix's official
+            // Crisis Core soundtrack cover (the game's logo) instead of the uploader's thumbnails.
+            coverArt = "https://yt3.googleusercontent.com/NUroKdpFTlpUapk0E2XKyYWogJie3XlaXlalTiEBLmhLdZUEWu1ZWz2bebbfIeX1_AKjq3BR3rcasEoW=w544-h544-s-l90-rj"),
         // Includes Intergrade's INTERmission episode (DLC): its soundtrack is part of Remake's.
         Game("ff7r", "VII·R", "Final Fantasy VII Remake", 2020, "Hamauzu · Suzuki · Uematsu",
             "Final Fantasy VII Remake original soundtrack", c(0xFF022C22), c(0xFF34D399),
@@ -62,7 +71,12 @@ object Catalog {
             "Final Fantasy X original soundtrack", c(0xFF0C4A6E), c(0xFF7DD3FC), match = num("X", notWith = setOf("X2")), art = R.drawable.art_ff10),
         Game("ff10-2", "X-2", "Final Fantasy X-2", 2003, "Noriko Matsueda · Takahito Eguchi",
             "Final Fantasy X-2 original soundtrack", c(0xFF500724), c(0xFFF9A8D4), match = num("X2", notWith = setOf("X")), art = R.drawable.art_ff10_2,
-            extras = listOf(ExtraSong("real Emotion", "Kumi Koda", "ec6gB4QH5jU", 240))),
+            extras = listOf(
+                ExtraSong("real Emotion", "Kumi Koda", "ec6gB4QH5jU", 240),
+                // The English version sung by Jade (Sweetbox) for the Western release. Square Enix
+                // has no upload of it, so this one song comes from a fan upload of the full track.
+                ExtraSong("1000 Words (English Version)", "Jade Valerie", "r4voJjkJevs", 361),
+            )),
         Game("ff11", "XI", "Final Fantasy XI", 2002, "Uematsu · Mizuta · Tanioka",
             "Final Fantasy XI original soundtrack", c(0xFF1C1917), c(0xFFD6D3D1), match = num("XI"), art = R.drawable.art_ff11,
             // From later add-on soundtracks that aren't on YouTube Music as albums.
@@ -73,12 +87,17 @@ object Catalog {
         Game("ff12", "XII", "Final Fantasy XII", 2006, "Hitoshi Sakimoto",
             "Final Fantasy XII original soundtrack", c(0xFF451A03), c(0xFFFDBA74), match = num("XII"), art = R.drawable.art_ff12),
         Game("ff13", "XIII", "Final Fantasy XIII", 2009, "Masashi Hamauzu",
-            "Final Fantasy XIII original soundtrack", c(0xFF082F49), c(0xFFBAE6FD), match = num("XIII", notWith = setOf("XIII2")), art = R.drawable.art_ff13,
+            "Final Fantasy XIII original soundtrack", c(0xFF082F49), c(0xFFBAE6FD), match = num("XIII", exclude = listOf("LIGHTNING RETURNS"), notWith = setOf("XIII2")), art = R.drawable.art_ff13,
             // The Western release's theme song isn't on the Japanese soundtrack album.
             extras = listOf(ExtraSong("My Hands", "Leona Lewis"))),
         Game("ff13-2", "XIII-2", "Final Fantasy XIII-2", 2011, "Hamauzu · Mizuta · Suzuki",
             "Final Fantasy XIII-2 original soundtrack", c(0xFF1E0B3A), c(0xFFB9A2FF),
             match = num("XIII2", notWith = setOf("XIII")), art = R.drawable.art_ff13_2),
+        // The third XIII game; its Original Soundtrack PLUS (extra tracks) is included.
+        Game("lr", "LR", "Lightning Returns: Final Fantasy XIII", 2013, "Hamauzu · Mizuta · Suzuki",
+            "Lightning Returns Final Fantasy XIII original soundtrack", c(0xFF2A0E2E), c(0xFFF5A3D0),
+            match = MatchSpec(numerals = setOf("XIII"), allOf = listOf("LIGHTNING RETURNS")), art = R.drawable.art_lr,
+            albumQueries = listOf("Lightning Returns Final Fantasy XIII original soundtrack plus")),
         Game("ff14", "XIV", "Final Fantasy XIV", 2013, "Masayoshi Soken",
             "Final Fantasy XIV original soundtrack", c(0xFF2E1065), c(0xFFC4B5FD), match = num("XIV"), art = R.drawable.art_ff14,
             // Each expansion and each run of patches has its own official album.
@@ -98,16 +117,18 @@ object Catalog {
         Game("ff16", "XVI", "Final Fantasy XVI", 2023, "Masayoshi Soken",
             "Final Fantasy XVI original soundtrack", c(0xFF450A0A), c(0xFFFB923C), match = num("XVI"), art = R.drawable.art_ff16),
 
-        // Spin-offs & more
-        Game("fft", "T", "Final Fantasy Tactics", 1997, "Hitoshi Sakimoto · Masaharu Iwata",
-            "Final Fantasy Tactics original soundtrack", c(0xFF3F2A14), c(0xFFE7C78A), Series.SPINOFF,
-            match = MatchSpec(allOf = listOf("TACTICS"), exclude = listOf("ADVANCE", "A2")), art = R.drawable.art_fft),
-        Game("ccr", "CC·R", "Crisis Core: Reunion", 2022, "Takeharu Ishimoto",
-            "Crisis Core Final Fantasy VII Reunion original soundtrack", c(0xFF172554), c(0xFF93C5FD), Series.SPINOFF,
-            match = MatchSpec(allOf = listOf("CRISIS CORE", "REUNION")), art = R.drawable.art_ccr,
-            // Reunion's soundtrack isn't on YouTube Music; its songs show Square Enix's official
-            // Crisis Core soundtrack cover (the game's logo) instead of the uploader's thumbnails.
-            coverArt = "https://yt3.googleusercontent.com/NUroKdpFTlpUapk0E2XKyYWogJie3XlaXlalTiEBLmhLdZUEWu1ZWz2bebbfIeX1_AKjq3BR3rcasEoW=w544-h544-s-l90-rj"),
+        // Other Banger Games
+        // The game's soundtrack and its Verso's Drafts expansion soundtrack; not the bonus album
+        // ("Nos vies en Lumière (Bonus Edition)") or the pre-release trailer EPs ("Reveal Edition",
+        // "Gustave Edition", "Cast Reveal Edition").
+        Game("coe33", "E33", "Clair Obscur: Expedition 33", 2025, "Lorien Testard",
+            "Clair Obscur Expedition 33 original soundtrack", c(0xFF1F1611), c(0xFFE9C46A), Series.SPINOFF,
+            match = MatchSpec(
+                allOf = listOf("CLAIR OBSCUR"),
+                exclude = listOf("EDITION", "BONUS", "NOS VIES", "TRAILER", "REVEAL"),
+                requireFinalFantasy = false,
+            ), art = R.drawable.art_coe33, fullSongTitles = true,
+            albumQueries = listOf("Clair Obscur Expedition 33 Verso's Drafts original soundtrack")),
         Game("ct", "CT", "Chrono Trigger", 1995, "Yasunori Mitsuda · Nobuo Uematsu",
             "Chrono Trigger original soundtrack", c(0xFF1E3A5F), c(0xFFFFD166), Series.SPINOFF,
             match = MatchSpec(allOf = listOf("CHRONO", "TRIGGER"), requireFinalFantasy = false), art = R.drawable.art_ct),

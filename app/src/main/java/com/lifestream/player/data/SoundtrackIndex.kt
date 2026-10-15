@@ -30,7 +30,7 @@ import java.io.File
 object SoundtrackIndex {
 
     /** Bump when the way soundtracks are sourced changes, so old indexes are rebuilt. */
-    private const val VERSION = 12
+    private const val VERSION = 13
     private const val FILE_NAME = "soundtrack-index.json"
     // Soundtracks rarely change; refreshing weekly keeps background network use low.
     private const val MAX_AGE_MS = 7L * 24 * 60 * 60 * 1000
@@ -66,7 +66,7 @@ object SoundtrackIndex {
     fun tracksFor(gameId: String): List<Track>? = _tracks.value[gameId]?.takeIf { it.isNotEmpty() }
 
     /** A soundtrack's songs with one version of each (the original release's, which comes first). */
-    fun songsFor(gameId: String): List<Track>? = tracksFor(gameId)?.distinctBy { Matching.songKey(it.title) }
+    fun songsFor(gameId: String): List<Track>? = tracksFor(gameId)?.distinctBy { Matching.songKey(it) }
 
     /** The soundtrack a song belongs to: from the song itself, or by finding it in the index. */
     fun gameOf(track: Track): Game? {
@@ -156,7 +156,7 @@ object SoundtrackIndex {
         var pages = 0
         do {
             val page = source.load(next)
-            page.items.forEach { if (it.id !in ids && out.putIfAbsent(Matching.songKey(it.title), it) == null) ids += it.id }
+            page.items.forEach { if (it.id !in ids && out.putIfAbsent(Matching.songKey(it.copy(gameId = game.id)), it) == null) ids += it.id }
             next = page.next
             pages++
         } while (next != null && out.size < MAX_TRACKS_PER_GAME && pages < 300)

@@ -151,8 +151,8 @@ class HomeViewModel : ViewModel() {
             out += page.items
             next = page.next
             loads++
-        } while (next != null && out.distinctBy { Matching.songKey(it.title) }.size < 40 && loads < 6)
-        out.distinctBy { Matching.songKey(it.title) }.take(60)
+        } while (next != null && out.distinctBy { Matching.songKey(it) }.size < 40 && loads < 6)
+        out.distinctBy { Matching.songKey(it) }.take(60)
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
@@ -181,7 +181,7 @@ class GameViewModel(game: Game) : ViewModel() {
         },
         // One version of each song, and never the same recording twice.
         alsoUnique = { it.id },
-    ) { Matching.songKey(it.title) }
+    ) { Matching.songKey(it) }
 
     /** Text in the "search this soundtrack" box. */
     var filter by mutableStateOf("")

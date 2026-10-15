@@ -121,6 +121,11 @@ data class Game(
      * (whose video thumbnails aren't the album art).
      */
     val coverArt: String? = null,
+    /**
+     * The soundtrack names songs "Area - Song" (e.g. "Spring Meadows - Cloud of Anxiety"), so the
+     * whole name identifies a song instead of the part before the dash.
+     */
+    val fullSongTitles: Boolean = false,
 )
 
 /**
@@ -143,7 +148,7 @@ data class ExtraSong(
 
 enum class Series(val label: String) {
     MAINLINE("Main series"),
-    SPINOFF("Spin-offs & more"),
+    SPINOFF("Other Banger Games"),
 }
 
 fun formatDuration(seconds: Long): String {

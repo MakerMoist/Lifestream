@@ -214,7 +214,7 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                     )
                 }
             }
-            itemsIndexed(matches, key = { _, t -> "f-${t.id}-${Matching.songKey(t.title)}" }) { index, track ->
+            itemsIndexed(matches, key = { _, t -> "f-${t.id}-${Matching.songKey(t)}" }) { index, track ->
                 TrackRow(track, onClick = { PlayerConnection.playTracks(matches, index, shuffle = false) })
             }
             if (!vm.tracks.endReached) {
@@ -228,7 +228,7 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
             pagedItems(
                 vm.tracks,
                 footerKey = "tracks-footer",
-                key = { "t-${it.id}-${Matching.songKey(it.title)}" },
+                key = { "t-${it.id}-${Matching.songKey(it)}" },
                 emptyText = "No official soundtrack for this game on YouTube Music yet.",
             ) { index, track ->
                 TrackRow(track, onClick = { PlayerConnection.playTracks(vm.tracks.items, index, shuffle = false) })

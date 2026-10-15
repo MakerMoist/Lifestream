@@ -26,6 +26,10 @@ import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQu
  */
 fun main(args: Array<String>) {
     NewPipe.init(OkHttpDownloader(Http.client), Localization("en", "US"), ContentCountry("US"))
+    if (args.firstOrNull() == "--search") {
+        runSearch(args.drop(1))
+        return
+    }
     if ("--covers" in args) {
         runCovers()
         return
@@ -90,7 +94,7 @@ fun main(args: Array<String>) {
                     .map { Matching.cleanTrackTitle(it, game) }
                     .filterNot { Matching.isFillerTrack(it) }
             } else titles
-            clean.forEach { songs.putIfAbsent(Matching.songKey(it), it) }
+            clean.forEach { songs.putIfAbsent(Matching.songKey(it, game.fullSongTitles), it) }
             detail.append("- used: ${album.title} — *${album.artist}* — ${titles.size} tracks${if (album.fromPlaylist) " (playlist)" else ""}\n")
             if (album.fromPlaylist) {
                 // Full listing for playlist sources: these are the ones that can contain stray songs.

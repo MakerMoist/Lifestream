@@ -50,6 +50,8 @@ object Matching {
         "KAWAMORI", "ARNIE ROTH", "BLACK MAGES", "SQUARE ENIX", "SQUARESOFT", "SHOTARO SHIMA",
         "KAZUHIKO TOYAMA", "RYO YAMAZAKI", "DISTANT WORLDS", "HIROKAZU AKIYAMA", "MITSUDA",
         "NORIKO MATSUEDA", "TAKAHITO EGUCHI", "YOSHITAKA SUZUKI", "TSUYOSHI SEKITO",
+        // Clair Obscur: Expedition 33
+        "LORIEN TESTARD", "ALICE DUPORT", "SANDFALL",
     )
 
     // Compiled once: these run for every song on every search keystroke.
@@ -344,8 +346,30 @@ object Matching {
     private val leadingNumber = Regex("^(disc\\s*\\d+\\s*)?(track\\s*)?\\d{1,3}(?=[.\\s_-])[.\\s_-]+")
     private val nonLetterDigit = Regex("[^\\p{L}\\p{N}]+")
 
-    fun songKey(title: String): String {
-        var t = Normalizer.normalize(title, Normalizer.Form.NFKC).lowercase(Locale.ROOT)
+    /** A song sung in another language is its own recording ("1000 Words (English Version)"). */
+    private val languageVersion = Regex("\\b(english|japanese)\\s+(version|ver\\.?|vocal)")
+
+    fun songKey(title: String, fullTitle: Boolean = false): String {
+        val t = Normalizer.normalize(title, Normalizer.Form.NFKC).lowercase(Locale.ROOT)
+        val language = languageVersion.find(t)?.groupValues?.get(1)
+        val key = if (fullTitle) fullSongKey(t, title) else baseSongKey(t, title)
+        return if (language != null) "$key $language" else key
+    }
+
+    /** A song's identity, using its soundtrack's naming style (see [Game.fullSongTitles]). */
+    fun songKey(track: Track): String =
+        songKey(track.title, Catalog.game(track.gameId ?: "")?.fullSongTitles == true)
+
+    /** The whole name, minus bracketed version notes: "Verso (Music Box)" is still "verso". */
+    private fun fullSongKey(lowered: String, title: String): String {
+        var t = bracketed.replace(lowered, " ")
+        t = tildeQuoted.replace(t, " ")
+        t = nonLetterDigit.replace(t, " ").trim()
+        return t.ifEmpty { title.lowercase(Locale.ROOT).trim() }
+    }
+
+    private fun baseSongKey(lowered: String, title: String): String {
+        var t = lowered
         t = bracketed.replace(t, " ")
         t = tildeQuoted.replace(t, " ")
         val segments = t.split(segmentSplit).map { it.trim() }.filter { it.isNotEmpty() }
@@ -367,7 +391,7 @@ object Matching {
         "CONCERT", "LIVE", "SELECTION", "SELECTIONS", "COLLECTION", "COLLECTIONS", "BEST", "SPECIAL",
         "DISTANT WORLDS", "TRIBUTE", "COVER", "COVERS", "REMIX", "REMIXES", "REMIXED", "MUSIC BOX", "SINGLE",
         "BATTLE TRAX", "BLACK MAGES", "PRELUDE", "PREVIEW", "KINGSGLAIVE", "BROTHERHOOD", "GIFTS FROM VANA",
-        "LIGHTNING RETURNS", "ADVENT CHILDREN", "SPIRITS WITHIN",
+        "ADVENT CHILDREN", "SPIRITS WITHIN",
     )
 
     private val remasterWords = listOf("REMASTER", "REMASTERED", "HD", "PIXEL", "REMASTERS")

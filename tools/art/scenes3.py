@@ -744,11 +744,88 @@ def lo(c):
     finish(c, "#0c0e12", "#fff0d0", amount=0.1, vignette=0.48)
 
 
+# Lightning Returns: rose and plum twilight; a vast clock face over a gothic city, chaos rising.
+def lr(c):
+    c.vgrad([(0, "#12061a"), (0.38, "#3d1442"), (0.6, "#a8467a"), (0.68, "#f3a6c8"), (1, "#0e0814")])
+    c.stars(300, 0, 0.45, "#ffe6f4", fade=1 - smoothstep(0.15, 0.45, c.Y))
+    c.clouds(0.1, 0.62, "#2a0f33", lit="#ffb3d6", cover=0.45, scale=2.3, seed=31, alpha=0.7, light_dir=(0, 1))
+    # The clock face: rings, hour ticks and two hands, faint and luminous.
+    cx, cy, r = 0.5, 0.36, 0.2
+    asp = c.w / c.h
+    for rr, w, a_ in [(r, 2.5, 0.9), (r * 0.93, 1.2, 0.5), (r * 0.6, 1.0, 0.35)]:
+        ring = c.ellipse(cx, cy, rr, rr * asp) - c.ellipse(cx, cy, rr - 0.002 * w, rr * asp - 0.003 * w)
+        c.glow(np.clip(ring, 0, 1), "#ffd6ec", 8, a_)
+    for k in range(12):
+        ang = 2 * math.pi * k / 12
+        x0, y0 = cx + math.cos(ang) * r * 0.82, cy + math.sin(ang) * r * 0.82 * asp
+        x1, y1 = cx + math.cos(ang) * r * 0.9, cy + math.sin(ang) * r * 0.9 * asp
+        c.glow(c.line([(x0, y0), (x1, y1)], 3 if k % 3 == 0 else 1.5), "#fff0f7", 5, 0.8)
+    for ang, L, w in [(-math.pi / 2 + 0.35, 0.75, 3), (-math.pi / 2 - 1.3, 0.5, 4)]:
+        c.glow(c.line([(cx, cy), (cx + math.cos(ang) * r * L, cy + math.sin(ang) * r * L * asp)], w), "#fff0f7", 6, 0.9)
+    c.glow(c.circle(cx, cy, 0.006), "#ffffff", 10, 1.0)
+    # Chaos: green-teal mist rising from below.
+    for k in range(3):
+        c.ribbon(lambda t, k=k: (0.1 + 0.8 * t, 0.72 - 0.12 * math.sin(t * math.pi * (1.3 + k * 0.3)) - 0.02 * k),
+                 "#5ef2c8", 2.0 - k * 0.5, 28, 0.45, core=0.3)
+    c.land(0.7, 0.05, "#3a1840", seed=31, haze="#f3a6c8", haze_amt=0.4)
+    # Gothic city: spires and a cathedral at the centre.
+    c.skyline(0.82, "#12081a", seed=32, hmin=0.04, hmax=0.14, wmin=0.012, wmax=0.03, lights="#ffcfe6",
+              light_density=0.12, spires=0.7)
+    cat = c.rect(0.44, 0.62, 0.56, 0.84)
+    for x, h in [(0.46, 0.5), (0.54, 0.5), (0.5, 0.44)]:
+        cat = np.maximum(cat, c.rect(x - 0.012, h + 0.05, x + 0.012, 0.84))
+        cat = np.maximum(cat, c.poly([(x - 0.016, h + 0.055), (x, h), (x + 0.016, h + 0.055)]))
+    c.paint(cat, "#12081a")
+    c.glow(c.ellipse(0.5, 0.68, 0.012, 0.02), "#ffd6ec", 10, 0.9)
+    c.fog(0.7, 0.92, "#3a7a6e", 0.3, seed=33)
+    c.particles(160, 0.05, 0.95, 0.15, 0.85, "#d9fff3", 0.5, 1.8, 5, 0.8, seed=34)
+    c.land(0.9, 0.03, "#0a0610", seed=35)
+    finish(c, "#0c0412", "#ffe6f2", amount=0.1, vignette=0.48)
+
+
+# Clair Obscur: Expedition 33 — gold dusk over the sea; a dark monolith on the horizon, a city
+# with a bent iron tower, red petals on the wind. Painterly, Belle Époque palette.
+def coe33(c):
+    c.vgrad([(0, "#1a1410"), (0.35, "#5a3d26"), (0.58, "#d9a35a"), (0.66, "#f6dfa8"), (1, "#16120e")])
+    c.radial(0.62, 0.62, 0.45, "#fff0c8", 0.6, 2.2)
+    c.clouds(0.05, 0.58, "#3a2a1e", lit="#ffd79a", cover=0.5, scale=2.2, seed=41, alpha=0.75, light_dir=(0.2, 1))
+    # The monolith: a tall, slightly tapering dark spire far across the water, faint glowing marks.
+    mono = c.poly([(0.7, 0.66), (0.715, 0.12), (0.735, 0.1), (0.75, 0.13), (0.765, 0.66)])
+    c.paint(mono, hexc("#17110d")[None, None, :] * (0.8 + c.fbm(30, 3, 4)[..., None] * 0.4))
+    c.add(c.blur(mono, 30), "#ffcf8a", 0.15)
+    marks = np.zeros_like(mono)
+    for k in range(5):
+        y = 0.22 + k * 0.07
+        marks = np.maximum(marks, c.line([(0.722, y), (0.745, y + 0.012)], 1.2))
+    c.glow(marks * mono, "#ffb36a", 6, 0.6)
+    c.land(0.665, 0.012, "#2a2018", seed=42, haze="#f6dfa8", haze_amt=0.35)
+    c.water(0.67, "#1e1712", dim=0.75, tint_amt=0.3, sparkle="#ffe2b0", sparkle_amt=0.45)
+    # The city on the left shore, with its tall iron tower bent over at the top.
+    shore = c.poly([(0, 0.7), (0.12, 0.68), (0.36, 0.69), (0.44, 0.73), (0.46, 1), (0, 1)])
+    c.paint(shore, "#120d0a")
+    c.skyline(0.7, "#120d0a", seed=43, x0=0.0, x1=0.4, hmin=0.02, hmax=0.08, wmin=0.01, wmax=0.026,
+              lights="#ffd18a", light_density=0.14, spires=0.4)
+    tower = c.poly([(0.17, 0.7), (0.2, 0.42), (0.21, 0.42), (0.24, 0.7)])
+    tower = np.maximum(tower, c.line([(0.205, 0.42), (0.21, 0.32), (0.23, 0.26), (0.26, 0.24)], 3))
+    tower = np.maximum(tower, c.rect(0.18, 0.6, 0.23, 0.61))
+    tower = np.maximum(tower, c.rect(0.19, 0.5, 0.22, 0.508))
+    c.paint(tower, "#120d0a")
+    # Red petals drifting across.
+    rng = c.rng
+    for _ in range(70):
+        x, y = rng.uniform(0, 1), rng.uniform(0.05, 0.95)
+        rx = 0.003 + rng.random() * 0.006
+        petal = c.ellipse(x, y, rx, rx * 0.55 * c.w / c.h)
+        c.paint(petal, mix("#a5121e", "#e8463c", rng.random()), 0.9)
+    c.particles(120, 0, 1, 0.1, 0.8, "#ffe6b8", 0.4, 1.4, 4, 0.6, seed=44)
+    finish(c, "#120c08", "#fff0d0", amount=0.12, vignette=0.5, sat=0.95)
+
+
 SCENES = {
     "ff1": ff1, "ff2": ff2, "ff3": ff3, "ff4": ff4, "ff5": ff5, "ff6": ff6, "ff7": ff7, "ff8": ff8,
     "ff9": ff9, "ff10": ff10, "ff10_2": ff10_2, "ff11": ff11, "ff12": ff12, "ff13": ff13,
     "ff13_2": ff13_2, "ff14": ff14, "ff15": ff15, "ff16": ff16, "ff7r": ff7r, "ff7rb": ff7rb,
-    "ccr": ccr, "fft": fft, "ct": ct, "cx": cx, "lo": lo,
+    "ccr": ccr, "fft": fft, "ct": ct, "cx": cx, "lo": lo, "lr": lr, "coe33": coe33,
 }
 
 if __name__ == "__main__":

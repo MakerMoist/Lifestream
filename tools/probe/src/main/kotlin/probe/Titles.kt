@@ -20,7 +20,11 @@ internal fun englishPart(name: String): String? {
     while (i >= 0) {
         val left = name.substring(0, i)
         val right = name.substring(i + 3).trim()
-        if (japanese.containsMatchIn(left) && right.isNotEmpty() && !japanese.containsMatchIn(right)) return right
+        if (japanese.containsMatchIn(left) && right.isNotEmpty() && !japanese.containsMatchIn(right)) {
+            // "スノウのテーマ - Complete Mix - - Snow's Theme (Complete Mix)": the English name is
+            // after the doubled dash; the version label is already part of it.
+            return right.substringAfter(" - - ").removePrefix("- ").trim()
+        }
         i = name.indexOf(" - ", i + 1)
     }
     return null
