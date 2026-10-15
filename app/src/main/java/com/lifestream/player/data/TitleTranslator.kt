@@ -41,9 +41,16 @@ object TitleTranslator {
                 .build()
         ).also { client = it }
 
-    /** Frees the translation model's memory; it's reloaded (from disk) if needed again. */
+    /** Translations running right now; the model is never closed under one of them. */
+    private val inFlight = java.util.concurrent.atomic.AtomicInteger(0)
+
+    /**
+     * Frees the translation model's memory; it's reloaded (from disk) if needed again. Skipped
+     * while a translation is running (the idle timer lets it go once that's done).
+     */
     @Synchronized
     fun release() {
+        if (inFlight.get() > 0) return
         client?.close()
         client = null
     }
@@ -61,11 +68,11 @@ object TitleTranslator {
         idleJob = idleScope.launch {
             while (true) {
                 val wait = lastUse + IDLE_RELEASE_MS - System.currentTimeMillis()
-                if (wait <= 0) {
+                if (wait <= 0 && inFlight.get() == 0) {
                     release()
                     break
                 }
-                kotlinx.coroutines.delay(wait)
+                kotlinx.coroutines.delay(wait.coerceAtLeast(1_000))
             }
         }
     }
@@ -77,11 +84,6 @@ object TitleTranslator {
 
     /** Frees remembered translations (titles are stored translated, so this is rarely needed again). */
     fun trimCaches() = cache.clear()
-
-    /** Starts the model download in the background so titles are translated from the first search. */
-    fun prefetch() {
-        Thread({ runCatching { ensureModel() } }, "title-translator").start()
-    }
 
     /**
      * Official English names for Final Fantasy terms the general-purpose translator tends to
@@ -160,10 +162,32 @@ object TitleTranslator {
         "クロノ・クロス" to "Chrono Cross", "クロノ" to "Crono", "ルッカ" to "Lucca", "カイム" to "Kaim",
     ).sortedByDescending { it.first.length }
 
-    private fun applyGlossary(text: String): String {
+    private val katakanaOnly = Regex("^[\\u30A0-\\u30FF\\uFF65-\\uFF9F]+$")
+
+    /**
+     * Short katakana names only count as whole words: "ビビ" (Vivi) is a name, but it's also the
+     * start of "ビビッド" (vivid), and "ヴァン" (Vaan) starts "ヴァンパイア" (vampire). Those must
+     * not be split, so a short name next to more katakana is left for the translator.
+     */
+    private val glossaryRules: List<Pair<Regex?, String>> = glossary.map { (jp, en) ->
+        val needsBoundary = jp.length <= 3 && katakanaOnly.matches(jp)
+        val rule = if (needsBoundary) {
+            // Katakana letters and the long-vowel mark (not the "・" between names).
+            val letter = "[\\u30A1-\\u30FA\\u30FC\\uFF66-\\uFF9F]"
+            Regex("(?<!$letter)" + Regex.escape(jp) + "(?!$letter)")
+        } else {
+            null
+        }
+        rule to en
+    }
+
+    internal fun applyGlossary(text: String): String {
         var t = text
-        for ((jp, en) in glossary) {
-            if (t.contains(jp)) t = t.replace(jp, " $en ")
+        for ((i, entry) in glossaryRules.withIndex()) {
+            val jp = glossary[i].first
+            if (!t.contains(jp)) continue
+            val (rule, en) = entry
+            t = if (rule == null) t.replace(jp, " $en ") else t.replace(rule, Regex.escapeReplacement(" $en "))
         }
         return t.replace(whitespace, " ").replace(spaceBeforePunctuation, "$1").trim()
     }
@@ -178,10 +202,14 @@ object TitleTranslator {
         if (!hasJapanese(prepared)) return tidy(prepared).also { cache[text] = it }
         if (!ensureModel()) return prepared
         touch()
+        inFlight.incrementAndGet()
         val translated = try {
             Tasks.await(translator.translate(prepared), 5, TimeUnit.SECONDS)
         } catch (e: Exception) {
             return prepared
+        } finally {
+            inFlight.decrementAndGet()
+            touch()
         }
         val result = tidy(translated).ifBlank { text }
         cache[text] = result

@@ -21,6 +21,8 @@ android {
         versionName = System.getenv("LIFESTREAM_VERSION_NAME")
             ?.takeIf { it.matches(Regex("^\\d+\\.\\d+\\.\\d+$")) } ?: "1.4.0-dev"
         buildConfigField("String", "UPDATE_REPO", "\"MakerMoist/Lifestream\"")
+        // On-device feature tests (app/src/androidTest), run on the emulator by the smoke test.
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Phones run ARM; leaving out the x86 builds of native libraries keeps the APK small.
         // (The emulator smoke test sets LIFESTREAM_ALL_ABIS to keep them.)
         if (System.getenv("LIFESTREAM_ALL_ABIS") == null) {
@@ -129,4 +131,10 @@ dependencies {
     implementation("com.google.guava:guava:33.4.0-android")
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
+
+    // On-device tests only; never part of the app.
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test:core:1.6.1")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("junit:junit:4.13.2")
 }

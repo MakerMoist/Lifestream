@@ -1,7 +1,7 @@
 name: Smoke test
 
 # Installs a release build (shrunk exactly like the published one) on an Android emulator,
-# launches it and checks it keeps running without crashing. Runs when the smoke-test branch is
+# launches it and checks it keeps running without crashing, then runs the on-device feature tests. Runs when the smoke-test branch is
 # pushed (nothing is published from there), or from the Actions tab.
 on:
   push:
@@ -14,7 +14,7 @@ permissions:
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
@@ -46,11 +46,14 @@ jobs:
             exit 1
           fi
 
-      - name: Launch on an emulator
+      # Then the on-device feature tests (built as a debug build with the same native libraries).
+      - name: Launch on an emulator and run the feature tests
         uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        env:
+          LIFESTREAM_ALL_ABIS: "1"
         with:
           api-level: 34
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: bash .github/smoke.sh
+          script: bash .github/emulator.sh

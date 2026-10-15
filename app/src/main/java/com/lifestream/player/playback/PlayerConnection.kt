@@ -250,7 +250,12 @@ object PlayerConnection {
     fun togglePlay() = withController { c ->
         when {
             c.playbackState == Player.STATE_IDLE -> { c.prepare(); c.play() }
-            c.playbackState == Player.STATE_ENDED -> { c.seekToDefaultPosition(0); c.play() }
+            c.playbackState == Player.STATE_ENDED -> {
+                // From the top of the play order (with shuffle on, that isn't queue item 0).
+                val first = c.currentTimeline.takeUnless { it.isEmpty }?.getFirstWindowIndex(c.shuffleModeEnabled) ?: 0
+                c.seekToDefaultPosition(first.coerceAtLeast(0))
+                c.play()
+            }
             c.isPlaying -> c.pause()
             else -> c.play()
         }
