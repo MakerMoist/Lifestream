@@ -115,24 +115,39 @@ object Matching {
      * are worked out once and reused (the last query is remembered), and song titles' normalized
      * forms are kept between keystrokes.
      */
-    @Volatile private var lastQuery: Triple<String, List<String>, String>? = null
-    private val normalizedTitles = java.util.concurrent.ConcurrentHashMap<String, String>()
-    private const val MAX_NORMALIZED_TITLES = 40_000
-
-    private fun forQuery(query: String): Triple<String, List<String>, String> =
-        lastQuery?.takeIf { it.first == query }
-            ?: Triple(query, computeQueryTokens(query), normalize(query)).also { lastQuery = it }
-
-    private fun normalizedTitle(title: String): String = normalizedTitles[title] ?: normalize(title).also {
-        if (normalizedTitles.size >= MAX_NORMALIZED_TITLES) normalizedTitles.clear()
-        normalizedTitles[title] = it
+    private class QueryParts(val query: String, val tokens: List<String>, val phrase: String) {
+        val compact = tokens.joinToString("")
     }
 
-    fun queryTokens(query: String): List<String> = forQuery(query).second
+    /** A song title split up for matching: normalized, its words (numbers as numerals), squashed. */
+    private class TitleParts(val normalized: String, val words: List<String>) {
+        val compact = words.joinToString("")
+    }
+
+    @Volatile private var lastQuery: QueryParts? = null
+    private val titleParts = java.util.concurrent.ConcurrentHashMap<String, TitleParts>()
+    private const val MAX_NORMALIZED_TITLES = 40_000
+
+    private fun forQuery(query: String): QueryParts =
+        lastQuery?.takeIf { it.query == query }
+            ?: QueryParts(query, computeQueryTokens(query), normalize(query)).also { lastQuery = it }
+
+    /** Worked out once per title and kept, so typing a search doesn't split every title again. */
+    private fun partsOf(title: String): TitleParts = titleParts[title] ?: run {
+        val normalized = normalize(title)
+        // Numbers are compared the way the query has them: the query's "2" became "II" (so "ff 7"
+        // finds VII), so a song called "Battle 2" must count as "Battle II" too.
+        TitleParts(normalized, normalized.split(' ').filter { it.isNotEmpty() }.map(::canonical))
+    }.also {
+        if (titleParts.size >= MAX_NORMALIZED_TITLES) titleParts.clear()
+        titleParts[title] = it
+    }
+
+    fun queryTokens(query: String): List<String> = forQuery(query).tokens
 
     /** Frees search caches (they're rebuilt as soon as a search runs again). */
     fun trimCaches() {
-        normalizedTitles.clear()
+        titleParts.clear()
         songKeys.clear()
         lastQuery = null
     }
@@ -205,21 +220,22 @@ object Matching {
      * - small typos are tolerated ("Sephirot", "Zanarkan")
      */
     fun searchScore(query: String, title: String, extraTokens: List<String> = emptyList()): Int? {
-        val (_, q, phrase) = forQuery(query)
+        val parts = forQuery(query)
+        val q = parts.tokens
         if (q.isEmpty()) return null
-        val normTitle = normalizedTitle(title)
-        // Numbers are compared the way the query has them: the query's "2" became "II" (so "ff 7"
-        // finds VII), so a song called "Battle 2" must count as "Battle II" too.
-        val words = normTitle.split(' ').filter { it.isNotEmpty() }.map(::canonical)
-        val all = words + extraTokens
-        val compactQuery = q.joinToString("")
-        val compactTitle = words.joinToString("")
+        val phrase = parts.phrase
+        val compactQuery = parts.compact
+        val t = partsOf(title)
+        val normTitle = t.normalized
+        val words = t.words
+        val compactTitle = t.compact
 
         var score = when {
             q.all { w -> words.any { it.startsWith(w) } } -> 6
             compactQuery.length >= 3 && compactTitle.contains(compactQuery) -> 5
-            q.all { w -> all.any { it.startsWith(w) } } -> 4
-            q.all { w -> all.any { wordMatches(w, it) } } -> 2
+            // The title's words plus [extraTokens] (e.g. its game's name), without joining lists.
+            q.all { w -> words.any { it.startsWith(w) } || extraTokens.any { it.startsWith(w) } } -> 4
+            q.all { w -> words.any { wordMatches(w, it) } || extraTokens.any { wordMatches(w, it) } } -> 2
             compactQuery.length >= 6 && fuzzyContains(compactTitle, compactQuery) -> 1
             else -> return null
         }

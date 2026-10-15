@@ -16,7 +16,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
-import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
@@ -235,41 +234,150 @@ object SoundtrackIndex {
 
     // ---- Disk ----
 
+    /**
+     * Read piece by piece (not the whole file into one big text and object tree first): the
+     * index holds thousands of songs, and this keeps the memory it needs at start-up small.
+     */
     private fun readFromDisk() {
-        runCatching {
-            if (!file.exists()) return
-            // A damaged or runaway file is ignored (and rebuilt) rather than read into memory.
-            if (file.length() > MAX_FILE_BYTES) return
-            val root = JSONObject(file.readText())
-            if (root.optInt("version") != VERSION) return
-            val games = root.getJSONObject("games")
-            val map = mutableMapOf<String, List<Track>>()
-            val stamps = mutableMapOf<String, Long>()
-            for (id in games.keys()) {
-                if (Catalog.games.none { it.id == id }) continue // only the app's current soundtracks
-                val g = games.getJSONObject(id)
-                val arr = g.getJSONArray("tracks")
-                map[id] = (0 until arr.length()).mapNotNull { i ->
-                    arr.optJSONObject(i)?.let { Track.fromJson(it, tidy = false) }?.copy(gameId = id)?.let(ArtistCredits::fix)?.let(OfficialTitles::fix)
-                }.distinctBy { it.id }
-                stamps[id] = g.optLong("built")
-            }
-            builtAt.clear()
-            builtAt.putAll(stamps)
-            _tracks.value = shareStrings(map)
-        }
+        val saved = parseFile() ?: return
+        builtAt.clear()
+        builtAt.putAll(saved.built)
+        emptyAt.putAll(saved.empty)
+        _tracks.value = shareStrings(saved.tracks)
     }
 
-    private fun writeToDisk() {
+    private class Saved(val tracks: Map<String, List<Track>>, val built: Map<String, Long>, val empty: Map<String, Long>)
+
+    /** The index file's contents, or null if there's none or it's damaged or from another version. */
+    private fun parseFile(): Saved? {
         runCatching {
-            val games = JSONObject()
-            for ((id, list) in _tracks.value) {
-                val arr = JSONArray()
-                list.forEach { arr.put(it.toJson()) }
-                games.put(id, JSONObject().put("built", builtAt[id] ?: 0L).put("tracks", arr))
+            if (!file.exists()) return null
+            // A damaged or runaway file is ignored (and rebuilt) rather than read into memory.
+            if (file.length() > MAX_FILE_BYTES) return null
+            val known = Catalog.games.map { it.id }.toSet()
+            val map = mutableMapOf<String, List<Track>>()
+            val stamps = mutableMapOf<String, Long>()
+            val empty = mutableMapOf<String, Long>()
+            var version = -1
+            android.util.JsonReader(file.bufferedReader()).use { r ->
+                r.beginObject()
+                while (r.hasNext()) {
+                    when (r.nextName()) {
+                        "version" -> version = r.nextInt()
+                        // Written after the version; an index from another version is rebuilt.
+                        "games" -> {
+                            if (version != VERSION) return null
+                            r.beginObject()
+                            while (r.hasNext()) {
+                                val id = r.nextName()
+                                if (id !in known) { // only the app's current soundtracks
+                                    r.skipValue()
+                                    continue
+                                }
+                                val (built, tracks) = readGame(r, id)
+                                map[id] = tracks
+                                stamps[id] = built
+                            }
+                            r.endObject()
+                        }
+                        // When titles last came back empty, so a restart doesn't search again at once.
+                        "empty" -> {
+                            r.beginObject()
+                            while (r.hasNext()) {
+                                val id = r.nextName()
+                                val at = r.nextLong()
+                                if (id in known) empty[id] = at
+                            }
+                            r.endObject()
+                        }
+                        else -> r.skipValue()
+                    }
+                }
             }
+            if (version != VERSION) return null
+            return Saved(map, stamps, empty)
+        }
+        return null
+    }
+
+    /**
+     * For the on-device tests: saves the index, reads the file back and says whether it holds
+     * exactly the songs in memory (the app itself never needs this).
+     */
+    internal fun savedCopyMatches(): Boolean {
+        val snapshot = _tracks.value
+        writeToDisk(snapshot)
+        val saved = parseFile() ?: return false
+        return saved.tracks == snapshot
+    }
+
+    private fun readGame(r: android.util.JsonReader, id: String): Pair<Long, List<Track>> {
+        var built = 0L
+        val tracks = ArrayList<Track>()
+        r.beginObject()
+        while (r.hasNext()) {
+            when (r.nextName()) {
+                "built" -> built = r.nextLong()
+                "tracks" -> {
+                    r.beginArray()
+                    while (r.hasNext()) {
+                        readTrack(r)?.copy(gameId = id)?.let(ArtistCredits::fix)?.let(OfficialTitles::fix)?.let(tracks::add)
+                    }
+                    r.endArray()
+                }
+                else -> r.skipValue()
+            }
+        }
+        r.endObject()
+        return built to tracks.distinctBy { it.id }
+    }
+
+    /** One stored song; checked exactly like any other stored song (see [Track.fromJson]). */
+    private fun readTrack(r: android.util.JsonReader): Track? {
+        val o = JSONObject()
+        r.beginObject()
+        while (r.hasNext()) {
+            val name = r.nextName()
+            if (r.peek() == android.util.JsonToken.STRING) o.put(name, r.nextString())
+            else if (name == "duration" && r.peek() == android.util.JsonToken.NUMBER) o.put(name, r.nextLong())
+            else r.skipValue()
+        }
+        r.endObject()
+        return Track.fromJson(o, tidy = false)
+    }
+
+    /** Written piece by piece, straight to the file, for the same reason. */
+    private fun writeToDisk(tracks: Map<String, List<Track>> = _tracks.value) {
+        runCatching {
             val tmp = File(file.parentFile, "$FILE_NAME.tmp")
-            tmp.writeText(JSONObject().put("version", VERSION).put("games", games).toString())
+            android.util.JsonWriter(tmp.bufferedWriter()).use { w ->
+                w.beginObject()
+                w.name("version").value(VERSION.toLong())
+                w.name("games").beginObject()
+                for ((id, list) in tracks) {
+                    w.name(id).beginObject()
+                    w.name("built").value(builtAt[id] ?: 0L)
+                    w.name("tracks").beginArray()
+                    for (t in list) {
+                        w.beginObject()
+                        w.name("id").value(t.id)
+                        w.name("title").value(t.title)
+                        w.name("artist").value(t.artist)
+                        w.name("duration").value(t.durationSec)
+                        w.name("thumb").value(t.thumbnail ?: "")
+                        w.name("game").value(t.gameId ?: "")
+                        w.name("alt").value(t.altTitle ?: "")
+                        w.endObject()
+                    }
+                    w.endArray()
+                    w.endObject()
+                }
+                w.endObject()
+                w.name("empty").beginObject()
+                for ((id, at) in emptyAt) if (tracks[id].isNullOrEmpty()) w.name(id).value(at)
+                w.endObject()
+                w.endObject()
+            }
             if (!tmp.renameTo(file)) tmp.delete()
         }
     }
