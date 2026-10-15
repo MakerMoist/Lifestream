@@ -47,13 +47,44 @@ jobs:
           fi
 
       # Then the on-device feature tests (built as a debug build with the same native libraries).
-      - name: Launch on an emulator and run the feature tests
-        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+      # The emulator is started with Google's own SDK tools on the runner (no third-party action).
+      - name: Start an Android emulator
+        timeout-minutes: 20
+        run: |
+          SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          BIN="$SDK/cmdline-tools/latest/bin"
+          ADB="$SDK/platform-tools/adb"
+          IMAGE="system-images;android-34;google_apis;x86_64"
+          LOG="$RUNNER_TEMP/emulator.log"
+          # avdmanager and the emulator must agree on where the virtual device is kept.
+          export ANDROID_AVD_HOME="$HOME/.android/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          fail() {
+            echo "::error::$1"
+            tail -25 "$LOG" 2>/dev/null | sed 's/^/::error::emulator: /'
+            exit 1
+          }
+          yes | "$BIN/sdkmanager" --licenses > /dev/null 2>&1 || true
+          timeout 600 "$BIN/sdkmanager" --install "platform-tools" "emulator" "$IMAGE" > "$RUNNER_TEMP/sdk.log" 2>&1 \
+            || { tail -10 "$RUNNER_TEMP/sdk.log" | sed 's/^/::error::sdkmanager: /'; exit 1; }
+          echo no | "$BIN/avdmanager" create avd --force -n smoke -k "$IMAGE" > /dev/null 2>&1 || fail "Couldn't create the emulator"
+          nohup "$SDK/emulator/emulator" -avd smoke -no-window -no-audio -no-boot-anim -no-snapshot -no-metrics \
+            -accel on -gpu swiftshader_indirect -camera-back none -camera-front none > "$LOG" 2>&1 &
+          timeout 300 "$ADB" wait-for-device || fail "The emulator didn't come up"
+          start=$SECONDS
+          booted=""
+          while [ $((SECONDS - start)) -lt 600 ]; do
+            if [ "$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; then booted=1; break; fi
+            sleep 5
+          done
+          [ -n "$booted" ] || fail "The emulator didn't finish booting in 10 minutes"
+          echo "::notice::Emulator booted in $((SECONDS - start)) s"
+          for a in window_animation_scale transition_animation_scale animator_duration_scale; do
+            "$ADB" shell settings put global $a 0
+          done
+          echo "$SDK/platform-tools" >> "$GITHUB_PATH"
+
+      - name: Launch on the emulator and run the feature tests
         env:
           LIFESTREAM_ALL_ABIS: "1"
-        with:
-          api-level: 34
-          target: google_apis
-          arch: x86_64
-          disable-animations: true
-          script: bash .github/emulator.sh
+        run: bash .github/emulator.sh
