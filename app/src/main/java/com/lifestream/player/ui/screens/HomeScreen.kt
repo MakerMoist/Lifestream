@@ -251,27 +251,33 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
                         Spacer(Modifier.height(10.dp))
                     }
                     val lastPlaylistId by Library.lastPlaylistId.collectAsStateWithLifecycle()
+                    // Two big buttons sharing the full width: New Game (a fresh random mix) and
+                    // Load Game (the playlist you last played from).
                     Row(
                         Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        FilledTonalButton(onClick = { vm.surprise() }, enabled = !vm.surprising) {
+                        FilledTonalButton(
+                            onClick = { vm.surprise() },
+                            enabled = !vm.surprising,
+                            modifier = Modifier.weight(1f).height(56.dp),
+                        ) {
                             if (vm.surprising) {
-                                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                                CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
                             } else {
-                                Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(18.dp))
+                                Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(22.dp))
                             }
-                            Spacer(Modifier.width(8.dp))
-                            Text("Instant Playlist")
+                            Spacer(Modifier.width(10.dp))
+                            Text("New Game", style = MaterialTheme.typography.titleMedium)
                         }
-                        // Opens the playlist you last played from.
                         FilledTonalButton(
                             onClick = { lastPlaylistId?.let(onOpenPlaylist) },
                             enabled = lastPlaylistId != null,
+                            modifier = Modifier.weight(1f).height(56.dp),
                         ) {
-                            Icon(Icons.AutoMirrored.Rounded.QueueMusic, null, Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Last Playlist")
+                            Icon(Icons.AutoMirrored.Rounded.QueueMusic, null, Modifier.size(22.dp))
+                            Spacer(Modifier.width(10.dp))
+                            Text("Load Game", style = MaterialTheme.typography.titleMedium)
                         }
                     }
                     vm.surpriseNote?.let { note ->

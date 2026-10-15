@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -233,20 +234,31 @@ private fun PlaylistRow(p: Playlist, onClick: () -> Unit) {
 
 @Composable
 private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null, extra: @Composable () -> Unit = {}) {
+    // Play and Shuffle share the full width (anything extra, like History's Clear, sits after).
     Row(
-        Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Button(onClick = { PlayerConnection.playTracks(tracks, fromPlaylist = playlistId) }, enabled = tracks.isNotEmpty()) {
-            Icon(Icons.Rounded.PlayArrow, null, Modifier.size(18.dp))
-            Spacer(Modifier.width(6.dp))
-            Text("Play")
+        Button(
+            onClick = { PlayerConnection.playTracks(tracks, fromPlaylist = playlistId) },
+            enabled = tracks.isNotEmpty(),
+            modifier = Modifier.weight(1f).height(52.dp),
+        ) {
+            Icon(Icons.Rounded.PlayArrow, null, Modifier.size(22.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Play", style = MaterialTheme.typography.titleMedium)
         }
-        OutlinedButton(onClick = { PlayerConnection.playTracks(tracks, randomStart = true, fromPlaylist = playlistId) }, enabled = tracks.isNotEmpty()) {
-            Icon(Icons.Rounded.Shuffle, null, Modifier.size(18.dp))
-            Spacer(Modifier.width(6.dp))
-            Text("Shuffle")
+        OutlinedButton(
+            onClick = { PlayerConnection.playTracks(tracks, randomStart = true, fromPlaylist = playlistId) },
+            enabled = tracks.isNotEmpty(),
+            modifier = Modifier.weight(1f).height(52.dp),
+        ) {
+            Icon(Icons.Rounded.Shuffle, null, Modifier.size(22.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Shuffle", style = MaterialTheme.typography.titleMedium)
         }
         extra()
     }

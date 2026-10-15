@@ -135,7 +135,7 @@ object AutoLibrary {
     private fun home(): List<MediaItem> {
         val out = mutableListOf(instantItem())
         Library.lastPlaylistId.value?.let { Library.playlist(it) }?.let { p ->
-            out += folder(PLAYLIST + p.id, "Last Playlist", MediaMetadata.MEDIA_TYPE_PLAYLIST, subtitle = p.name, extras = listStyle())
+            out += folder(PLAYLIST + p.id, "Load Game", MediaMetadata.MEDIA_TYPE_PLAYLIST, subtitle = p.name, extras = listStyle())
         }
         val recommended = Recommendations.recommend(
             Library.recents.value,
@@ -254,7 +254,7 @@ object AutoLibrary {
         .setMediaId(INSTANT)
         .setMediaMetadata(
             MediaMetadata.Builder()
-                .setTitle("Instant Playlist")
+                .setTitle("New Game")
                 .setSubtitle("A random mix from every title")
                 .setIsPlayable(true)
                 .setIsBrowsable(false)

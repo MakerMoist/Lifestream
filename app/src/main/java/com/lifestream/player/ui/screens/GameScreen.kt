@@ -154,23 +154,26 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                             color = Color.White.copy(alpha = 0.75f),
                         )
                         Spacer(Modifier.height(16.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        // Play all and Shuffle share the full width.
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Button(
                                 // A title's own page plays in soundtrack order.
                                 onClick = { PlayerConnection.playTracks(tracks, shuffle = false) },
                                 enabled = tracks.isNotEmpty(),
+                                modifier = Modifier.weight(1f).height(52.dp),
                             ) {
-                                Icon(Icons.Rounded.PlayArrow, null, Modifier.size(18.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text("Play all")
+                                Icon(Icons.Rounded.PlayArrow, null, Modifier.size(22.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Play all", style = MaterialTheme.typography.titleMedium)
                             }
                             OutlinedButton(
                                 onClick = { PlayerConnection.playTracks(tracks, randomStart = true) },
                                 enabled = tracks.isNotEmpty(),
+                                modifier = Modifier.weight(1f).height(52.dp),
                             ) {
-                                Icon(Icons.Rounded.Shuffle, null, Modifier.size(18.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text("Shuffle")
+                                Icon(Icons.Rounded.Shuffle, null, Modifier.size(22.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Shuffle", style = MaterialTheme.typography.titleMedium)
                             }
                         }
                     }
