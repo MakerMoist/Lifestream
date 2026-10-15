@@ -37,7 +37,8 @@ class QuotesTest {
         VillainQuotes.init(context)
         val seen = LinkedHashSet<Int>()
         repeat(n / 2) { seen += VillainQuotes.next() }
-        // "Restart": reload the deck from storage and finish the round.
+        // "Restart": the app saves its place when it's left, then reloads it and finishes the round.
+        VillainQuotes.save()
         Thread.sleep(300)
         VillainQuotes.init(context)
         repeat(n - n / 2) { seen += VillainQuotes.next() }

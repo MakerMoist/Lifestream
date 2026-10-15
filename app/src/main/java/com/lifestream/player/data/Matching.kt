@@ -133,6 +133,7 @@ object Matching {
     /** Frees search caches (they're rebuilt as soon as a search runs again). */
     fun trimCaches() {
         normalizedTitles.clear()
+        songKeys.clear()
         lastQuery = null
     }
 
@@ -364,7 +365,20 @@ object Matching {
     /** A song sung in another language is its own recording ("1000 Words (English Version)"). */
     private val languageVersion = Regex("\\b(english|japanese)\\s+(version|ver\\.?|vocal)")
 
+    private val songKeys = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    /**
+     * Worked out for every song row as lists scroll (their keys) and for every song when lists
+     * are built, so each title's key is remembered rather than recomputed with its regexes.
+     */
     fun songKey(title: String, fullTitle: Boolean = false): String {
+        val cacheKey = if (fullTitle) "\u0001$title" else title
+        songKeys[cacheKey]?.let { return it }
+        if (songKeys.size >= MAX_NORMALIZED_TITLES) songKeys.clear()
+        return computeSongKey(title, fullTitle).also { songKeys[cacheKey] = it }
+    }
+
+    private fun computeSongKey(title: String, fullTitle: Boolean): String {
         val t = Normalizer.normalize(title, Normalizer.Form.NFKC).lowercase(Locale.ROOT)
         val language = languageVersion.find(t)?.groupValues?.get(1)
         val key = if (fullTitle) fullSongKey(t, title) else baseSongKey(t, title)

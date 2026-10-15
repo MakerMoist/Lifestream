@@ -250,7 +250,7 @@ object SoundtrackIndex {
                 val g = games.getJSONObject(id)
                 val arr = g.getJSONArray("tracks")
                 map[id] = (0 until arr.length()).mapNotNull { i ->
-                    arr.optJSONObject(i)?.let(Track::fromJson)?.copy(gameId = id)?.let(ArtistCredits::fix)?.let(OfficialTitles::fix)
+                    arr.optJSONObject(i)?.let { Track.fromJson(it, tidy = false) }?.copy(gameId = id)?.let(ArtistCredits::fix)?.let(OfficialTitles::fix)
                 }.distinctBy { it.id }
                 stamps[id] = g.optLong("built")
             }

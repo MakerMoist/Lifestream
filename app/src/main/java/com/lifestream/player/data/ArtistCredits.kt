@@ -49,8 +49,16 @@ object ArtistCredits {
         "doomed account", "manwe sulimo", "synapsidae", "tukepuikko",
     )
 
+    private val canonicalNames = java.util.concurrent.ConcurrentHashMap<String, String>()
+
     /** Fixes known spellings and channel names; anything else is returned tidied. */
     fun canonical(raw: String): String {
+        canonicalNames[raw]?.let { return it }
+        if (canonicalNames.size > 5_000) canonicalNames.clear()
+        return computeCanonical(raw).also { canonicalNames[raw] = it }
+    }
+
+    private fun computeCanonical(raw: String): String {
         val name = tidySongTitle(raw).trim()
         val lower = name.lowercase()
         return when {

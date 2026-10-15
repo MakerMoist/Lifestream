@@ -70,13 +70,20 @@ data class Track(
         const val MAX_TEXT = 300
 
         /** Reads a stored song, or null if the entry isn't a valid one (e.g. a corrupted file). */
-        fun fromJson(o: JSONObject): Track? {
+        fun fromJson(o: JSONObject): Track? = fromJson(o, tidy = true)
+
+        /**
+         * [tidy] cleans up names; the song index (the app's own, already tidied output) skips it,
+         * which saves thousands of text passes each time the app starts.
+         */
+        fun fromJson(o: JSONObject, tidy: Boolean): Track? {
             val id = o.optString("id")
             if (!videoId.matches(id)) return null
+            fun clean(s: String) = if (tidy) tidySongTitle(s) else s.trim()
             return Track(
                 id = id,
-                title = tidySongTitle(o.optString("title")).take(MAX_TEXT).ifBlank { "Unknown track" },
-                artist = tidySongTitle(o.optString("artist")).take(MAX_TEXT),
+                title = clean(o.optString("title")).take(MAX_TEXT).ifBlank { "Unknown track" },
+                artist = clean(o.optString("artist")).take(MAX_TEXT),
                 durationSec = o.optLong("duration", -1).coerceIn(-1L, 24L * 3600),
                 thumbnail = o.optString("thumb").takeIf { it.startsWith("https://") && it.length <= 2048 },
                 gameId = o.optString("game").ifBlank { null }?.take(32),

@@ -260,11 +260,23 @@ object VillainQuotes {
         }
         val pick = deck.removeFirst()
         last = pick
+        dirty = true
+        pick
+    }
+
+    private var dirty = false
+
+    /**
+     * Writes the place in the deck to storage. Called when Home goes out of sight rather than on
+     * every quote (one every 7.5 seconds), so the phone's storage isn't written that often.
+     */
+    fun save() = synchronized(this) {
+        if (!dirty) return@synchronized
+        dirty = false
         prefs?.edit()
             ?.putString(KEY_DECK, deck.joinToString(","))
-            ?.putInt(KEY_LAST, pick)
+            ?.putInt(KEY_LAST, last)
             ?.putInt(KEY_SIZE, villainQuotes.size)
             ?.apply()
-        pick
     }
 }

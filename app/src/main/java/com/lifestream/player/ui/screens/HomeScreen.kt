@@ -183,6 +183,9 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
         }
     }
     LaunchedEffect(Unit) { ArtCache.warm(context, Catalog.games.map { it.art }) }
+    // Remember the place in the quote deck when Home goes out of sight (or the app is left).
+    androidx.lifecycle.compose.LifecycleEventEffect(Lifecycle.Event.ON_STOP) { VillainQuotes.save() }
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { VillainQuotes.save() } }
 
     // Back leaves selection mode instead of the app.
     BackHandler(enabled = selecting) { vm.clear() }
