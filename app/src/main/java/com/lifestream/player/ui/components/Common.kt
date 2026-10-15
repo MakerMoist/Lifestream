@@ -118,11 +118,15 @@ fun TrackRow(
     // Only the playing song's id, so rows don't redraw for anything else the player does.
     val currentId by PlayerConnection.currentId.collectAsStateWithLifecycle()
     val isCurrent = currentId == track.id
+    // The menu opens where the row was pressed, or at the ⋮ button.
+    val rowAnchor = rememberMenuAnchor()
+    val dotsAnchor = rememberMenuAnchor()
 
     Row(
         modifier
+            .menuAnchor(rowAnchor)
             .fillMaxWidth()
-            .combinedClickable(onClick = onClick, onLongClick = { TrackActions.show(track, playlistId) })
+            .combinedClickable(onClick = onClick, onLongClick = { TrackActions.show(track, playlistId, rowAnchor.at()) })
             .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -178,7 +182,10 @@ fun TrackRow(
             )
         }
         Box {
-            IconButton(onClick = { TrackActions.show(track, playlistId) }) {
+            IconButton(
+                onClick = { TrackActions.show(track, playlistId, dotsAnchor.at(center = true)) },
+                modifier = Modifier.menuAnchor(dotsAnchor),
+            ) {
                 Icon(Icons.Rounded.MoreVert, "Song options", tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }

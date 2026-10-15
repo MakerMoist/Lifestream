@@ -111,6 +111,7 @@ import com.lifestream.player.data.Track
 import com.lifestream.player.playback.PlayerConnection
 import com.lifestream.player.ui.components.Artwork
 import com.lifestream.player.ui.components.TrackActions
+import com.lifestream.player.ui.components.menuAnchor
 import com.lifestream.player.ui.components.SectionLabel
 import com.lifestream.player.ui.components.VillainQuotes
 import com.lifestream.player.ui.components.villainQuotes
@@ -383,13 +384,15 @@ private fun RecommendedRow(songs: List<Track>) {
         contentPadding = PaddingValues(horizontal = 0.dp),
     ) {
         itemsIndexed(songs, key = { _, t -> t.id }) { index, track ->
+            val anchor = com.lifestream.player.ui.components.rememberMenuAnchor()
             Column(
                 Modifier
+                    .menuAnchor(anchor)
                     .width(120.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .combinedClickable(
                         onClick = { PlayerConnection.playTracks(songs, index) },
-                        onLongClick = { TrackActions.show(track) },
+                        onLongClick = { TrackActions.show(track, at = anchor.at()) },
                     ),
             ) {
                 Artwork(track.thumbnail, Modifier.size(120.dp), size = 120.dp)

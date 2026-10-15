@@ -64,6 +64,7 @@ import com.lifestream.player.ui.components.TrackActionsHost
 import com.lifestream.player.ui.screens.NowPlayingScreen
 import com.lifestream.player.ui.screens.SearchScreen
 import com.lifestream.player.ui.screens.SearchFocus
+import com.lifestream.player.ui.screens.TabReselect
 import com.lifestream.player.ui.screens.SettingsScreen
 import com.lifestream.player.ui.screens.ThemesScreen
 import com.lifestream.player.ui.screens.UpdatePrompt
@@ -212,7 +213,11 @@ private fun BottomBar(nav: NavHostController) {
                         if (entry?.destination?.route == item.route) {
                             // Already on this section's first screen: nothing to navigate; Home
                             // refreshes as if pulled down.
-                            if (item.route == "home") HomeReselect.count++
+                            when (item.route) {
+                                "home" -> HomeReselect.count++
+                                "settings" -> TabReselect.settings++
+                                "library" -> TabReselect.library++
+                            }
                         } else if (!nav.popBackStack(item.route, inclusive = false)) {
                             // Inside the section: go back to its first screen.
                             nav.navigate(item.route) { launchSingleTop = true }

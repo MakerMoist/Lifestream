@@ -91,6 +91,8 @@ import com.lifestream.player.playback.PlayerConnection
 import com.lifestream.player.playback.PlayerUiState
 import com.lifestream.player.ui.components.Artwork
 import com.lifestream.player.ui.components.TrackActions
+import com.lifestream.player.ui.components.menuAnchor
+import com.lifestream.player.ui.components.rememberMenuAnchor
 import com.lifestream.player.ui.components.SaveInstantPlaylistDialog
 import com.lifestream.player.ui.components.SoftBlur
 import androidx.compose.material.icons.rounded.Add
@@ -107,6 +109,16 @@ fun NowPlayingScreen(onClose: () -> Unit) {
 
     // Back closes the player and returns to the page underneath (e.g. the soundtrack).
     BackHandler { onClose() }
+
+    // Nothing on this screen types. Take focus away from the screen underneath (e.g. the Search
+    // box), so the keyboard doesn't pop up here, including when coming back to the app.
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
+    val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+    androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
+        focus.clearFocus(force = true)
+        keyboard?.hide()
+        onPauseOrDispose { }
+    }
 
     // Drag down to minimize: the screen follows your finger and closes past a quarter of the way
     // (or with a downward flick); otherwise it springs back. Drag up to open Up next: the screen
@@ -217,7 +229,12 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             )
                         }
                     }
-                    IconButton(onClick = { track?.let { TrackActions.show(it) } }, enabled = track != null) {
+                    val dots = rememberMenuAnchor()
+                    IconButton(
+                        onClick = { track?.let { TrackActions.show(it, at = dots.at(center = true)) } },
+                        enabled = track != null,
+                        modifier = Modifier.menuAnchor(dots),
+                    ) {
                         Icon(Icons.Rounded.MoreVert, "Song options")
                     }
                 }

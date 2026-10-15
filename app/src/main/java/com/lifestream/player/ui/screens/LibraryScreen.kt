@@ -13,6 +13,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
@@ -36,10 +44,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,12 +62,37 @@ import com.lifestream.player.ui.components.PlaylistNameDialog
 import com.lifestream.player.ui.components.TrackRow
 import com.lifestream.player.ui.theme.LsColors
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
     val playlists by Library.playlists.collectAsStateWithLifecycle()
     val recents by Library.recents.collectAsStateWithLifecycle()
-    var tab by rememberSaveable { mutableIntStateOf(0) }
+    // Swipe left and right between Playlists and History (or tap their tabs).
+    val pager = rememberPagerState { 2 }
+    val scope = rememberCoroutineScope()
     var creating by remember { mutableStateOf(false) }
+    var confirmClear by remember { mutableStateOf(false) }
+    val playlistList = rememberLazyListState()
+    val historyList = rememberLazyListState()
+
+    // Pull down on either page to refresh it, like Home.
+    var refreshing by remember { mutableStateOf(false) }
+    fun refresh() {
+        if (refreshing) return
+        refreshing = true
+        scope.launch {
+            Library.refresh()
+            delay(700) // long enough to see the spinner settle
+            refreshing = false
+        }
+    }
+
+    // Tapping the Library tab while here returns to Playlists (and its top).
+    val reselectAtStart = remember { TabReselect.library }
+    LaunchedEffect(TabReselect.library) {
+        if (TabReselect.library == reselectAtStart) return@LaunchedEffect
+        if (pager.currentPage != 0) pager.animateScrollToPage(0) else playlistList.animateScrollToItem(0)
+    }
 
     Column(
         Modifier
@@ -73,68 +104,84 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp),
         )
-        TabRow(selectedTabIndex = tab, containerColor = LsColors.Night) {
-            Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Playlists") })
-            Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("History") })
+        TabRow(selectedTabIndex = pager.currentPage, containerColor = LsColors.Night) {
+            Tab(selected = pager.currentPage == 0, onClick = { scope.launch { pager.animateScrollToPage(0) } }, text = { Text("Playlists") })
+            Tab(selected = pager.currentPage == 1, onClick = { scope.launch { pager.animateScrollToPage(1) } }, text = { Text("History") })
         }
 
-        if (tab == 0) {
-            LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
-                if (playlists.isEmpty()) {
-                    item(key = "empty") {
-                        EmptyState(
-                            "No playlists yet",
-                            "Make one with the button below, or press and hold any song and choose Add to playlist.",
-                        )
+        HorizontalPager(state = pager, modifier = Modifier.weight(1f).fillMaxWidth()) { page ->
+            if (page == 0) {
+                Column(Modifier.fillMaxSize()) {
+                    PullToRefreshBox(
+                        isRefreshing = refreshing,
+                        onRefresh = { refresh() },
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                    ) {
+                        LazyColumn(Modifier.fillMaxSize(), state = playlistList) {
+                            if (playlists.isEmpty()) {
+                                item(key = "empty") {
+                                    EmptyState(
+                                        "No playlists yet",
+                                        "Make one with the button below, or press and hold any song and choose Add to playlist.",
+                                    )
+                                }
+                            }
+                            items(playlists, key = { it.id }) { p ->
+                                PlaylistRow(p, onClick = { onOpenPlaylist(p) })
+                            }
+                        }
+                    }
+                    // Across the bottom of the screen, just above the player bar and tabs.
+                    FilledTonalButton(
+                        onClick = { creating = true },
+                        enabled = Library.canCreatePlaylist(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                    ) {
+                        Icon(Icons.Rounded.Add, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("New playlist")
                     }
                 }
-                items(playlists, key = { it.id }) { p ->
-                    PlaylistRow(p, onClick = { onOpenPlaylist(p) })
-                }
-            }
-            // Across the bottom of the screen, just above the player bar and tabs.
-            FilledTonalButton(
-                onClick = { creating = true },
-                enabled = Library.canCreatePlaylist(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-            ) {
-                Icon(Icons.Rounded.Add, null, Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text("New playlist")
-            }
-        } else {
-            if (recents.isEmpty()) {
-                EmptyState("Nothing played yet", "Songs you play will show up here.")
-                return@Column
-            }
-            var confirmClear by remember { mutableStateOf(false) }
-            if (confirmClear) {
-                AlertDialog(
-                    onDismissRequest = { confirmClear = false },
-                    title = { Text("Clear history?") },
-                    text = { Text("This removes all ${recents.size} songs from your history. Your playlists and saved songs aren't affected.") },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            Library.clearRecents()
-                            confirmClear = false
-                        }) { Text("Clear") }
-                    },
-                    dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("Cancel") } },
-                )
-            }
-            LazyColumn(Modifier.fillMaxSize()) {
-                item(key = "actions") {
-                    PlayShuffleRow(recents) {
-                        TextButton(onClick = { confirmClear = true }) { Text("Clear") }
+            } else {
+                PullToRefreshBox(
+                    isRefreshing = refreshing,
+                    onRefresh = { refresh() },
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    LazyColumn(Modifier.fillMaxSize(), state = historyList) {
+                        if (recents.isEmpty()) {
+                            item(key = "empty") { EmptyState("Nothing played yet", "Songs you play will show up here.") }
+                        } else {
+                            item(key = "actions") {
+                                PlayShuffleRow(recents) {
+                                    TextButton(onClick = { confirmClear = true }) { Text("Clear") }
+                                }
+                            }
+                            itemsIndexed(recents, key = { _, t: Track -> t.id }) { index, track ->
+                                TrackRow(track, onClick = { PlayerConnection.playTracks(recents, index) })
+                            }
+                        }
                     }
-                }
-                itemsIndexed(recents, key = { _, t: Track -> t.id }) { index, track ->
-                    TrackRow(track, onClick = { PlayerConnection.playTracks(recents, index) })
                 }
             }
         }
+    }
+
+    if (confirmClear) {
+        AlertDialog(
+            onDismissRequest = { confirmClear = false },
+            title = { Text("Clear history?") },
+            text = { Text("This removes all ${recents.size} songs from your history. Your playlists and saved songs aren't affected.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    Library.clearRecents()
+                    confirmClear = false
+                }) { Text("Clear") }
+            },
+            dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("Cancel") } },
+        )
     }
 
     if (creating) {

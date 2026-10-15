@@ -144,6 +144,33 @@ object Library {
         prefs.edit().putString(KEY_RECENTS, writeTracks(updated)).apply()
     }
 
+    /**
+     * Pull-to-refresh on the Library: brings stored songs up to date with the latest official
+     * names, composer credits and soundtrack links (e.g. songs saved before a title was indexed
+     * get their "Open title" link). Saves only if something changed.
+     */
+    suspend fun refresh() = kotlinx.coroutines.withContext(Dispatchers.Default) {
+        fun fresh(t: Track): Track {
+            val linked = if (t.gameId == null) SoundtrackIndex.gameOf(t)?.let { t.copy(gameId = it.id) } ?: t else t
+            return OfficialTitles.fix(ArtistCredits.fix(linked))
+        }
+        val recents = _recents.value
+        val newRecents = recents.map(::fresh)
+        val lists = _playlists.value
+        val newLists = lists.map { p -> p.copy(tracks = p.tracks.map(::fresh)) }
+        kotlinx.coroutines.withContext(Dispatchers.Main) {
+            // Only if nothing changed meanwhile (a song played or a playlist edited).
+            if (newRecents != recents && _recents.value === recents) {
+                _recents.value = newRecents
+                prefs.edit().putString(KEY_RECENTS, writeTracks(newRecents)).apply()
+            }
+            if (newLists != lists && _playlists.value === lists) {
+                _playlists.value = newLists
+                savePlaylists()
+            }
+        }
+    }
+
     fun clearRecents() {
         _recents.value = emptyList()
         prefs.edit().putString(KEY_RECENTS, "[]").apply()

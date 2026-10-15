@@ -275,6 +275,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
     val levelVolume by AppSettings.levelVolume.collectAsStateWithLifecycle()
     val autoPlayAtEnd by AppSettings.autoPlayAtEnd.collectAsStateWithLifecycle()
     val androidAuto by AppSettings.androidAuto.collectAsStateWithLifecycle()
+    val closeFromRecents by AppSettings.closeFromRecents.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
     val themeId by AppSettings.themeId.collectAsStateWithLifecycle()
@@ -286,11 +287,18 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
         onPauseOrDispose { }
     }
 
+    // Tapping the Settings tab while on Settings goes back to the top.
+    val scroll = rememberScrollState()
+    val reselectAtStart = remember { TabReselect.settings }
+    LaunchedEffect(TabReselect.settings) {
+        if (TabReselect.settings != reselectAtStart) scroll.animateScrollTo(0)
+    }
+
     Column(
         Modifier
             .fillMaxSize()
             .statusBarsPadding()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scroll)
             .padding(bottom = 24.dp),
     ) {
         Text(
@@ -416,6 +424,21 @@ fun SettingsScreen(onOpenThemes: () -> Unit) {
                 Switch(checked = androidAuto, onCheckedChange = { AppSettings.setAndroidAuto(it) })
             }
             if (androidAuto) AndroidAutoSetupHint(context)
+        }
+        SettingsCard {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Close Fully From Recent Apps", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Swiping LifeStream away in your recent apps stops the music and force closes the app. " +
+                            "Turn off to keep the music playing in the background.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = closeFromRecents, onCheckedChange = { AppSettings.setCloseFromRecents(it) })
+            }
         }
         SettingsCard {
             Text("Saved Songs", style = MaterialTheme.typography.titleMedium)

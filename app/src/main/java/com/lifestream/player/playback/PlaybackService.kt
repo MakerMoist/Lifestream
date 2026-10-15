@@ -163,12 +163,35 @@ class PlaybackService : MediaLibraryService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = session
 
     override fun onTaskRemoved(rootIntent: Intent?) {
+        // Settings → System → "Close Fully From Recent Apps": swiping the app away stops the
+        // music and ends the app completely.
+        if (AppSettings.closeFromRecents.value) {
+            closeCompletely()
+            return
+        }
         // Keep playing in the background only if something is actually playing; a queue that
         // finished or stopped on an error shouldn't keep the service (and its notification) alive.
         val player = session?.player
         val playing = player != null && player.playWhenReady && player.mediaItemCount > 0 &&
             player.playbackState != Player.STATE_IDLE && player.playbackState != Player.STATE_ENDED
         if (!playing) stopSelf()
+    }
+
+    /**
+     * Stops playback, removes the notification and ends the app's process, like a force stop.
+     * The process ends a moment later, so playlist and settings changes still being saved are
+     * written first.
+     */
+    private fun closeCompletely() {
+        session?.player?.run {
+            playWhenReady = false
+            stop()
+        }
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+        Handler(Looper.getMainLooper()).postDelayed({
+            android.os.Process.killProcess(android.os.Process.myPid())
+        }, 700)
     }
 
     override fun onDestroy() {

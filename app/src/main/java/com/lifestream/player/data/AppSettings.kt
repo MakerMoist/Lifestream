@@ -22,6 +22,7 @@ object AppSettings {
     private const val KEY_AUTO_PLAY_AT_END = "auto_play_at_end"
     private const val KEY_ANDROID_AUTO = "android_auto"
     private const val KEY_ANDROID_AUTO_SEEN = "android_auto_seen"
+    private const val KEY_CLOSE_FROM_RECENTS = "close_from_recents"
 
     /** Size choices for saved songs, in MB (0 = don't save songs). */
     val CACHE_LIMIT_CHOICES = listOf(0, 2048, 4096, 6144, 8192)
@@ -88,6 +89,19 @@ object AppSettings {
         prefs.edit().putBoolean(KEY_ANDROID_AUTO_SEEN, true).apply()
     }
 
+    private val _closeFromRecents = MutableStateFlow(true)
+
+    /**
+     * Swiping LifeStream away in the recent apps stops the music and closes the app completely
+     * (on), or leaves the music playing in the background (off).
+     */
+    val closeFromRecents: StateFlow<Boolean> = _closeFromRecents.asStateFlow()
+
+    fun setCloseFromRecents(on: Boolean) {
+        _closeFromRecents.value = on
+        prefs.edit().putBoolean(KEY_CLOSE_FROM_RECENTS, on).apply()
+    }
+
     private val _autoPlayAtEnd = MutableStateFlow(true)
 
     /** When the queue runs out, keep going with random songs from any soundtrack. */
@@ -110,6 +124,7 @@ object AppSettings {
         _autoPlayAtEnd.value = prefs.getBoolean(KEY_AUTO_PLAY_AT_END, true)
         _androidAuto.value = prefs.getBoolean(KEY_ANDROID_AUTO, false)
         _androidAutoSeen.value = prefs.getBoolean(KEY_ANDROID_AUTO_SEEN, false)
+        _closeFromRecents.value = prefs.getBoolean(KEY_CLOSE_FROM_RECENTS, true)
         // A size from an older version (e.g. 5 or 10 GB) becomes the largest choice that fits in it.
         val stored = prefs.getInt(KEY_CACHE_LIMIT_MB, DEFAULT_CACHE_LIMIT_MB)
         _cacheLimitMb.value = if (stored in CACHE_LIMIT_CHOICES) stored
