@@ -29,7 +29,7 @@ import java.io.File
 object SoundtrackIndex {
 
     /** Bump when the way soundtracks are sourced changes, so old indexes are rebuilt. */
-    private const val VERSION = 14
+    private const val VERSION = 15
     private const val FILE_NAME = "soundtrack-index.json"
     // Soundtracks rarely change; refreshing weekly keeps background network use low.
     private const val MAX_AGE_MS = 7L * 24 * 60 * 60 * 1000

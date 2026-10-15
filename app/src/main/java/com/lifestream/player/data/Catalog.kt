@@ -104,7 +104,24 @@ object Catalog {
             )),
         Game("ff11", "XI", "Final Fantasy XI", 2002, "Uematsu · Mizuta · Tanioka",
             "Final Fantasy XI original soundtrack", c(0xFF1C1917), c(0xFFD6D3D1), match = num("XI"), art = R.drawable.art_ff11,
-            // From later add-on soundtracks that aren't on YouTube Music as albums.
+            // The original game, each expansion (Rise of the Zilart, Chains of Promathia, Treasures
+            // of Aht Urhgan, Wings of the Goddess, Seekers of Adoulin), the PLUS albums, and the two
+            // "Gifts from Vana'diel" albums with the later Rhapsodies of Vana'diel and Voracious
+            // Resurgence music.
+            albumQueries = listOf(
+                "Final Fantasy XI Rise of the Zilart original soundtrack",
+                "Final Fantasy XI Chains of Promathia original soundtrack",
+                "Final Fantasy XI Treasures of Aht Urhgan original soundtrack",
+                "Final Fantasy XI Wings of the Goddess original soundtrack",
+                "Final Fantasy XI Seekers of Adoulin original soundtrack",
+                "Final Fantasy XI Gifts from Vana'diel Songs of Rebirth soundtrack",
+                "Final Fantasy XI Gifts from Vana'diel Prime Memories soundtrack",
+            ),
+            maxAlbums = 12,
+            // Songs like "Conflict: March of the Hero" and "Conflict: You Want to Live Forever?" are
+            // different songs, so the whole name identifies each.
+            fullSongTitles = true,
+            // From later add-on soundtracks (also on the PLUS album; kept in case it isn't found).
             extras = listOf(
                 ExtraSong("Melodies Errant", "Naoshi Mizuta", "n4-yiZpK81g", 205),
                 ExtraSong("Shinryu", "Naoshi Mizuta", "x_XQmblQl3Q", 352),
@@ -127,19 +144,32 @@ object Catalog {
         Game("ff14", "XIV", "Final Fantasy XIV", 2013, "Masayoshi Soken",
             "Final Fantasy XIV original soundtrack", c(0xFF2E1065), c(0xFFC4B5FD), match = num("XIV"), art = R.drawable.art_ff14,
             // Each expansion and each run of patches has its own official album.
+            // (A Realm Reborn and Before Meteor for 2.x, Heavensward and The Far Edge of Fate for 3.x,
+            // Stormblood, Shadowbringers and Death Unto Dawn for 5.x, Endwalker and Growing Light for
+            // 6.x, Dawntrail; each named so none depends on turning up in a general search.)
             albumQueries = listOf(
+                "A Realm Reborn Final Fantasy XIV original soundtrack",
+                "Before Meteor Final Fantasy XIV original soundtrack",
                 "Before the Fall Final Fantasy XIV original soundtrack",
                 "Heavensward Final Fantasy XIV original soundtrack",
                 "The Far Edge of Fate Final Fantasy XIV original soundtrack",
                 "Stormblood Final Fantasy XIV original soundtrack",
                 "Shadowbringers Final Fantasy XIV original soundtrack",
+                "Death Unto Dawn Final Fantasy XIV original soundtrack",
                 "Endwalker Final Fantasy XIV original soundtrack",
+                "Growing Light Final Fantasy XIV original soundtrack",
                 "Dawntrail Final Fantasy XIV original soundtrack",
+            ),
+            releaseOrder = listOf(
+                "A Realm Reborn", "Before Meteor", "Heavensward", "Before the Fall", "Far Edge of Fate",
+                "Stormblood", "Shadowbringers", "Death Unto Dawn", "Endwalker", "Growing Light", "Dawntrail",
             ),
             maxAlbums = 16),
         Game("ff15", "XV", "Final Fantasy XV", 2016, "Yoko Shimomura",
             "Final Fantasy XV original soundtrack", c(0xFF0A0A0A), c(0xFFA3A3A3), match = num("XV"), art = R.drawable.art_ff15,
-            albumQueries = listOf("Final Fantasy XV Episode Ardyn original soundtrack")),
+            // Volume 2 (two albums) has the DLC: Episodes Gladiolus, Prompto, Ignis and Ardyn,
+            // Comrades and the Royal Edition.
+            albumQueries = listOf("Final Fantasy XV original soundtrack volume 2")),
         Game("ff16", "XVI", "Final Fantasy XVI", 2023, "Masayoshi Soken",
             "Final Fantasy XVI original soundtrack", c(0xFF450A0A), c(0xFFFB923C), match = num("XVI"), art = R.drawable.art_ff16),
 

@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.components
 
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -141,11 +142,12 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Mo
                 Artwork(track.thumbnail, Modifier.size(44.dp), corner = 6.dp)
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
+                    // A long title scrolls; the artist line stays still (cut off if too long).
                     Text(
                         track.title,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.basicMarquee(initialDelayMillis = 1_500),
                     )
                     Text(
                         track.artist,

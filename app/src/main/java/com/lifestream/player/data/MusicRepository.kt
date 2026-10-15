@@ -101,7 +101,7 @@ object MusicRepository {
             }
 
             if (found.isEmpty()) lastError?.let { throw it }
-            val ranked = found.values.sortedByDescending { Matching.score(it, game) }
+            val ranked = Matching.ordered(found.values, game)
             if (ranked.isNotEmpty()) albumCache[game.id] = ranked
             ranked
         }

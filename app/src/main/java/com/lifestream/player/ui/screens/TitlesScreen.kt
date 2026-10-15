@@ -64,8 +64,7 @@ fun TitlesScreen(onBack: () -> Unit) {
                 }
             }
             Text(
-                "Titles you turn off don't show up on Home, in Search or in New Game. " +
-                    "Their songs already in your playlists stay there.",
+                "Titles you turn off don't show up on Home, in Search or in New Game.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp),

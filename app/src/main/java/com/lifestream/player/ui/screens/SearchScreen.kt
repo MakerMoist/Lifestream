@@ -167,7 +167,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
         if (vm.input.isBlank()) {
             if (recentSearches.isEmpty()) {
                 EmptyState(
-                    title = "Search Final Fantasy music",
+                    title = "Search all enabled titles",
                     body = "Find songs and soundtracks by name. Your recent searches will show up here.",
                 )
                 return@Column

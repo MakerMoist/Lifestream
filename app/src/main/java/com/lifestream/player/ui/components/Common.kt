@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.components
 
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAddCheck
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Close
@@ -183,6 +184,16 @@ fun TrackRow(
                 "Saved on this phone",
                 tint = Color.Gray,
                 modifier = Modifier.size(18.dp),
+            )
+        }
+        // In at least one of your playlists.
+        val inPlaylists by com.lifestream.player.data.Library.inPlaylists.collectAsStateWithLifecycle()
+        if (track.id in inPlaylists) {
+            Icon(
+                Icons.AutoMirrored.Rounded.PlaylistAddCheck,
+                "In a playlist",
+                tint = Color.Gray,
+                modifier = Modifier.padding(start = 6.dp).size(18.dp),
             )
         }
         Box {

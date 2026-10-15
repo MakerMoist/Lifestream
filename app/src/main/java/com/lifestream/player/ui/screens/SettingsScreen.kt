@@ -115,6 +115,34 @@ class SettingsViewModel : ViewModel() {
         }
     }
 
+    /**
+     * The quiet check again, when Home is refreshed (pulled down or its tab tapped) and automatic
+     * checks are on. Shows the update prompt only if there's a newer version; a failure stays silent.
+     */
+    fun recheck() {
+        when (val s = state) {
+            is UpdateState.Checking, is UpdateState.Downloading, is UpdateState.ReadyToInstall, is UpdateState.NeedsPermission -> return
+            is UpdateState.Available -> {
+                prompt = s.release
+                return
+            }
+            else -> Unit
+        }
+        autoChecked = true
+        viewModelScope.launch {
+            try {
+                val latest = Updater.fetchLatest()
+                if (Updater.isNewer(latest) && state !is UpdateState.Downloading) {
+                    state = UpdateState.Available(latest)
+                    prompt = latest
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+            }
+        }
+    }
+
     fun dismissPrompt() {
         prompt = null
     }
@@ -422,7 +450,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
                 FilterChip(
                     selected = randomSongOrder,
                     onClick = { AppSettings.setRandomSongOrder(true) },
-                    label = { Text("Random") },
+                    label = { Text("Shuffled") },
                 )
             }
         }

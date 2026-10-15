@@ -378,6 +378,15 @@ object Matching {
     private val leadingNumber = Regex("^(disc\\s*\\d+\\s*)?(track\\s*)?\\d{1,3}(?=[.\\s_-])[.\\s_-]+")
     private val nonLetterDigit = Regex("[^\\p{L}\\p{N}]+")
 
+    /** "Forever Today ep ver." is another version of "Forever Today". */
+    private val epVersion = Regex("\\s+ep\\.?\\s+ver(sion)?\\.?\\s*$")
+
+    /**
+     * A Japanese name followed by its English one ("ヴァナ・ディールの星唄 -Rhapsodies of Vana'diel"):
+     * the English part names the song, so it matches the same song listed in English.
+     */
+    private val japaneseThenEnglish = Regex("^[^a-z]*[\\p{IsHan}\\p{IsHiragana}\\p{IsKatakana}][^a-z]*?\\s*[-–—]\\s*([a-z].*)$")
+
     /** A song sung in another language is its own recording ("1000 Words (English Version)"). */
     private val languageVersion = Regex("\\b(english|japanese)\\s+(version|ver\\.?|vocal)")
 
@@ -395,7 +404,12 @@ object Matching {
     }
 
     private fun computeSongKey(title: String, fullTitle: Boolean): String {
-        val t = Normalizer.normalize(title, Normalizer.Form.NFKC).lowercase(Locale.ROOT)
+        var t = Normalizer.normalize(title, Normalizer.Form.NFKC).lowercase(Locale.ROOT)
+        t = epVersion.replace(t, "")
+        // (Not when the English part only says which version it is: "ザナルカンドにて - Piano Ver.")
+        japaneseThenEnglish.find(t)?.groupValues?.get(1)
+            ?.takeIf { english -> !versionWords.containsMatchIn(english) && english.count { it.isLetter() } >= 3 }
+            ?.let { t = it }
         val language = languageVersion.find(t)?.groupValues?.get(1)
         val key = if (fullTitle) fullSongKey(t, title) else baseSongKey(t, title)
         return if (language != null) "$key $language" else key
@@ -435,7 +449,7 @@ object Matching {
         "ARRANGEMENT", "ARRANGEMENTS", "VOCAL", "VOCALS", "ACOUSTIC", "GUITAR", "JAZZ", "BRASS", "STRINGS",
         "CONCERT", "LIVE", "SELECTION", "SELECTIONS", "COLLECTION", "COLLECTIONS", "BEST", "SPECIAL",
         "DISTANT WORLDS", "TRIBUTE", "COVER", "COVERS", "REMIX", "REMIXES", "REMIXED", "MUSIC BOX", "SINGLE",
-        "BATTLE TRAX", "BLACK MAGES", "PRELUDE", "PREVIEW", "KINGSGLAIVE", "BROTHERHOOD", "GIFTS FROM VANA",
+        "BATTLE TRAX", "BLACK MAGES", "PRELUDE", "PREVIEW", "KINGSGLAIVE", "BROTHERHOOD",
         "ADVENT CHILDREN", "SPIRITS WITHIN",
     )
 
@@ -461,6 +475,17 @@ object Matching {
     }
 
     /** Higher is better: the original release before remasters, the composers' own credit first. */
+    /** Best album first; a title with a [Game.releaseOrder] plays its albums in release order. */
+    fun ordered(albums: Collection<Album>, game: Game): List<Album> {
+        val best = albums.sortedByDescending { score(it, game) }
+        if (game.releaseOrder.isEmpty()) return best
+        fun rank(a: Album): Int {
+            val t = normalize(a.title)
+            return game.releaseOrder.indexOfFirst { hasWord(t, normalize(it)) }.let { if (it < 0) Int.MAX_VALUE else it }
+        }
+        return best.sortedBy { rank(it) } // stable: same rank keeps the best-first order
+    }
+
     fun score(album: Album, game: Game): Int {
         val t = normalize(album.title)
         var s = 0
