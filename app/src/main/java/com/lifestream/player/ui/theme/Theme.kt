@@ -26,7 +26,6 @@ object LsColors {
     val Crystal: Color get() = p.primary
     val Mako: Color get() = p.accent
     val Gold: Color get() = p.gold
-    val Mist: Color get() = p.mist
     val Faint: Color get() = lerp(p.panel, p.mist, 0.45f)
     /** Content drawn on top of the primary colour (e.g. the play button icon). */
     val OnPrimary: Color get() = p.night

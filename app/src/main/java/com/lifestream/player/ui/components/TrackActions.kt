@@ -210,9 +210,6 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
     }
 }
 
-/** A run of related options (kept together in the list; no heading is shown). */
-private class MenuSection(val label: String, val items: List<MenuItem>)
-
 private class MenuItem(val icon: ImageVector, val label: String, val danger: Boolean = false, val onClick: () -> Unit)
 
 /** Where the menu's corner sits on screen, worked out when it's placed (read while drawing). */
@@ -239,81 +236,62 @@ private fun SongMenu(
 
     fun close() = TrackActions.dismiss()
 
-    val sections = remember(track, target.playlistId, playlists, instantQueue, isPlaying, game) {
+    val items = remember(track, target.playlistId, playlists, instantQueue, isPlaying, game) {
         buildList {
             // The song that's playing (e.g. Now Playing's ⋮) can't also play next or be queued.
             if (!isPlaying) {
-                add(
-                    MenuSection(
-                        "Play",
-                        listOf(
-                            MenuItem(Icons.Rounded.QueuePlayNext, "Play next") {
-                                PlayerConnection.playNext(track)
-                                toast(context, "Playing next")
-                                close()
-                            },
-                            MenuItem(Icons.AutoMirrored.Rounded.QueueMusic, "Add to queue") {
-                                PlayerConnection.addToQueue(track)
-                                toast(context, "Added to queue")
-                                close()
-                            },
-                        ),
-                    )
-                )
+                add(MenuItem(Icons.Rounded.QueuePlayNext, "Play next") {
+                    PlayerConnection.playNext(track)
+                    toast(context, "Playing next")
+                    close()
+                })
+                add(MenuItem(Icons.AutoMirrored.Rounded.QueueMusic, "Add to queue") {
+                    PlayerConnection.addToQueue(track)
+                    toast(context, "Added to queue")
+                    close()
+                })
             }
-            val playlistItems = mutableListOf<MenuItem>()
-            playlistItems += MenuItem(Icons.AutoMirrored.Rounded.PlaylistAdd, "Add to playlist") {
+            add(MenuItem(Icons.AutoMirrored.Rounded.PlaylistAdd, "Add to playlist") {
                 close()
                 onAddToPlaylist(track)
-            }
+            })
             // An Instant Playlist can be kept: offered on the playing song's menu (Now Playing's ⋮).
             if (instantQueue && isPlaying) {
-                playlistItems += MenuItem(Icons.Rounded.Add, "Save as playlist") {
+                add(MenuItem(Icons.Rounded.Add, "Save as playlist") {
                     close()
                     onSaveInstant()
-                }
+                })
             }
             // Offered wherever the song is shown once it's in a playlist; inside a playlist it
             // removes it from that one.
             val containing = Library.playlistsWith(track.id)
             val here = target.playlistId?.takeIf { pid -> containing.any { it.id == pid } }
             when {
-                here != null -> playlistItems += MenuItem(Icons.Rounded.RemoveCircleOutline, "Remove from this playlist", danger = true) {
+                here != null -> add(MenuItem(Icons.Rounded.RemoveCircleOutline, "Remove from this playlist", danger = true) {
                     Library.removeFromPlaylist(here, track.id)
                     close()
-                }
-                containing.size == 1 -> playlistItems += MenuItem(Icons.Rounded.RemoveCircleOutline, "Remove from playlist", danger = true) {
+                })
+                containing.size == 1 -> add(MenuItem(Icons.Rounded.RemoveCircleOutline, "Remove from playlist", danger = true) {
                     val p = containing.first()
                     Library.removeFromPlaylist(p.id, track.id)
                     toast(context, "Removed from ${p.name}")
                     close()
-                }
-                containing.size > 1 -> playlistItems += MenuItem(Icons.Rounded.RemoveCircleOutline, "Remove from playlist…", danger = true) {
+                })
+                containing.size > 1 -> add(MenuItem(Icons.Rounded.RemoveCircleOutline, "Remove from playlist…", danger = true) {
                     close()
                     onRemoveFromSeveral(track)
-                }
+                })
             }
-            add(MenuSection("Playlists", playlistItems))
             if (game != null) {
-                add(
-                    MenuSection(
-                        "Go to",
-                        listOf(MenuItem(Icons.Rounded.Album, "Open ${game.title}") {
-                            close()
-                            onOpenGame(game)
-                        }),
-                    )
-                )
+                add(MenuItem(Icons.Rounded.Album, "Open ${game.title}") {
+                    close()
+                    onOpenGame(game)
+                })
             }
-            add(
-                MenuSection(
-                    "More",
-                    listOf(MenuItem(Icons.Rounded.Share, "Share") {
-                        shareTrack(context, track)
-                        close()
-                    }),
-                )
-            )
+            add(MenuItem(Icons.Rounded.Share, "Share") {
+                shareTrack(context, track)
+                close()
+            })
         }
     }
 
@@ -353,7 +331,7 @@ private fun SongMenu(
                         // Taps on the menu itself don't fall through and close it.
                         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
                 ) {
-                    MenuContent(track, game, sections)
+                    MenuContent(track, game, items)
                 }
             },
         ) { measurables, constraints ->
@@ -389,7 +367,7 @@ private fun SongMenu(
 }
 
 @Composable
-private fun MenuContent(track: Track, game: Game?, sections: List<MenuSection>) {
+private fun MenuContent(track: Track, game: Game?, items: List<MenuItem>) {
     Column(
         Modifier
             .verticalScroll(rememberScrollState())
@@ -412,10 +390,9 @@ private fun MenuContent(track: Track, game: Game?, sections: List<MenuSection>) 
                 )
             }
         }
-        // Just the options, with no group headings.
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Spacer(Modifier.height(4.dp))
-        sections.flatMap { it.items }.forEach { item -> MenuRow(item) }
+        items.forEach { item -> MenuRow(item) }
     }
 }
 

@@ -24,7 +24,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 data class PlayerUiState(
-    val connected: Boolean = false,
     val current: Track? = null,
     val isPlaying: Boolean = false,
     val isBuffering: Boolean = false,
@@ -113,7 +112,7 @@ object PlayerConnection {
         controller?.removeListener(listener)
         controller?.release()
         controller = null
-        _state.update { it.copy(connected = false) }
+        _state.update { it.copy(isPlaying = false, isBuffering = false) }
     }
 
     private fun onControllerLost(lost: MediaController) {
@@ -122,7 +121,7 @@ object PlayerConnection {
         // A dead connection still holds a thread and binder resources until it's released.
         runCatching { lost.release() }
         controller = null
-        _state.update { it.copy(connected = false, isPlaying = false, isBuffering = false) }
+        _state.update { it.copy(isPlaying = false, isBuffering = false) }
     }
 
     private fun withController(action: (MediaController) -> Unit) {
@@ -364,7 +363,6 @@ object PlayerConnection {
         _currentId.value = c.currentMediaItem?.mediaId
         _state.update {
             it.copy(
-                connected = true,
                 current = c.currentMediaItem?.toTrack(),
                 isPlaying = c.isPlaying,
                 isBuffering = c.playbackState == Player.STATE_BUFFERING,

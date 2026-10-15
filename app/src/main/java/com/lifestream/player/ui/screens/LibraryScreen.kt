@@ -81,9 +81,12 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
         if (refreshing) return
         refreshing = true
         scope.launch {
-            Library.refresh()
-            delay(700) // long enough to see the spinner settle
-            refreshing = false
+            try {
+                Library.refresh()
+                delay(700) // long enough to see the spinner settle
+            } finally {
+                refreshing = false
+            }
         }
     }
 
