@@ -118,6 +118,9 @@ object Catalog {
                 "Final Fantasy XI Gifts from Vana'diel Prime Memories soundtrack",
             ),
             maxAlbums = 12,
+            // Songs like "Conflict: March of the Hero" and "Conflict: You Want to Live Forever?" are
+            // different songs, so the whole name identifies each.
+            fullSongTitles = true,
             // From later add-on soundtracks (also on the PLUS album; kept in case it isn't found).
             extras = listOf(
                 ExtraSong("Melodies Errant", "Naoshi Mizuta", "n4-yiZpK81g", 205),
@@ -156,6 +159,10 @@ object Catalog {
                 "Endwalker Final Fantasy XIV original soundtrack",
                 "Growing Light Final Fantasy XIV original soundtrack",
                 "Dawntrail Final Fantasy XIV original soundtrack",
+            ),
+            releaseOrder = listOf(
+                "A Realm Reborn", "Before Meteor", "Heavensward", "Before the Fall", "Far Edge of Fate",
+                "Stormblood", "Shadowbringers", "Death Unto Dawn", "Endwalker", "Growing Light", "Dawntrail",
             ),
             maxAlbums = 16),
         Game("ff15", "XV", "Final Fantasy XV", 2016, "Yoko Shimomura",

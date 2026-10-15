@@ -475,6 +475,17 @@ object Matching {
     }
 
     /** Higher is better: the original release before remasters, the composers' own credit first. */
+    /** Best album first; a title with a [Game.releaseOrder] plays its albums in release order. */
+    fun ordered(albums: Collection<Album>, game: Game): List<Album> {
+        val best = albums.sortedByDescending { score(it, game) }
+        if (game.releaseOrder.isEmpty()) return best
+        fun rank(a: Album): Int {
+            val t = normalize(a.title)
+            return game.releaseOrder.indexOfFirst { hasWord(t, normalize(it)) }.let { if (it < 0) Int.MAX_VALUE else it }
+        }
+        return best.sortedBy { rank(it) } // stable: same rank keeps the best-first order
+    }
+
     fun score(album: Album, game: Game): Int {
         val t = normalize(album.title)
         var s = 0

@@ -118,6 +118,14 @@ class SearchAndNamesTest {
         assertEquals(key, Matching.songKey("One-Winged Angel (Remastered)"))
         assertEquals(key, Matching.songKey("01. One-Winged Angel"))
         assertEquals(key, Matching.songKey("FINAL FANTASY VII - One-Winged Angel [Piano Ver.]"))
+        // An "ep ver." is the same song, and a Japanese name followed by its English one matches the English.
+        assertEquals(Matching.songKey("Forever Today"), Matching.songKey("Forever Today ep ver."))
+        assertEquals(
+            Matching.songKey("Rhapsodies of Vana'diel ep ver."),
+            Matching.songKey("ヴァナ・ディールの星唄 -Rhapsodies of Vana'diel"),
+        )
+        // ...but not when the English part only names the version.
+        assertNotEquals(Matching.songKey("ザナルカンドにて - Piano Ver."), Matching.songKey("ビサイド島 - Piano Ver."))
         // A song sung in another language is its own recording.
         assertNotEquals(Matching.songKey("1000 Words"), Matching.songKey("1000 Words (English Version)"))
         // Soundtracks that name songs "Area - Song" keep the whole name.
@@ -125,6 +133,19 @@ class SearchAndNamesTest {
             Matching.songKey("Spring Meadows - Cloud of Anxiety", fullTitle = true),
             Matching.songKey("Spring Meadows - Another Song", fullTitle = true),
         )
+    }
+
+    @Test
+    fun expansionAlbumsPlayInReleaseOrder() {
+        val ff14 = com.lifestream.player.data.Catalog.game("ff14")!!
+        fun a(t: String) = com.lifestream.player.data.Album("https://music.youtube.com/playlist?list=$t", t, "Masayoshi Soken", 60, null)
+        val albums = listOf(
+            a("GROWING LIGHT: FINAL FANTASY XIV Original Soundtrack"), a("DAWNTRAIL: FINAL FANTASY XIV Original Soundtrack"),
+            a("Heavensward: FINAL FANTASY XIV Original Soundtrack"), a("A REALM REBORN: FINAL FANTASY XIV Original Soundtrack"),
+            a("THE FAR EDGE OF FATE:FINAL FANTASY XIV Original Soundtrack"),
+        )
+        // A Realm Reborn, Heavensward, The Far Edge of Fate, Growing Light, Dawntrail.
+        assertEquals(listOf(3, 2, 4, 0, 1), Matching.ordered(albums, ff14).map { albums.indexOf(it) })
     }
 
     // ---- Names ----

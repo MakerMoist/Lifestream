@@ -136,6 +136,11 @@ data class Game(
     val fullSongTitles: Boolean = false,
     /** Short names that find this title in Search, e.g. "FFT", "CC", "CT" (letters and digits only). */
     val aliases: List<String> = emptyList(),
+    /**
+     * For titles split across many albums: a word or phrase naming each album, in release order.
+     * Albums play in this order, and a song on several keeps its first (original) version.
+     */
+    val releaseOrder: List<String> = emptyList(),
 )
 
 /**
