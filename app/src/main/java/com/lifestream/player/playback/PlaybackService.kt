@@ -16,6 +16,9 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.audio.AudioProcessor
+import androidx.media3.cast.CastPlayer
+import androidx.media3.cast.SessionAvailabilityListener
+import com.google.android.gms.cast.framework.CastContext
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -55,6 +58,10 @@ import com.lifestream.player.R
 class PlaybackService : MediaLibraryService() {
 
     private var session: MediaLibrarySession? = null
+
+    /** The phone's own player, and the Cast device's while casting (see [switchToCast]). */
+    private var localPlayer: ExoPlayer? = null
+    private var castPlayer: CastPlayer? = null
 
     /** Android Auto's library requests (lists, search) are worked out off the main thread. */
     private val libraryExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor())
@@ -162,6 +169,8 @@ class PlaybackService : MediaLibraryService() {
         session = MediaLibrarySession.Builder(this, player, SessionCallback())
             .setSessionActivity(openApp)
             .build()
+        localPlayer = player
+        setUpCasting()
 
         // Turning Android Auto on or off in Settings refreshes the car's screens right away.
         serviceScope.launch {
@@ -206,6 +215,10 @@ class PlaybackService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        castPlayer?.setSessionAvailabilityListener(null)
+        castPlayer?.release()
+        castPlayer = null
+        CastRelay.stop()
         serviceScope.cancel()
         libraryExecutor.shutdownNow()
         otherAudio?.release()
@@ -215,11 +228,113 @@ class PlaybackService : MediaLibraryService() {
         recovery?.cancel()
         recovery = null
         session?.run {
+            localPlayer?.takeIf { it !== player }?.release()
             player.release()
             release()
         }
         session = null
+        localPlayer = null
         super.onDestroy()
+    }
+
+    // ---------------- Casting ----------------
+
+    /**
+     * Google Cast, when the phone has Google Play services. Starting a Cast session moves the
+     * queue to the Cast device (the phone relays the audio, see [CastRelay]); ending it brings the
+     * queue back to the phone, paused, at the same song and spot.
+     */
+    private fun setUpCasting() {
+        val castContext = runCatching { CastContext.getSharedInstance(this) }.getOrNull() ?: return
+        val cast = runCatching { CastPlayer(castContext) }.getOrNull() ?: return
+        castPlayer = cast
+        cast.setSessionAvailabilityListener(object : SessionAvailabilityListener {
+            override fun onCastSessionAvailable() = switchToCast()
+            override fun onCastSessionUnavailable() = switchToLocal()
+        })
+        if (cast.isCastSessionAvailable) switchToCast()
+    }
+
+    @Suppress("DEPRECATION")
+    private fun castDeviceAddress(): java.net.InetAddress? = runCatching {
+        CastContext.getSharedInstance(this).sessionManager.currentCastSession?.castDevice?.inetAddress
+    }.getOrNull()
+
+    /** A queue item as the Cast device plays it: from the phone's relay. Null if it can't be. */
+    private fun castItem(item: MediaItem): MediaItem? {
+        val url = CastRelay.urlFor(item.mediaId) ?: return null
+        return item.buildUpon().setUri(url).setMimeType(CastRelay.MIME).build()
+    }
+
+    /** Items coming in from a controller, made playable by whichever player is in charge. */
+    private fun forCurrentPlayer(item: MediaItem): MediaItem? =
+        if (castPlayer != null && session?.player === castPlayer) castItem(item) else item
+
+    private fun switchToCast() {
+        val cast = castPlayer ?: return
+        val local = localPlayer ?: return
+        val s = session ?: return
+        if (s.player === cast) return
+        if (!CastRelay.start(castDeviceAddress())) {
+            // Not on the same Wi-Fi as the Cast device: keep playing on the phone.
+            android.widget.Toast.makeText(this, "Casting needs the phone on the same Wi-Fi as the Cast device.", android.widget.Toast.LENGTH_LONG).show()
+            runCatching { CastContext.getSharedInstance(this).sessionManager.endCurrentSession(true) }
+            return
+        }
+        // The queue in the order it's playing (shuffle included), up to 200 songs around this one.
+        val order = playOrder(local)
+        val here = order.indexOf(local.currentMediaItemIndex).coerceAtLeast(0)
+        val from = (here - 20).coerceAtLeast(0)
+        val window = order.subList(from, minOf(order.size, from + 200))
+        val items = window.mapNotNull { castItem(local.getMediaItemAt(it)) }
+        val position = local.currentPosition
+        val play = local.playWhenReady
+        s.player = cast
+        if (items.size == window.size && items.isNotEmpty()) {
+            cast.repeatMode = local.repeatMode
+            cast.setMediaItems(items, here - from, position)
+            cast.playWhenReady = play
+            cast.prepare()
+        }
+        local.playWhenReady = false
+        local.stop()
+    }
+
+    private fun switchToLocal() {
+        val cast = castPlayer ?: return
+        val local = localPlayer ?: return
+        val s = session ?: return
+        if (s.player !== cast) {
+            CastRelay.stop()
+            return
+        }
+        val items = (0 until cast.mediaItemCount).map { cast.getMediaItemAt(it) }
+            .filter { SafeInput.isVideoId(it.mediaId) }
+        val current = cast.currentMediaItem?.mediaId
+        val index = items.indexOfFirst { it.mediaId == current }.coerceAtLeast(0)
+        val position = cast.currentPosition.coerceAtLeast(0)
+        s.player = local
+        if (items.isNotEmpty()) {
+            local.setMediaItems(items.map { it.toTrack().toMediaItem() }, index, position)
+            local.prepare()
+        }
+        // Back on the phone, paused, so the music doesn't suddenly play out of the phone's speaker.
+        local.playWhenReady = false
+        CastRelay.stop()
+    }
+
+    /** Queue positions in the order they play. */
+    private fun playOrder(player: Player): List<Int> {
+        val timeline = player.currentTimeline
+        if (timeline.isEmpty) return emptyList()
+        val shuffle = player.shuffleModeEnabled
+        val out = ArrayList<Int>(timeline.windowCount)
+        var i = timeline.getFirstWindowIndex(shuffle)
+        while (i != C.INDEX_UNSET && out.size < timeline.windowCount) {
+            out += i
+            i = timeline.getNextWindowIndex(i, Player.REPEAT_MODE_OFF, shuffle)
+        }
+        return out
     }
 
     /** LifeStream itself: its package name and its own app user id (which no other app shares). */
@@ -279,7 +394,7 @@ class PlaybackService : MediaLibraryService() {
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>,
         ): ListenableFuture<MutableList<MediaItem>> =
-            Futures.immediateFuture(mediaItems.mapNotNull { it.withPlayableUri() }.toMutableList())
+            Futures.immediateFuture(mediaItems.mapNotNull { it.withPlayableUri()?.let(::forCurrentPlayer) }.toMutableList())
 
         /**
          * A song, Instant Playlist or voice request from Android Auto becomes a full queue; plain
@@ -301,7 +416,7 @@ class PlaybackService : MediaLibraryService() {
                 pendingShuffleAt = SystemClock.elapsedRealtime()
                 return Futures.immediateFuture(
                     MediaSession.MediaItemsWithStartPosition(
-                        request.tracks.map { it.toMediaItem() },
+                        request.tracks.mapNotNull { forCurrentPlayer(it.toMediaItem()) },
                         request.startIndex,
                         C.TIME_UNSET,
                     )

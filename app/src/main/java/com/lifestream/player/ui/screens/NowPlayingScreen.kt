@@ -276,13 +276,14 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    // Up next sits beside the title; an Instant Playlist also gets a save button above it.
+                    // Beside the title, top to bottom: Save as playlist (New Game only), Cast, Up next.
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         if (instantQueue) {
                             IconButton(onClick = { savingInstant = true }) {
                                 Icon(Icons.Rounded.Add, "Save as playlist")
                             }
                         }
+                        com.lifestream.player.ui.components.CastButton()
                         IconButton(onClick = { showQueue = true }) {
                             Icon(Icons.AutoMirrored.Rounded.QueueMusic, "Up next")
                         }

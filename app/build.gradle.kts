@@ -114,6 +114,9 @@ dependencies {
     implementation("androidx.media3:media3-session:1.7.1")
     implementation("androidx.media3:media3-datasource:1.7.1")
     implementation("androidx.media3:media3-database:1.7.1")
+    // Casting: Media3's Cast player (Google Cast) and the device picker.
+    implementation("androidx.media3:media3-cast:1.7.1")
+    implementation("androidx.mediarouter:mediarouter:1.7.0")
 
     // Resolves YouTube audio stream URLs without any YouTube app or API key
     implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.5")

@@ -226,6 +226,9 @@ object StreamDataSources {
             .build()
     }
 
+    /** Reads YouTube audio directly (no saved-song cache): what the Cast relay sends on. */
+    fun castSource(): DataSource = YouTubeStreamDataSource(mediaClient)
+
     fun factory(): DataSource.Factory {
         val upstream = DataSource.Factory { YouTubeStreamDataSource(mediaClient) }
         val network = ResolvingDataSource.Factory(upstream) { spec ->

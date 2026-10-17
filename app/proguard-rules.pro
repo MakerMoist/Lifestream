@@ -1,3 +1,6 @@
+# Google Cast creates this by its name (from the manifest).
+-keep class com.lifestream.player.playback.CastOptionsProvider { *; }
+
 # LifeStream release shrinking: unused code is removed, nothing is renamed (stack traces stay
 # readable and nothing that's looked up by name can break).
 -dontobfuscate

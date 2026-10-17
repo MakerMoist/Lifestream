@@ -244,8 +244,15 @@ object PlayerConnection {
             // order from the starting song when shuffle switches on.
             c.shuffleModeEnabled = false
             val start = if (randomStart) valid.indices.random() else valid.indexOf(chosen).coerceAtLeast(0)
-            c.setMediaItems(valid.map { it.toMediaItem() }, start, 0L)
-            c.shuffleModeEnabled = shuffle
+            if (shuffle && !c.isCommandAvailable(Player.COMMAND_SET_SHUFFLE_MODE)) {
+                // A Cast device can't shuffle by itself: hand it the songs already shuffled,
+                // starting with the chosen one.
+                val first = valid[start]
+                c.setMediaItems((listOf(first) + (valid - first).shuffled()).map { it.toMediaItem() }, 0, 0L)
+            } else {
+                c.setMediaItems(valid.map { it.toMediaItem() }, start, 0L)
+                c.shuffleModeEnabled = shuffle
+            }
             c.prepare()
             c.play()
         }
