@@ -28,7 +28,8 @@ object Catalog {
                 numerals = setOf("I"),
                 allowBare = true,
                 exclude = listOf("PIANO", "DISTANT WORLDS", "WORLD OF", "TACTICS", "DISSIDIA", "ORCHESTRA",
-                    "RECORD KEEPER", "BRAVE EXVIUS", "CRYSTAL CHRONICLES", "THEATRHYTHM", "ORIGINS"),
+                    "RECORD KEEPER", "BRAVE EXVIUS", "CRYSTAL CHRONICLES", "THEATRHYTHM", "ORIGINS",
+                    "ORIGIN", "STRANGER OF PARADISE"),
             ), art = R.drawable.art_ff1),
         Game("ff2", "II", "Final Fantasy II", 1988, "Nobuo Uematsu",
             "Final Fantasy II original soundtrack", c(0xFF7F1D1D), c(0xFFF87171), match = num("II"), art = R.drawable.art_ff2),
@@ -46,36 +47,9 @@ object Catalog {
             // YouTube only has small (480x360) frames for this soundtrack's songs, which look
             // blurry when shown large; the album's own cover is sharp.
             coverArt = "https://yt3.googleusercontent.com/yrm6nocGlOsaKN6w2xdmncbfuFHVdlUP4DvJfg0Tpivky3XhYVLYsg8fB__eqjaS_z9J_AN7WMi8JMsYhw=w544-h544-l90-rj"),
-        Game("ccr", "CC·R", "Crisis Core: Reunion", 2022, "Takeharu Ishimoto",
-            "Crisis Core Final Fantasy VII Reunion original soundtrack", c(0xFF172554), c(0xFF93C5FD),
-            match = MatchSpec(allOf = listOf("CRISIS CORE", "REUNION")), art = R.drawable.art_ccr,
-            aliases = listOf("CCR", "CCFF7", "CCFFVII", "CCFF7R"),
-            // Reunion's soundtrack isn't on YouTube Music; its songs show Square Enix's official
-            // Crisis Core soundtrack cover (the game's logo) instead of the uploader's thumbnails.
-            coverArt = "https://yt3.googleusercontent.com/NUroKdpFTlpUapk0E2XKyYWogJie3XlaXlalTiEBLmhLdZUEWu1ZWz2bebbfIeX1_AKjq3BR3rcasEoW=w544-h544-s-l90-rj"),
         Game("ff7", "VII", "Final Fantasy VII", 1997, "Nobuo Uematsu",
             "Final Fantasy VII original soundtrack", c(0xFF052E16), c(0xFF6EF2B5),
             match = num("VII", exclude = notOriginalVII), art = R.drawable.art_ff7),
-        Game("fft", "T", "Final Fantasy: Tactics", 1997, "Hitoshi Sakimoto · Masaharu Iwata",
-            "Final Fantasy Tactics original soundtrack", c(0xFF3F2A14), c(0xFFE7C78A),
-            match = MatchSpec(allOf = listOf("TACTICS"), exclude = listOf("ADVANCE", "A2")), art = R.drawable.art_fft,
-            aliases = listOf("FFT"),
-        ),
-        // Includes Intergrade's INTERmission episode (DLC): its soundtrack is part of Remake's.
-        Game("ff7r", "VII·R", "Final Fantasy VII: Remake", 2020, "Hamauzu · Suzuki · Uematsu",
-            "Final Fantasy VII Remake original soundtrack", c(0xFF022C22), c(0xFF34D399),
-            match = MatchSpec(
-                numerals = setOf("VII"),
-                allOf = listOf("REMAKE"),
-                exclude = listOf("REBIRTH"),
-            ), art = R.drawable.art_ff7r,
-            aliases = listOf("FF7R", "FFVIIR"),
-            albumQueries = listOf("Final Fantasy VII Remake Intergrade original soundtrack")),
-        Game("ff7rb", "VII·RB", "Final Fantasy VII: Rebirth", 2024, "Mitsuto Suzuki · various",
-            "Final Fantasy VII Rebirth original soundtrack", c(0xFF0F172A), c(0xFF67E8F9),
-            match = MatchSpec(numerals = setOf("VII"), allOf = listOf("REBIRTH")), art = R.drawable.art_ff7rb,
-            aliases = listOf("FF7RB", "FFVIIRB"),
-        ),
         Game("ff8", "VIII", "Final Fantasy VIII", 1999, "Nobuo Uematsu",
             "Final Fantasy VIII original soundtrack", c(0xFF1F2937), c(0xFF93C5FD), match = num("VIII"), art = R.drawable.art_ff8,
             // Licensed vocal theme, left off the streaming album.
@@ -171,16 +145,68 @@ object Catalog {
             "Final Fantasy XV original soundtrack", c(0xFF0A0A0A), c(0xFFA3A3A3), match = num("XV"), art = R.drawable.art_ff15,
             // Volume 2 (two albums) has the DLC: Episodes Gladiolus, Prompto, Ignis and Ardyn,
             // Comrades and the Royal Edition.
-            albumQueries = listOf("Final Fantasy XV original soundtrack volume 2")),
+            albumQueries = listOf("Final Fantasy XV original soundtrack volume 2"),
+            // The game's theme song, released by Florence + The Machine rather than on the
+            // soundtrack albums.
+            extras = listOf(ExtraSong("Stand By Me", "Florence + The Machine", albumArt = true))),
         Game("ff16", "XVI", "Final Fantasy XVI", 2023, "Masayoshi Soken",
             "Final Fantasy XVI original soundtrack", c(0xFF450A0A), c(0xFFFB923C), match = num("XVI"), art = R.drawable.art_ff16),
+
+        // The VII Series
+        Game("ccr", "CC·R", "Crisis Core: Reunion", 2022, "Takeharu Ishimoto",
+            "Crisis Core Final Fantasy VII Reunion original soundtrack", c(0xFF172554), c(0xFF93C5FD), Series.VII,
+            match = MatchSpec(allOf = listOf("CRISIS CORE", "REUNION")), art = R.drawable.art_ccr,
+            aliases = listOf("CCR", "CCFF7", "CCFFVII", "CCFF7R"),
+            // Reunion's soundtrack isn't on YouTube Music; its songs show Square Enix's official
+            // Crisis Core soundtrack cover (the game's logo) instead of the uploader's thumbnails.
+            coverArt = "https://yt3.googleusercontent.com/NUroKdpFTlpUapk0E2XKyYWogJie3XlaXlalTiEBLmhLdZUEWu1ZWz2bebbfIeX1_AKjq3BR3rcasEoW=w544-h544-s-l90-rj"),
+        // The film's soundtrack (and Advent Children Complete's, when it's on YouTube Music).
+        Game("ac", "VII·AC", "Final Fantasy VII: Advent Children", 2005, "Nobuo Uematsu · Kawamori · Fukui",
+            "Final Fantasy VII Advent Children original soundtrack", c(0xFF0B0F14), c(0xFF9CA3AF), Series.VII,
+            match = MatchSpec(numerals = setOf("VII"), allOf = listOf("ADVENT CHILDREN")), art = R.drawable.art_ac,
+            aliases = listOf("AC", "ACC", "FF7AC", "FFVIIAC"),
+            albumQueries = listOf("Final Fantasy VII Advent Children Complete original soundtrack")),
+        // Includes Intergrade's INTERmission episode (DLC): its soundtrack is part of Remake's.
+        Game("ff7r", "VII·R", "Final Fantasy VII: Remake", 2020, "Hamauzu · Suzuki · Uematsu",
+            "Final Fantasy VII Remake original soundtrack", c(0xFF022C22), c(0xFF34D399), Series.VII,
+            match = MatchSpec(
+                numerals = setOf("VII"),
+                allOf = listOf("REMAKE"),
+                exclude = listOf("REBIRTH"),
+            ), art = R.drawable.art_ff7r,
+            aliases = listOf("FF7R", "FFVIIR"),
+            albumQueries = listOf("Final Fantasy VII Remake Intergrade original soundtrack")),
+        Game("ff7rb", "VII·RB", "Final Fantasy VII: Rebirth", 2024, "Mitsuto Suzuki · various",
+            "Final Fantasy VII Rebirth original soundtrack", c(0xFF0F172A), c(0xFF67E8F9), Series.VII,
+            match = MatchSpec(numerals = setOf("VII"), allOf = listOf("REBIRTH")), art = R.drawable.art_ff7rb,
+            aliases = listOf("FF7RB", "FFVIIRB"),
+        ),
+
+        // Series Spin-Offs
+        Game("fft", "T", "Final Fantasy: Tactics", 1997, "Hitoshi Sakimoto · Masaharu Iwata",
+            "Final Fantasy Tactics original soundtrack", c(0xFF3F2A14), c(0xFFE7C78A), Series.SPINOFF,
+            match = MatchSpec(allOf = listOf("TACTICS"), exclude = listOf("ADVANCE", "A2")), art = R.drawable.art_fft,
+            aliases = listOf("FFT"),
+        ),
+        // The game's soundtrack and its DLC (Trials of the Dragon King, Wanderer of the Rift,
+        // Different Future) soundtracks.
+        Game("sop", "SoP", "Stranger of Paradise: Final Fantasy Origin", 2022, "Naoshi Mizuta · Hidenori Iwasaki",
+            "Stranger of Paradise Final Fantasy Origin original soundtrack", c(0xFF0A0A12), c(0xFF8B5CF6), Series.SPINOFF,
+            match = MatchSpec(allOf = listOf("STRANGER OF PARADISE")), art = R.drawable.art_sop,
+            aliases = listOf("SOP", "SOPFFO", "FFO"),
+            albumQueries = listOf(
+                "Stranger of Paradise Final Fantasy Origin original soundtrack DLC",
+                "Stranger of Paradise Final Fantasy Origin Trials of the Dragon King soundtrack",
+                "Stranger of Paradise Final Fantasy Origin Wanderer of the Rift soundtrack",
+                "Stranger of Paradise Final Fantasy Origin Different Future soundtrack",
+            )),
 
         // Other Games
         // The game's soundtrack and its Verso's Drafts expansion soundtrack; not the bonus album
         // ("Nos vies en Lumière (Bonus Edition)") or the pre-release trailer EPs ("Reveal Edition",
         // "Gustave Edition", "Cast Reveal Edition").
         Game("coe33", "E33", "Clair Obscur: Expedition 33", 2025, "Lorien Testard",
-            "Clair Obscur Expedition 33 original soundtrack", c(0xFF1F1611), c(0xFFE9C46A), Series.SPINOFF,
+            "Clair Obscur Expedition 33 original soundtrack", c(0xFF1F1611), c(0xFFE9C46A), Series.OTHER,
             match = MatchSpec(
                 allOf = listOf("CLAIR OBSCUR"),
                 exclude = listOf("EDITION", "BONUS", "NOS VIES", "TRAILER", "REVEAL"),
@@ -189,12 +215,12 @@ object Catalog {
             aliases = listOf("E33", "COE33", "CO33", "CO E33"),
             albumQueries = listOf("Clair Obscur Expedition 33 Verso's Drafts original soundtrack")),
         Game("lo", "LO", "Lost Odyssey", 2007, "Nobuo Uematsu",
-            "Lost Odyssey original soundtrack", c(0xFF292524), c(0xFFE7B76B), Series.SPINOFF,
+            "Lost Odyssey original soundtrack", c(0xFF292524), c(0xFFE7B76B), Series.OTHER,
             match = MatchSpec(allOf = listOf("LOST ODYSSEY"), requireFinalFantasy = false), art = R.drawable.art_lo,
             aliases = listOf("LO"),
         ),
         Game("ct", "CT", "Chrono Trigger", 1995, "Yasunori Mitsuda · Nobuo Uematsu",
-            "Chrono Trigger original soundtrack", c(0xFF1E3A5F), c(0xFFFFD166), Series.SPINOFF,
+            "Chrono Trigger original soundtrack", c(0xFF1E3A5F), c(0xFFFFD166), Series.OTHER,
             match = MatchSpec(allOf = listOf("CHRONO", "TRIGGER"), requireFinalFantasy = false), art = R.drawable.art_ct,
             aliases = listOf("CT"),
             // YouTube only has small (480x360) frames for this soundtrack's songs, which look
@@ -202,7 +228,7 @@ object Catalog {
             coverArt = "https://yt3.googleusercontent.com/Nt784WTZYI6WHUjn6UGg_IbTIzfHeNBN_Lj17t7YvP9lK1WL5L3ZH_uWna9th7EGAvr5HTTxYNAm1Fs=w544-h544-s-l90-rj",
         ),
         Game("cx", "CC", "Chrono Cross", 1999, "Yasunori Mitsuda",
-            "Chrono Cross original soundtrack", c(0xFF083344), c(0xFF22D3EE), Series.SPINOFF,
+            "Chrono Cross original soundtrack", c(0xFF083344), c(0xFF22D3EE), Series.OTHER,
             match = MatchSpec(allOf = listOf("CHRONO", "CROSS"), requireFinalFantasy = false), art = R.drawable.art_cx,
             aliases = listOf("CC"),
         ),

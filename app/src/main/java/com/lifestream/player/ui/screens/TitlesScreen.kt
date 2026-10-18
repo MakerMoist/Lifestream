@@ -70,7 +70,7 @@ fun TitlesScreen(onBack: () -> Unit) {
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
             )
         }
-        for (series in listOf(Series.MAINLINE, Series.SPINOFF)) {
+        for (series in Series.entries) {
             item(key = "label-${series.name}") { SectionLabel(series.label, Modifier.padding(top = 8.dp)) }
             items(Catalog.bySeries(series), key = { it.id }) { game ->
                 TitleRow(game, shown = game.id !in hidden) { AppSettings.setTitleShown(game.id, it) }

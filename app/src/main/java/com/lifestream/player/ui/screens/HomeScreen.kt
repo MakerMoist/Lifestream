@@ -317,7 +317,7 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
                 }
             }
 
-            listOf(Series.MAINLINE, Series.SPINOFF).forEach { series ->
+            Series.entries.forEach { series ->
                 val games = Catalog.bySeries(series).filter { it.id !in hidden }
                 if (games.isEmpty()) return@forEach
                 item(key = "label-${series.name}", span = { GridItemSpan(maxLineSpan) }) {

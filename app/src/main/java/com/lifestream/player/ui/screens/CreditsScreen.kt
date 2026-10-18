@@ -105,8 +105,9 @@ object Credits {
         val finalFantasy = "FINAL FANTASY is a registered trademark of $SQUARE_ENIX"
         for (id in listOf(
             "ff1", "ff2", "ff3", "ff4", "ff5", "ff6", "ff7", "fft", "ff7r", "ff7rb", "ff8", "ff9", "ff10",
-            "ff10-2", "ff11", "ff12", "ff13", "ff13-2", "lr", "ff14", "ff15", "ff16",
+            "ff10-2", "ff11", "ff12", "ff13", "ff13-2", "lr", "ff14", "ff15", "ff16", "ac",
         )) put(id, finalFantasy)
+        put("sop", "$finalFantasy (developed with Team NINJA of KOEI TECMO GAMES)")
         put("ccr", "CRISIS CORE and FINAL FANTASY are registered trademarks of $SQUARE_ENIX")
         put("ct", "CHRONO TRIGGER is a registered trademark of $SQUARE_ENIX")
         put("cx", "CHRONO CROSS is a registered trademark of $SQUARE_ENIX")
@@ -121,7 +122,8 @@ object Credits {
     )
 
     const val DISCLAIMER = "LifeStream is an unofficial, fan-made player. It isn't affiliated with, sponsored or " +
-        "endorsed by Square Enix, Microsoft, Sandfall Interactive, Kepler Interactive or Google. All trademarks " +
+        "endorsed by Square Enix, Koei Tecmo, Microsoft, Sandfall Interactive, Kepler Interactive or Google. " +
+        "All trademarks " +
         "and music belong to their respective owners."
 }
 
