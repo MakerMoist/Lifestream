@@ -78,6 +78,10 @@ object Updater {
             }
         }
         if (versionUrl == null || apkUrl == null) throw IOException("The latest release has no installable build yet.")
+        // Both files must be this repository's own release downloads, not a link elsewhere on GitHub.
+        if (!isOwnReleaseAsset(versionUrl!!) || !isOwnReleaseAsset(apkUrl!!)) {
+            throw IOException("The latest release points somewhere unexpected, so it was ignored.")
+        }
         val info = JSONObject(getText(versionUrl!!))
         val sha = info.optString("sha256").lowercase()
         if (!sha.matches(sha256Hex)) throw IOException("The release's checksum is missing or invalid.")
@@ -210,6 +214,18 @@ object Updater {
                 throw IOException("Unexpected response from GitHub.")
             }
         }
+    }
+
+    /** https://github.com/<this repo>/releases/download/<tag>/<file>, and nothing else. */
+    private fun isOwnReleaseAsset(url: String): Boolean {
+        val uri = Uri.parse(url)
+        val segments = uri.pathSegments
+        val repo = BuildConfig.UPDATE_REPO.split('/')
+        return uri.scheme == "https" && uri.host == "github.com" && uri.port == -1 &&
+            uri.encodedQuery == null && uri.encodedFragment == null && uri.userInfo == null &&
+            segments.size == 6 && segments[0] == repo[0] && segments[1] == repo[1] &&
+            segments[2] == "releases" && segments[3] == "download" &&
+            segments.none { it == "." || it == ".." || it.isEmpty() }
     }
 
     /** Only GitHub's API, site and asset CDN, over HTTPS. */
