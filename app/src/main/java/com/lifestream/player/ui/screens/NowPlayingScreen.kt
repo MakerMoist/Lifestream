@@ -7,6 +7,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.runtime.mutableFloatStateOf
@@ -472,6 +473,9 @@ private fun SwipeableArtwork(state: PlayerUiState) {
     fun canPrevious(s: PlayerUiState) = s.hasPrevious
 
     val flingPx = with(LocalDensity.current) { 900.dp.toPx() } // per second
+    // Press and hold the art for the same menu as the ⋮ button, opening where the finger is.
+    val holdAnchor = rememberMenuAnchor()
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
     Artwork(
         state.current?.thumbnail,
         size = 400.dp,
@@ -479,6 +483,15 @@ private fun SwipeableArtwork(state: PlayerUiState) {
             .fillMaxWidth()
             .aspectRatio(1f)
             .onSizeChanged { widthPx = it.width.toFloat().coerceAtLeast(1f) }
+            .menuAnchor(holdAnchor)
+            .pointerInput(Unit) {
+                detectTapGestures(onLongPress = {
+                    current.current?.let { track ->
+                        haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                        TrackActions.show(track, at = holdAnchor.at())
+                    }
+                })
+            }
             // Touches are measured here, outside the layer that moves and tilts the art, so the
             // art following your finger can't skew the distance or the fling direction.
             .pointerInput(Unit) {

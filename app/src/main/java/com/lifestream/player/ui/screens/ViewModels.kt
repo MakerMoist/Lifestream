@@ -95,6 +95,7 @@ class HomeViewModel : ViewModel() {
                 val titles = mix.mapNotNull { it.gameId }.distinct().size
                 if (mix.size >= 20 && titles >= 3) {
                     PlayerConnection.playTracks(mix, instant = true)
+                    NowPlayingRequest.open() // straight to the player, like any song you pick
                     val note = "Shuffling ${mix.size} songs from $titles soundtracks"
                     surpriseNote = note
                     clearNoteLater(note)
@@ -108,6 +109,7 @@ class HomeViewModel : ViewModel() {
                     if (tracks.isNotEmpty()) {
                         lastSurprise = game.id
                         PlayerConnection.playTracks(tracks, randomStart = true, instant = true)
+                        NowPlayingRequest.open()
                         surpriseNote = "Shuffling ${game.title}"
                         clearNoteLater("Shuffling ${game.title}")
                         return@launch
@@ -183,4 +185,7 @@ class SearchViewModel : ViewModel() {
     var input by mutableStateOf("")
     var games by mutableStateOf<List<Game>>(emptyList())
     var hits by mutableStateOf<List<SoundtrackIndex.Hit>>(emptyList())
+
+    /** The search [games] and [hits] are the results of (they arrive a moment after typing). */
+    var resultsFor by mutableStateOf<String?>(null)
 }

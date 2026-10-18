@@ -19,14 +19,14 @@ private const val X2 = "Final Fantasy X-2"
 private const val XII = "Final Fantasy XII"
 private const val XIII = "Final Fantasy XIII"
 private const val XIII2 = "Final Fantasy XIII-2"
-private const val LR = "Lightning Returns: Final Fantasy XIII"
+private const val LR = "Final Fantasy XIII: Lightning Returns"
 private const val XIV = "Final Fantasy XIV"
 private const val XV = "Final Fantasy XV"
 private const val XVI = "Final Fantasy XVI"
 private const val DC = "Dirge of Cerberus: Final Fantasy VII"
 private const val CT = "Chrono Trigger"
 private const val CX = "Chrono Cross"
-private const val FFT = "Final Fantasy Tactics"
+private const val FFT = "Final Fantasy: Tactics"
 
 /** Checked against Wikiquote's game pages and the Final Fantasy Wiki; a few well-known lines from memory. */
 val villainQuotes = listOf(
@@ -207,7 +207,7 @@ val villainQuotes = listOf(
     VillainQuote("Two!!! Number Two!!!", "Don Corneo", VII),
     VillainQuote("I will never be a memory.", "Sephiroth", AC),
     VillainQuote("Tell me what you cherish most. Give me the pleasure of taking it away.", "Sephiroth", AC),
-    VillainQuote("Seven seconds till the end.", "Sephiroth", "Final Fantasy VII Remake"),
+    VillainQuote("Seven seconds till the end.", "Sephiroth", "Final Fantasy VII: Remake"),
     VillainQuote("Even if the morrow is barren of promises, nothing shall forestall my return.", "Genesis", CC),
     VillainQuote(
         "My friend, the fates are cruel. There are no dreams, no honor remains. The arrow has left the bow of the goddess.",

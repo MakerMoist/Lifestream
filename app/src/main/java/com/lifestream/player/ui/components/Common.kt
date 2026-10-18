@@ -4,7 +4,7 @@ import androidx.compose.material.icons.automirrored.rounded.PlaylistAddCheck
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.DownloadForOffline
 import com.lifestream.player.playback.SongCache
 import androidx.compose.ui.platform.LocalDensity
 import com.lifestream.player.data.hiResArtwork
@@ -180,7 +180,7 @@ fun TrackRow(
         val savedIds by SongCache.cachedIds.collectAsStateWithLifecycle()
         if (track.id in savedIds) {
             Icon(
-                Icons.Rounded.Check,
+                Icons.Rounded.DownloadForOffline,
                 "Saved on this phone",
                 tint = Color.Gray,
                 modifier = Modifier.size(18.dp),
@@ -218,7 +218,7 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun EmptyState(title: String, body: String, modifier: Modifier = Modifier) {
+fun EmptyState(title: String, body: String? = null, modifier: Modifier = Modifier) {
     Column(
         modifier
             .fillMaxWidth()
@@ -228,7 +228,9 @@ fun EmptyState(title: String, body: String, modifier: Modifier = Modifier) {
     ) {
         Icon(Icons.Rounded.MusicNote, null, tint = LsColors.Faint, modifier = Modifier.size(40.dp))
         Text(title, style = MaterialTheme.typography.titleMedium)
-        Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (body != null) {
+            Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
@@ -296,16 +298,12 @@ fun SlimSearchField(
     }
 }
 
-/**
- * A big button's icon and label with the label itself centered on the button: the icon sits just
- * before the text and a matching gap after it balances the row.
- */
+/** A big button's icon and label, centered together on the button. */
 @Composable
 fun CenteredButtonLabel(text: String, icon: @Composable () -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(20.dp), contentAlignment = Alignment.Center) { icon() }
         Spacer(Modifier.width(8.dp))
         Text(text, style = MaterialTheme.typography.titleSmall, maxLines = 1)
-        Spacer(Modifier.width(28.dp))
     }
 }

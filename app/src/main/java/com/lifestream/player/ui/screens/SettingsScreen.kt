@@ -433,7 +433,6 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
         )
 
         SectionLabel("Interface", Modifier.padding(top = 8.dp))
-        ThemeRow(Palettes.byId(themeId), onClick = onOpenThemes)
         SettingsCard {
             Text("Song List Order", style = MaterialTheme.typography.bodyLarge)
             Text(
@@ -457,9 +456,17 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
         }
         SettingsCard {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Show Quotes", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                Column(Modifier.weight(1f)) {
+                    Text("Hide Quotes", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Hides the random villain quotes from the home tab.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 Spacer(Modifier.width(12.dp))
-                Switch(checked = showQuotes, onCheckedChange = { AppSettings.setShowQuotes(it) })
+                // On means hidden (quotes show by default, so this starts off).
+                Switch(checked = !showQuotes, onCheckedChange = { AppSettings.setShowQuotes(!it) })
             }
         }
         SettingsCard {
@@ -476,6 +483,8 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
                 Switch(checked = searchKeyboard, onCheckedChange = { AppSettings.setSearchKeyboard(it) })
             }
         }
+        // Themes always sits at the bottom of Interface.
+        ThemeRow(Palettes.byId(themeId), onClick = onOpenThemes)
 
         // System sits at the bottom: Android Auto, Cast, saved songs, then app updates last.
         SectionLabel("System", Modifier.padding(top = 8.dp))

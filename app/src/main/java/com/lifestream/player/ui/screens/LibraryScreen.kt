@@ -125,10 +125,7 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
                         LazyColumn(Modifier.fillMaxSize(), state = playlistList) {
                             if (playlists.isEmpty()) {
                                 item(key = "empty") {
-                                    EmptyState(
-                                        "No playlists yet",
-                                        "Make one with the button below, or press and hold any song and choose \"Add to playlist\".",
-                                    )
+                                    EmptyState("No playlists yet")
                                 }
                             }
                             items(playlists, key = { it.id }) { p ->
@@ -160,8 +157,12 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
                             item(key = "empty") { EmptyState("Nothing played yet", "Songs you play will show up here.") }
                         } else {
                             item(key = "actions") {
-                                PlayShuffleRow(recents) {
-                                    TextButton(onClick = { confirmClear = true }) { Text("Clear") }
+                                Column {
+                                    // Clear sits on its own line, so Play and Shuffle stay centered.
+                                    Row(Modifier.fillMaxWidth().padding(end = 8.dp), horizontalArrangement = Arrangement.End) {
+                                        TextButton(onClick = { confirmClear = true }) { Text("Clear") }
+                                    }
+                                    PlayShuffleRow(recents)
                                 }
                             }
                             itemsIndexed(recents, key = { _, t: Track -> t.id }) { index, track ->
@@ -234,8 +235,8 @@ private fun PlaylistRow(p: Playlist, onClick: () -> Unit) {
 }
 
 @Composable
-private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null, extra: @Composable () -> Unit = {}) {
-    // Play and Shuffle share the full width (anything extra, like History's Clear, sits after).
+private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null) {
+    // Play and Shuffle share the full width, centered.
     Row(
         Modifier
             .fillMaxWidth()
@@ -257,7 +258,6 @@ private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null, extr
         ) {
             CenteredButtonLabel("Shuffle") { Icon(Icons.Rounded.Shuffle, null, Modifier.size(20.dp)) }
         }
-        extra()
     }
 }
 

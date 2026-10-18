@@ -167,7 +167,7 @@ object AppSettings {
     /** When the queue runs out, keep going with random songs from any soundtrack. */
     val autoPlayAtEnd: StateFlow<Boolean> = _autoPlayAtEnd.asStateFlow()
 
-    private val _levelVolume = MutableStateFlow(true)
+    private val _levelVolume = MutableStateFlow(false)
 
     /** Even out loudness between songs (see VolumeLeveler). */
     val levelVolume: StateFlow<Boolean> = _levelVolume.asStateFlow()
@@ -180,7 +180,7 @@ object AppSettings {
         _pauseAtZeroVolume.value = prefs.getBoolean(KEY_PAUSE_AT_ZERO_VOLUME, true)
         _randomSongOrder.value = prefs.getBoolean(KEY_RANDOM_SONG_ORDER, false)
         _showQuotes.value = prefs.getBoolean(KEY_SHOW_QUOTES, true)
-        _levelVolume.value = prefs.getBoolean(KEY_LEVEL_VOLUME, true)
+        _levelVolume.value = prefs.getBoolean(KEY_LEVEL_VOLUME, false)
         _autoPlayAtEnd.value = prefs.getBoolean(KEY_AUTO_PLAY_AT_END, true)
         _androidAuto.value = prefs.getBoolean(KEY_ANDROID_AUTO, false)
         _androidAutoSeen.value = prefs.getBoolean(KEY_ANDROID_AUTO_SEEN, false)

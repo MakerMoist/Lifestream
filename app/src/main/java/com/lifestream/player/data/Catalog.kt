@@ -56,13 +56,13 @@ object Catalog {
         Game("ff7", "VII", "Final Fantasy VII", 1997, "Nobuo Uematsu",
             "Final Fantasy VII original soundtrack", c(0xFF052E16), c(0xFF6EF2B5),
             match = num("VII", exclude = notOriginalVII), art = R.drawable.art_ff7),
-        Game("fft", "T", "Final Fantasy Tactics", 1997, "Hitoshi Sakimoto · Masaharu Iwata",
+        Game("fft", "T", "Final Fantasy: Tactics", 1997, "Hitoshi Sakimoto · Masaharu Iwata",
             "Final Fantasy Tactics original soundtrack", c(0xFF3F2A14), c(0xFFE7C78A),
             match = MatchSpec(allOf = listOf("TACTICS"), exclude = listOf("ADVANCE", "A2")), art = R.drawable.art_fft,
             aliases = listOf("FFT"),
         ),
         // Includes Intergrade's INTERmission episode (DLC): its soundtrack is part of Remake's.
-        Game("ff7r", "VII·R", "Final Fantasy VII Remake", 2020, "Hamauzu · Suzuki · Uematsu",
+        Game("ff7r", "VII·R", "Final Fantasy VII: Remake", 2020, "Hamauzu · Suzuki · Uematsu",
             "Final Fantasy VII Remake original soundtrack", c(0xFF022C22), c(0xFF34D399),
             match = MatchSpec(
                 numerals = setOf("VII"),
@@ -71,7 +71,7 @@ object Catalog {
             ), art = R.drawable.art_ff7r,
             aliases = listOf("FF7R", "FFVIIR"),
             albumQueries = listOf("Final Fantasy VII Remake Intergrade original soundtrack")),
-        Game("ff7rb", "VII·RB", "Final Fantasy VII Rebirth", 2024, "Mitsuto Suzuki · various",
+        Game("ff7rb", "VII·RB", "Final Fantasy VII: Rebirth", 2024, "Mitsuto Suzuki · various",
             "Final Fantasy VII Rebirth original soundtrack", c(0xFF0F172A), c(0xFF67E8F9),
             match = MatchSpec(numerals = setOf("VII"), allOf = listOf("REBIRTH")), art = R.drawable.art_ff7rb,
             aliases = listOf("FF7RB", "FFVIIRB"),
@@ -136,7 +136,7 @@ object Catalog {
             "Final Fantasy XIII-2 original soundtrack", c(0xFF1E0B3A), c(0xFFB9A2FF),
             match = num("XIII2", notWith = setOf("XIII")), art = R.drawable.art_ff13_2),
         // The third XIII game; its Original Soundtrack PLUS (extra tracks) is included.
-        Game("lr", "LR", "Lightning Returns: Final Fantasy XIII", 2013, "Hamauzu · Mizuta · Suzuki",
+        Game("lr", "LR", "Final Fantasy XIII: Lightning Returns", 2013, "Hamauzu · Mizuta · Suzuki",
             "Lightning Returns Final Fantasy XIII original soundtrack", c(0xFF2A0E2E), c(0xFFF5A3D0),
             match = MatchSpec(numerals = setOf("XIII"), allOf = listOf("LIGHTNING RETURNS")), art = R.drawable.art_lr,
             aliases = listOf("LR", "LRFF13", "LRFFXIII"),

@@ -26,7 +26,7 @@ object Recommendations {
         history: List<Track>,
         index: Map<String, List<Track>>,
         seed: Long,
-        limit: Int = 16,
+        limit: Int = 20,
         gameOf: (Track) -> String? = { it.gameId },
     ): List<Track> {
         if (history.isEmpty() || index.isEmpty()) return emptyList()

@@ -125,6 +125,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
         }
         vm.games = games
         vm.hits = hits
+        vm.resultsFor = q
     }
 
     Column(
@@ -168,7 +169,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
             if (recentSearches.isEmpty()) {
                 EmptyState(
                     title = "Search all enabled titles",
-                    body = "Find songs and soundtracks by name. Your recent searches will show up here.",
+                    body = "Your recent searches will show up here.",
                 )
                 return@Column
             }
@@ -226,11 +227,18 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
         val games = vm.games
         val hits = vm.hits
         if (games.isEmpty() && hits.isEmpty()) {
-            EmptyState(
-                title = if (progress.running) "Still indexing…" else "No Final Fantasy music found",
-                body = if (progress.running) "More soundtracks are being added; results will appear as they load."
-                else "Search only covers the soundtracks in LifeStream.",
-            )
+            // Only once this search has actually finished (not for the moment between typing and
+            // its results, which used to flash "nothing found").
+            if (vm.resultsFor == vm.input) {
+                if (progress.running) {
+                    EmptyState(
+                        title = "Still indexing…",
+                        body = "More soundtracks are being added; results will appear as they load.",
+                    )
+                } else {
+                    EmptyState(title = "No Songs/Titles Found")
+                }
+            }
             return@Column
         }
 

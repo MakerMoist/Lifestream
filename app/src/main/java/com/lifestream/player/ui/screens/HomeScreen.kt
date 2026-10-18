@@ -418,8 +418,9 @@ private fun RecommendedRow(songs: List<Track>) {
                     .combinedClickable(
                         onClick = {
                             // The song that's already playing opens Now Playing instead of restarting.
-                            if (PlayerConnection.currentId.value == track.id) NowPlayingRequest.open()
-                            else PlayerConnection.playTracks(songs, index)
+                            // Either way, Now Playing opens.
+                            if (PlayerConnection.currentId.value != track.id) PlayerConnection.playTracks(songs, index)
+                            NowPlayingRequest.open()
                         },
                         onLongClick = { TrackActions.show(track, at = anchor.at()) },
                     ),
