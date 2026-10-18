@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import com.lifestream.player.ui.components.thinScrollbar
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,10 +47,13 @@ import com.lifestream.player.ui.components.rememberArt
 @Composable
 fun TitlesScreen(onBack: () -> Unit) {
     val hidden by AppSettings.hiddenTitles.collectAsStateWithLifecycle()
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     LazyColumn(
         Modifier
             .fillMaxSize()
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .thinScrollbar(listState),
+        state = listState,
     ) {
         item(key = "header") {
             Row(verticalAlignment = Alignment.CenterVertically) {

@@ -41,8 +41,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -388,7 +386,7 @@ private fun MenuContent(items: List<MenuItem>) {
     // Just the actions: the song is the one that was held or tapped, right beside the menu.
     Column(
         Modifier
-            .verticalScroll(rememberScrollState())
+            .scrollWithBar()
             .padding(vertical = 6.dp),
     ) {
         items.forEach { item -> MenuRow(item) }
@@ -421,7 +419,7 @@ private fun AddToPlaylistDialog(track: Track, onDismiss: () -> Unit, onNewPlayli
         title = { Text("Add to playlist") },
         text = {
             // Scrolls when there are many playlists.
-            Column(Modifier.verticalScroll(rememberScrollState())) {
+            Column(Modifier.scrollWithBar()) {
                 playlists.forEach { p ->
                     val already = p.tracks.any { it.id == track.id }
                     Row(
@@ -506,7 +504,7 @@ private fun RemoveFromPlaylistDialog(track: Track, onDismiss: () -> Unit, onPick
         title = { Text("Remove from playlist") },
         text = {
             // Scrolls when there are many playlists.
-            Column(Modifier.verticalScroll(rememberScrollState())) {
+            Column(Modifier.scrollWithBar()) {
                 containing.forEach { p ->
                     Row(
                         Modifier

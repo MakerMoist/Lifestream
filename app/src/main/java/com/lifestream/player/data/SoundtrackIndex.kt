@@ -218,6 +218,10 @@ object SoundtrackIndex {
             }
         }
         val order = Catalog.games.withIndex().associate { it.value.id to it.index }
+        // When some songs match the words as typed, leave out the ones that only matched through
+        // a typo or by sound; those are only for when nothing matches as typed.
+        val best = hits.maxOfOrNull { it.first } ?: 0
+        if (best >= 5) hits.removeAll { it.first <= 2 }
         return hits
             .sortedWith(compareByDescending<Pair<Int, Hit>> { it.first }.thenBy { order[it.second.game.id] ?: 0 })
             .take(limit)

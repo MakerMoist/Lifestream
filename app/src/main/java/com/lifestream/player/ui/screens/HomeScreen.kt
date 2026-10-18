@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import com.lifestream.player.ui.components.thinScrollbar
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.em
@@ -208,7 +209,7 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             state = gridState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().thinScrollbar(gridState),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = if (selecting) 112.dp else 24.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),

@@ -107,7 +107,7 @@ object Romaji {
      */
     fun soundsLike(query: String, japanese: String): Boolean {
         val q = skeleton(query.filter { it.isLetter() && it.code < 128 })
-        if (q.length < 4) return false // too short to compare by sound without false matches
+        if (q.length < 5) return false // too short to compare by sound without false matches
         val t = kanaSkeleton(japanese)
         if (t.length < 3) return false
         return Matching.withinEdits(q, t, maxOf(1, q.length / 4))

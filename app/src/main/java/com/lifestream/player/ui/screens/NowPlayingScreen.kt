@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import com.lifestream.player.ui.components.thinScrollbar
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.lifestream.player.playback.SafeInput
 import androidx.activity.compose.BackHandler
@@ -438,6 +439,7 @@ private fun QueueList(state: PlayerUiState) {
         state = listState,
         modifier = Modifier
             .height(480.dp)
+            .thinScrollbar(listState)
             .nestedScroll(keepScroll),
     ) {
         itemsIndexed(state.playOrder) { _, index ->

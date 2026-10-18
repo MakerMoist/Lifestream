@@ -122,6 +122,22 @@ object Matching {
     /** A song title split up for matching: normalized, its words (numbers as numerals), squashed. */
     private class TitleParts(val normalized: String, val words: List<String>) {
         val compact = words.joinToString("")
+
+        /** Where each word begins in [compact]. */
+        val wordStarts: IntArray = IntArray(words.size).also { starts ->
+            var at = 0
+            words.forEachIndexed { i, w -> starts[i] = at; at += w.length }
+        }
+
+        /** [needle] appears in [compact] starting where a word starts ("airbus" in AIR BUSTER, not "irbus"). */
+        fun containsFromWordStart(needle: String): Boolean {
+            var from = compact.indexOf(needle)
+            while (from >= 0) {
+                if (wordStarts.binarySearch(from) >= 0) return true
+                from = compact.indexOf(needle, from + 1)
+            }
+            return false
+        }
     }
 
     @Volatile private var lastQuery: QueryParts? = null
@@ -232,11 +248,13 @@ object Matching {
 
         var score = when {
             q.all { w -> words.any { it.startsWith(w) } } -> 6
-            compactQuery.length >= 3 && compactTitle.contains(compactQuery) -> 5
+            // Spacing doesn't matter, but the match has to start at the beginning of a word, so
+            // "ark" doesn't find "Dark" and "air" doesn't find "Repair".
+            compactQuery.length >= 3 && t.containsFromWordStart(compactQuery) -> 5
             // The title's words plus [extraTokens] (e.g. its game's name), without joining lists.
             q.all { w -> words.any { it.startsWith(w) } || extraTokens.any { it.startsWith(w) } } -> 4
             q.all { w -> words.any { wordMatches(w, it) } || extraTokens.any { wordMatches(w, it) } } -> 2
-            compactQuery.length >= 6 && fuzzyContains(compactTitle, compactQuery) -> 1
+            compactQuery.length >= 7 && fuzzyContains(t, compactQuery) -> 1
             else -> return null
         }
         if (phrase.isNotEmpty() && normTitle.contains(phrase)) score += 2
@@ -244,11 +262,15 @@ object Matching {
         return score
     }
 
-    /** A query word matches a title word by prefix, or with one typo (two for long words). */
+    /**
+     * A query word matches a title word by prefix, or with one typo (two for long words). Short
+     * words have to be typed right ("fire" shouldn't find "Five" or "Wire"), and the first letter
+     * has to be right too.
+     */
     fun wordMatches(q: String, word: String): Boolean {
         if (word.startsWith(q)) return true
-        if (q.length < 4 || isNumeralToken(q)) return false
-        val allowed = if (q.length >= 8) 2 else 1
+        if (q.length < 5 || isNumeralToken(q) || word.isEmpty() || word[0] != q[0]) return false
+        val allowed = if (q.length >= 9) 2 else 1
         return listOf(word, word.take(q.length), word.take(q.length + 1), word.take(q.length - 1))
             .any { editDistance(q, it, allowed) <= allowed }
     }
@@ -266,13 +288,17 @@ object Matching {
         return false
     }
 
-    /** True if some slice of [text] is within a typo or two of [needle] (spacing already removed). */
-    private fun fuzzyContains(text: String, needle: String): Boolean {
+    /**
+     * True if a stretch of the title, starting at one of its words, is within a typo or two of
+     * [needle] (spacing already removed).
+     */
+    private fun fuzzyContains(title: TitleParts, needle: String): Boolean {
+        val text = title.compact
         val allowed = if (needle.length >= 10) 2 else 1
         if (!mayBeWithin(needle, text, allowed)) return false
-        for (len in (needle.length - allowed)..(needle.length + allowed)) {
-            if (len <= 0 || len > text.length) continue
-            for (start in 0..(text.length - len)) {
+        for (start in title.wordStarts) {
+            for (len in (needle.length - allowed)..(needle.length + allowed)) {
+                if (len <= 0 || start + len > text.length) continue
                 if (editDistance(needle, text.substring(start, start + len), allowed) <= allowed) return true
             }
         }
