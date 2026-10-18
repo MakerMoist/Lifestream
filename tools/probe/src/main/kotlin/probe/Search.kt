@@ -24,16 +24,11 @@ fun runSearch(words: List<String>) {
 /** Several searches in one report: `--editions` looks for special and expanded soundtrack releases. */
 fun runEditions() {
     val queries = listOf(
-        "Stranger of Paradise Final Fantasy Origin original soundtrack",
-        "Stranger of Paradise Final Fantasy Origin soundtrack DLC",
-        "Stranger of Paradise Trials of the Dragon King",
-        "Stranger of Paradise Wanderer of the Rift",
-        "Stranger of Paradise Different Future",
-        "Final Fantasy VII Advent Children original soundtrack",
-        "Final Fantasy VII Advent Children Complete original soundtrack",
-        "Advent Children soundtrack",
-        "Florence + The Machine Stand By Me Final Fantasy XV",
-        "Florence The Machine Songs From Final Fantasy XV",
+        "Kyosuke Himuro Calling",
+        "氷室京介 CALLING",
+        "Kyosuke Himuro Safe and Sound Gerard Way",
+        "Final Fantasy VII Advent Children Complete mini album",
+        "Final Fantasy VII Advent Children Reunion Tracks",
     )
     val out = StringBuilder()
     for (q in queries) {
