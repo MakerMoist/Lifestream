@@ -19,7 +19,7 @@ android {
         val buildNumber = System.getenv("LIFESTREAM_VERSION_CODE")?.toIntOrNull() ?: 1
         versionCode = buildNumber
         versionName = System.getenv("LIFESTREAM_VERSION_NAME")
-            ?.takeIf { it.matches(Regex("^\\d+\\.\\d+\\.\\d+$")) } ?: "1.4.0-dev"
+            ?.takeIf { it.matches(Regex("^\\d+\\.\\d+\\.\\d+[a-z]?$")) } ?: "1.4.0-dev"
         buildConfigField("String", "UPDATE_REPO", "\"MakerMoist/Lifestream\"")
         // On-device feature tests (app/src/androidTest), run on the emulator by the smoke test.
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

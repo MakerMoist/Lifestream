@@ -170,7 +170,13 @@ class PlaybackService : MediaLibraryService() {
             .setSessionActivity(openApp)
             .build()
         localPlayer = player
-        setUpCasting()
+        // Cast starts only while "Cast Support" is on (no Cast framework running otherwise).
+        if (AppSettings.castSupport.value) setUpCasting()
+        serviceScope.launch {
+            AppSettings.castSupport.drop(1).collect { on ->
+                if (on) setUpCasting() else endCastSession()
+            }
+        }
 
         // Turning Android Auto on or off in Settings refreshes the car's screens right away.
         serviceScope.launch {
@@ -245,6 +251,7 @@ class PlaybackService : MediaLibraryService() {
      * queue back to the phone, paused, at the same song and spot.
      */
     private fun setUpCasting() {
+        if (castPlayer != null) return
         val castContext = runCatching { CastContext.getSharedInstance(this) }.getOrNull() ?: return
         val cast = runCatching { CastPlayer(castContext) }.getOrNull() ?: return
         castPlayer = cast
@@ -253,13 +260,11 @@ class PlaybackService : MediaLibraryService() {
             override fun onCastSessionUnavailable() = switchToLocal()
         })
         if (cast.isCastSessionAvailable) switchToCast()
-        // Turning "Cast Support" off while casting ends the session (the music comes back here).
-        serviceScope.launch {
-            AppSettings.castSupport.drop(1).collect { on -> if (!on) endCastSession() }
-        }
     }
 
+    /** Ends casting (the music comes back to the phone, see [switchToLocal]). */
     private fun endCastSession() {
+        if (castPlayer == null) return
         runCatching { CastContext.getSharedInstance(this).sessionManager.endCurrentSession(true) }
     }
 

@@ -46,6 +46,26 @@ jobs:
             exit 1
           fi
 
+      # What the finished app contains (components and permissions from every library), so
+      # anything unexpected, like a telemetry service, is visible in the run summary.
+      - name: Report app components
+        run: |
+          M=$(find app/build/intermediates -name AndroidManifest.xml -path "*merged_manifest*" -path "*release*" | head -1)
+          [ -n "$M" ] || { echo "::warning::Merged manifest not found"; exit 0; }
+          python3 - "$M" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          A = '{http://schemas.android.com/apk/res/android}'
+          app = ET.parse(sys.argv[1]).getroot()
+          perms = sorted(e.get(A + 'name') for e in app.iter('uses-permission'))
+          comps = []
+          for tag in ('activity', 'service', 'receiver', 'provider'):
+              for e in app.iter(tag):
+                  metas = [m.get(A + 'name') for m in e.iter('meta-data')]
+                  comps.append(f"{tag}: {e.get(A + 'name')} exported={e.get(A + 'exported')}" + (f" meta={metas}" if metas else ""))
+          print("::notice::App permissions: " + ", ".join(perms))
+          print("::notice::App components%0A" + "%0A".join(comps))
+          PY
+
       # Then the on-device feature tests (built as a debug build with the same native libraries).
       # The emulator is started with Google's own SDK tools on the runner (no third-party action).
       - name: Start an Android emulator

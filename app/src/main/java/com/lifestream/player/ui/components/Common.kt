@@ -4,7 +4,7 @@ import androidx.compose.material.icons.automirrored.rounded.PlaylistAddCheck
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.DownloadForOffline
+import androidx.compose.material.icons.outlined.DownloadForOffline
 import com.lifestream.player.playback.SongCache
 import androidx.compose.ui.platform.LocalDensity
 import com.lifestream.player.data.hiResArtwork
@@ -176,22 +176,23 @@ fun TrackRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        // Saved on the phone in full: plays without streaming.
-        val savedIds by SongCache.cachedIds.collectAsStateWithLifecycle()
-        if (track.id in savedIds) {
-            Icon(
-                Icons.Rounded.DownloadForOffline,
-                "Saved on this phone",
-                tint = Color.Gray,
-                modifier = Modifier.size(18.dp),
-            )
-        }
         // In at least one of your playlists.
         val inPlaylists by com.lifestream.player.data.Library.inPlaylists.collectAsStateWithLifecycle()
         if (track.id in inPlaylists) {
             Icon(
                 Icons.AutoMirrored.Rounded.PlaylistAddCheck,
                 "In a playlist",
+                tint = Color.Gray,
+                modifier = Modifier.size(18.dp),
+            )
+        }
+        // Saved on the phone in full (plays without streaming): an outlined circle with an arrow,
+        // right beside the ⋮ menu.
+        val savedIds by SongCache.cachedIds.collectAsStateWithLifecycle()
+        if (track.id in savedIds) {
+            Icon(
+                Icons.Outlined.DownloadForOffline,
+                "Saved on this phone",
                 tint = Color.Gray,
                 modifier = Modifier.padding(start = 6.dp).size(18.dp),
             )

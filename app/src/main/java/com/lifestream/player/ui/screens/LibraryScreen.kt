@@ -1,5 +1,7 @@
 package com.lifestream.player.ui.screens
 
+import androidx.compose.material.icons.rounded.DeleteSweep
+import androidx.compose.foundation.layout.PaddingValues
 import com.lifestream.player.ui.components.CenteredButtonLabel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -157,13 +159,7 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
                             item(key = "empty") { EmptyState("Nothing played yet", "Songs you play will show up here.") }
                         } else {
                             item(key = "actions") {
-                                Column {
-                                    // Clear sits on its own line, so Play and Shuffle stay centered.
-                                    Row(Modifier.fillMaxWidth().padding(end = 8.dp), horizontalArrangement = Arrangement.End) {
-                                        TextButton(onClick = { confirmClear = true }) { Text("Clear") }
-                                    }
-                                    PlayShuffleRow(recents)
-                                }
+                                PlayShuffleRow(recents, onClear = { confirmClear = true })
                             }
                             itemsIndexed(recents, key = { _, t: Track -> t.id }) { index, track ->
                                 TrackRow(track, onClick = { PlayerConnection.playTracks(recents, index) })
@@ -235,8 +231,9 @@ private fun PlaylistRow(p: Playlist, onClick: () -> Unit) {
 }
 
 @Composable
-private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null) {
-    // Play and Shuffle share the full width, centered.
+private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null, onClear: (() -> Unit)? = null) {
+    // Play and Shuffle (and History's Clear) share the full width evenly.
+    val padding = PaddingValues(horizontal = 10.dp)
     Row(
         Modifier
             .fillMaxWidth()
@@ -248,6 +245,7 @@ private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null) {
             onClick = { PlayerConnection.playTracks(tracks, fromPlaylist = playlistId) },
             enabled = tracks.isNotEmpty(),
             modifier = Modifier.weight(1f).height(44.dp),
+            contentPadding = padding,
         ) {
             CenteredButtonLabel("Play") { Icon(Icons.Rounded.PlayArrow, null, Modifier.size(20.dp)) }
         }
@@ -255,8 +253,19 @@ private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null) {
             onClick = { PlayerConnection.playTracks(tracks, randomStart = true, fromPlaylist = playlistId) },
             enabled = tracks.isNotEmpty(),
             modifier = Modifier.weight(1f).height(44.dp),
+            contentPadding = padding,
         ) {
             CenteredButtonLabel("Shuffle") { Icon(Icons.Rounded.Shuffle, null, Modifier.size(20.dp)) }
+        }
+        if (onClear != null) {
+            OutlinedButton(
+                onClick = onClear,
+                enabled = tracks.isNotEmpty(),
+                modifier = Modifier.weight(1f).height(44.dp),
+                contentPadding = padding,
+            ) {
+                CenteredButtonLabel("Clear") { Icon(Icons.Rounded.DeleteSweep, null, Modifier.size(20.dp)) }
+            }
         }
     }
 }

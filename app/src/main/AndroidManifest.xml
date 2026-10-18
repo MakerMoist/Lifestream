@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -58,6 +59,27 @@
         <meta-data
             android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
             android:value="com.lifestream.player.playback.CastOptionsProvider" />
+        <!-- No telemetry: Google's data-transport library (pulled in by ML Kit, which translates
+             song names on the phone) would send usage logs to Google. Its only upload route is
+             removed here, so those logs are never sent; translation itself is unaffected. The
+             service stays (minus the route), so nothing looking for it can fail. -->
+        <service
+            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+            tools:node="merge">
+            <meta-data
+                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
+                tools:node="remove" />
+        </service>
+        <!-- Faster start-up: the emoji-font helper (which can download fonts in the background) isn't
+             started; song names show with the phone's own fonts. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+                tools:node="remove" />
+        </provider>
         <!-- Shares only the downloaded update APK with the system installer. -->
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -47,7 +47,8 @@ object CastRelay {
     @Volatile private var allowed: InetAddress? = null
     private var workers: ThreadPoolExecutor? = null
 
-    val running: Boolean get() = server != null
+    /** Connections being served, closed the moment casting ends (not left to finish a song). */
+    private val clients = java.util.Collections.newSetFromMap(java.util.concurrent.ConcurrentHashMap<Socket, Boolean>())
 
     /**
      * Starts serving for the Cast device at [device] (its address on the Wi-Fi). Returns false
@@ -89,6 +90,8 @@ object CastRelay {
         key = ByteArray(0)
         workers?.shutdownNow()
         workers = null
+        clients.forEach { runCatching { it.close() } }
+        clients.clear()
     }
 
     /** The address the Cast device plays [videoId] from, or null when not running. */
@@ -113,8 +116,16 @@ object CastRelay {
                 continue
             }
             try {
-                pool.execute { client.use { serve(it) } }
+                clients += client
+                pool.execute {
+                    try {
+                        client.use { serve(it) }
+                    } finally {
+                        clients -= client
+                    }
+                }
             } catch (_: RejectedExecutionException) {
+                clients -= client
                 runCatching { client.close() } // too many at once
             }
         }

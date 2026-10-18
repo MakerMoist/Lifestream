@@ -34,10 +34,6 @@ fun main(args: Array<String>) {
         runEditions()
         return
     }
-    if ("--covers" in args) {
-        runCovers()
-        return
-    }
     if ("--art" in args) {
         runArt()
         return
