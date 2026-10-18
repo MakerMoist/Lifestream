@@ -50,7 +50,7 @@ PY
 played=0
 if tap_text "Final Fantasy" || tap_text "Final Fantasy II"; then
   sleep 20
-  if tap_text "Play all"; then
+  if tap_text "Play All"; then
     # Resolving the first stream downloads and runs YouTube's player script, which is slow on
     # an emulator; give it up to three minutes.
     for i in $(seq 1 18); do
@@ -67,7 +67,7 @@ if tap_text "Final Fantasy" || tap_text "Final Fantasy II"; then
         | grep -v "^--" | sort -u -k6 | head -4 | cut -c1-400 | sed 's/^/::warning::/' || true
     fi
   else
-    echo "::warning::Couldn't find the Play all button"
+    echo "::warning::Couldn't find the Play All button"
   fi
 else
   echo "::warning::Couldn't find a soundtrack card. On screen: $(grep -oE 'text="[^"]+"' ui.xml 2>/dev/null | head -12 | tr '\n' ' ')"
@@ -137,7 +137,7 @@ if tap_text "Library" lowest; then
     echo "::warning::Library: swiping left didn't open History"
   fi
   tap_text "Library" lowest; sleep 2
-  if [ -n "$(find_node "New playlist")" ]; then
+  if [ -n "$(find_node "New Playlist")" ]; then
     echo "::notice::Library: tapping the Library tab returns to Playlists"
   else
     echo "::warning::Library: the Library tab didn't return to Playlists"

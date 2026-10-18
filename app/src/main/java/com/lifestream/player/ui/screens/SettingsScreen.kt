@@ -495,7 +495,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 Column(Modifier.weight(1f)) {
                     Text("Hide Quotes", style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "Hides the random villain quotes from the home tab.",
+                        "Hides the random villain quotes from the Home tab.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

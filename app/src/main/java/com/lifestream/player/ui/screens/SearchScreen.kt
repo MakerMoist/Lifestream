@@ -175,7 +175,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
                 return@Column
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SectionLabel("Recent searches", Modifier.weight(1f))
+                SectionLabel("Recent Searches", Modifier.weight(1f))
                 TextButton(onClick = { confirmClear = true }, modifier = Modifier.padding(end = 8.dp)) {
                     Text("Clear")
                 }
@@ -212,7 +212,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
             if (confirmClear) {
                 AlertDialog(
                     onDismissRequest = { confirmClear = false },
-                    title = { Text("Clear recent searches?") },
+                    title = { Text("Clear Recent Searches?") },
                     text = { Text("This removes all ${recentSearches.size} recent searches.") },
                     confirmButton = {
                         TextButton(onClick = {

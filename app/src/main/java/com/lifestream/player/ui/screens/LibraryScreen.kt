@@ -148,7 +148,7 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
                     ) {
                         Icon(Icons.Rounded.Add, null, Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("New playlist")
+                        Text("New Playlist")
                     }
                 }
             } else {
@@ -184,7 +184,7 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
     if (confirmClear) {
         AlertDialog(
             onDismissRequest = { confirmClear = false },
-            title = { Text("Clear history?") },
+            title = { Text("Clear History?") },
             text = { Text("This removes all ${recents.size} songs from your history. Your playlists and saved songs aren't affected.") },
             confirmButton = {
                 TextButton(onClick = {
@@ -346,7 +346,7 @@ fun PlaylistScreen(playlistId: String, onBack: () -> Unit) {
 
     if (renaming) {
         PlaylistNameDialog(
-            title = "Rename playlist",
+            title = "Rename Playlist",
             initial = playlist.name,
             confirmLabel = "Save",
             onDismiss = { renaming = false },

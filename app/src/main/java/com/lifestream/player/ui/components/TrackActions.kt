@@ -202,7 +202,7 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
     confirmRemove?.let { (track, playlist) ->
         AlertDialog(
             onDismissRequest = { confirmRemove = null },
-            title = { Text("Remove song?") },
+            title = { Text("Remove Song?") },
             text = { Text("Remove \u201C${track.title}\u201D from ${playlist.name}?") },
             confirmButton = {
                 TextButton(onClick = {
@@ -455,7 +455,7 @@ private fun AddToPlaylistDialog(track: Track, onDismiss: () -> Unit, onNewPlayli
                     ) {
                         Icon(Icons.Rounded.Add, null, tint = LsColors.Crystal)
                         Spacer(Modifier.width(12.dp))
-                        Text("New playlist", style = MaterialTheme.typography.bodyLarge, color = LsColors.Crystal)
+                        Text("New Playlist", style = MaterialTheme.typography.bodyLarge, color = LsColors.Crystal)
                     }
                 } else {
                     Text(

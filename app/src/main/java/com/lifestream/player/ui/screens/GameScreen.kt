@@ -185,7 +185,7 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                                 enabled = tracks.isNotEmpty(),
                                 modifier = Modifier.weight(1f).height(44.dp),
                             ) {
-                                CenteredButtonLabel("Play all") { Icon(Icons.Rounded.PlayArrow, null, Modifier.size(20.dp)) }
+                                CenteredButtonLabel("Play All") { Icon(Icons.Rounded.PlayArrow, null, Modifier.size(20.dp)) }
                             }
                             OutlinedButton(
                                 onClick = { PlayerConnection.playTracks(tracks, randomStart = true) },

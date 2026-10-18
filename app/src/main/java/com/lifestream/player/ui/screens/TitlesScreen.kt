@@ -63,7 +63,7 @@ fun TitlesScreen(onBack: () -> Unit) {
                 Text("Titles", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
                 if (hidden.isNotEmpty()) {
                     TextButton(onClick = { AppSettings.showAllTitles() }, modifier = Modifier.padding(end = 8.dp)) {
-                        Text("Turn all on")
+                        Text("Turn All On")
                     }
                 }
             }

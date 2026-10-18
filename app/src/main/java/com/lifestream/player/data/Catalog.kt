@@ -146,9 +146,9 @@ object Catalog {
             // Volume 2 (two albums) has the DLC: Episodes Gladiolus, Prompto, Ignis and Ardyn,
             // Comrades and the Royal Edition.
             albumQueries = listOf("Final Fantasy XV original soundtrack volume 2"),
-            // The game's theme song, released by Florence + The Machine rather than on the
-            // soundtrack albums.
-            extras = listOf(ExtraSong("Stand By Me", "Florence + The Machine", albumArt = true))),
+            // The game's theme song, from Florence + The Machine's official "Songs From Final
+            // Fantasy XV" release rather than the soundtrack albums.
+            extras = listOf(ExtraSong("Stand By Me", "Florence + The Machine", "Mn37d5ne2Zw", 246))),
         Game("ff16", "XVI", "Final Fantasy XVI", 2023, "Masayoshi Soken",
             "Final Fantasy XVI original soundtrack", c(0xFF450A0A), c(0xFFFB923C), match = num("XVI"), art = R.drawable.art_ff16),
 
@@ -160,12 +160,12 @@ object Catalog {
             // Reunion's soundtrack isn't on YouTube Music; its songs show Square Enix's official
             // Crisis Core soundtrack cover (the game's logo) instead of the uploader's thumbnails.
             coverArt = "https://yt3.googleusercontent.com/NUroKdpFTlpUapk0E2XKyYWogJie3XlaXlalTiEBLmhLdZUEWu1ZWz2bebbfIeX1_AKjq3BR3rcasEoW=w544-h544-s-l90-rj"),
-        // The film's soundtrack (and Advent Children Complete's, when it's on YouTube Music).
+        // The film's soundtrack.
         Game("ac", "VII·AC", "Final Fantasy VII: Advent Children", 2005, "Nobuo Uematsu · Kawamori · Fukui",
             "Final Fantasy VII Advent Children original soundtrack", c(0xFF0B0F14), c(0xFF9CA3AF), Series.VII,
             match = MatchSpec(numerals = setOf("VII"), allOf = listOf("ADVENT CHILDREN")), art = R.drawable.art_ac,
             aliases = listOf("AC", "ACC", "FF7AC", "FFVIIAC"),
-            albumQueries = listOf("Final Fantasy VII Advent Children Complete original soundtrack")),
+        ),
         // Includes Intergrade's INTERmission episode (DLC): its soundtrack is part of Remake's.
         Game("ff7r", "VII·R", "Final Fantasy VII: Remake", 2020, "Hamauzu · Suzuki · Uematsu",
             "Final Fantasy VII Remake original soundtrack", c(0xFF022C22), c(0xFF34D399), Series.VII,
@@ -188,18 +188,14 @@ object Catalog {
             match = MatchSpec(allOf = listOf("TACTICS"), exclude = listOf("ADVANCE", "A2")), art = R.drawable.art_fft,
             aliases = listOf("FFT"),
         ),
-        // The game's soundtrack and its DLC (Trials of the Dragon King, Wanderer of the Rift,
-        // Different Future) soundtracks.
-        Game("sop", "SoP", "Stranger of Paradise: Final Fantasy Origin", 2022, "Naoshi Mizuta · Hidenori Iwasaki",
+        // The game's soundtrack (its DLC music, Trials of the Dragon King, Wanderer of the Rift and
+        // Different Future, joins it if Square Enix puts it on YouTube Music).
+        Game("sop", "SoP", "Stranger of Paradise: Final Fantasy Origin", 2022, "Mizuta · Yamazaki · Iwasaki",
             "Stranger of Paradise Final Fantasy Origin original soundtrack", c(0xFF0A0A12), c(0xFF8B5CF6), Series.SPINOFF,
             match = MatchSpec(allOf = listOf("STRANGER OF PARADISE")), art = R.drawable.art_sop,
             aliases = listOf("SOP", "SOPFFO", "FFO"),
-            albumQueries = listOf(
-                "Stranger of Paradise Final Fantasy Origin original soundtrack DLC",
-                "Stranger of Paradise Final Fantasy Origin Trials of the Dragon King soundtrack",
-                "Stranger of Paradise Final Fantasy Origin Wanderer of the Rift soundtrack",
-                "Stranger of Paradise Final Fantasy Origin Different Future soundtrack",
-            )),
+            albumQueries = listOf("Stranger of Paradise Final Fantasy Origin original soundtrack DLC"),
+        ),
 
         // Other Games
         // The game's soundtrack and its Verso's Drafts expansion soundtrack; not the bonus album

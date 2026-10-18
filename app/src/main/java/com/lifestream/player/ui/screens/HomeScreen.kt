@@ -327,7 +327,7 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
                         if (selecting) {
                             val allIn = games.all { it.id in vm.selected }
                             TextButton(onClick = { if (allIn) vm.deselect(games) else vm.select(games) }) {
-                                Text(if (allIn) "Deselect all" else "Select all")
+                                Text(if (allIn) "Deselect All" else "Select All")
                             }
                         }
                     }

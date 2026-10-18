@@ -122,8 +122,7 @@ object Credits {
 
     const val DISCLAIMER = "LifeStream is an unofficial, fan-made player. It isn't affiliated with, sponsored or " +
         "endorsed by Square Enix, Koei Tecmo, Microsoft, Sandfall Interactive, Kepler Interactive or Google. " +
-        "All trademarks " +
-        "and music belong to their respective owners."
+        "All trademarks and music belong to their respective owners."
 }
 
 /** Settings → Credits & Trademarks. */
