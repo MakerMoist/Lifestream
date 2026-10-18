@@ -153,6 +153,16 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White.copy(alpha = 0.75f),
                         )
+                        // How many songs the soundtrack has (once it's known).
+                        val songCount = if (vm.tracks.endReached) tracks.size
+                        else com.lifestream.player.data.SoundtrackIndex.songsFor(game.id)?.size ?: 0
+                        if (songCount > 0) {
+                            Text(
+                                if (songCount == 1) "1 song" else "$songCount songs",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White.copy(alpha = 0.75f),
+                            )
+                        }
                         Spacer(Modifier.height(16.dp))
                         // Play all and Shuffle share the full width.
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -209,8 +219,15 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                     )
                 }
             }
-            itemsIndexed(matches, key = { _, t -> "f-${t.id}-${Matching.songKey(t)}" }) { index, track ->
-                TrackRow(track, onClick = { PlayerConnection.playTracks(matches, index, shuffle = false) })
+            itemsIndexed(matches, key = { _, t -> "f-${t.id}-${Matching.songKey(t)}" }) { _, track ->
+                // The chosen song first, then the rest of the whole soundtrack, shuffled (not just
+                // the other songs that matched the search).
+                TrackRow(track, onClick = {
+                    val all = com.lifestream.player.data.SoundtrackIndex.songsFor(game.id) ?: vm.tracks.items
+                    val key = Matching.songKey(track)
+                    val rest = all.filter { it.id != track.id && Matching.songKey(it) != key }.shuffled()
+                    PlayerConnection.playTracks(listOf(track) + rest, 0, shuffle = false)
+                })
             }
             if (!vm.tracks.endReached) {
                 item(key = "filter-loading") {

@@ -408,7 +408,7 @@ private fun RecommendedRow(songs: List<Track>) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(horizontal = 0.dp),
     ) {
-        itemsIndexed(songs, key = { _, t -> t.id }) { index, track ->
+        itemsIndexed(songs, key = { _, t -> t.id }) { _, track ->
             val anchor = com.lifestream.player.ui.components.rememberMenuAnchor()
             Column(
                 Modifier
@@ -419,7 +419,14 @@ private fun RecommendedRow(songs: List<Track>) {
                         onClick = {
                             // The song that's already playing opens Now Playing instead of restarting.
                             // Either way, Now Playing opens.
-                            if (PlayerConnection.currentId.value != track.id) PlayerConnection.playTracks(songs, index)
+                            // A 50-song playlist like New Game's: this song, then the other picks
+                            // shuffled (topped up from every enabled title); it can be saved.
+                            if (PlayerConnection.currentId.value != track.id) {
+                                PlayerConnection.playTracks(
+                                    com.lifestream.player.data.Mixes.startingWith(track, songs),
+                                    0, shuffle = false, instant = true,
+                                )
+                            }
                             NowPlayingRequest.open()
                         },
                         onLongClick = { TrackActions.show(track, at = anchor.at()) },

@@ -159,6 +159,7 @@ class PlaybackService : MediaLibraryService() {
             }
         })
         player.addListener(AutoPlayListener(player))
+        watchNetwork(player)
         player.addListener(IdleReleaser(player).also { idleReleaser = it })
 
         setMediaNotificationProvider(
@@ -230,6 +231,8 @@ class PlaybackService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        networkWatch?.let { runCatching { getSystemService(android.net.ConnectivityManager::class.java)?.unregisterNetworkCallback(it) } }
+        networkWatch = null
         castPlayer?.setSessionAvailabilityListener(null)
         castPlayer?.release()
         castPlayer = null
@@ -364,6 +367,38 @@ class PlaybackService : MediaLibraryService() {
             i = timeline.getNextWindowIndex(i, Player.REPEAT_MODE_OFF, shuffle)
         }
         return out
+    }
+
+    private var networkWatch: android.net.ConnectivityManager.NetworkCallback? = null
+
+    /**
+     * Moving between Wi-Fi and mobile data: connections made on the old network are dropped at
+     * once (instead of hanging until they time out), and a song that failed during the switch
+     * carries on from the same spot.
+     */
+    private fun watchNetwork(player: ExoPlayer) {
+        val cm = getSystemService(android.net.ConnectivityManager::class.java) ?: return
+        val main = Handler(Looper.getMainLooper())
+        val callback = object : android.net.ConnectivityManager.NetworkCallback() {
+            private var current: android.net.Network? = null
+
+            override fun onAvailable(network: android.net.Network) {
+                val switched = current != null && current != network
+                current = network
+                if (!switched) return
+                com.lifestream.player.net.Http.client.connectionPool.evictAll()
+                main.post {
+                    if (player.playerError != null && player.mediaItemCount > 0 && player.playWhenReady) player.prepare()
+                }
+            }
+
+            // The network in use went away: its connections are dead. (The next network to appear
+            // still counts as a switch, since [current] keeps the old one.)
+            override fun onLost(network: android.net.Network) {
+                if (network == current) com.lifestream.player.net.Http.client.connectionPool.evictAll()
+            }
+        }
+        runCatching { cm.registerDefaultNetworkCallback(callback) }.onSuccess { networkWatch = callback }
     }
 
     /**

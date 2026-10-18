@@ -219,7 +219,7 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
 
     namingFor?.let { track ->
         PlaylistNameDialog(
-            title = "New playlist",
+            title = "New Playlist",
             initial = "",
             confirmLabel = "Create",
             onDismiss = { namingFor = null },

@@ -209,7 +209,15 @@ object SongCache {
                 .setCacheKeyFactory(keyFactory)
                 .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
                 .createDataSource()
-            CacheSwitchDataSource(cached, upstream.createDataSource())
+            // Fully saved songs are read from storage alone: no network path is involved, so a
+            // weak or switching connection can't stall them.
+            val savedOnly = CacheDataSource.Factory()
+                .setCache(c)
+                .setCacheKeyFactory(keyFactory)
+                .setUpstreamDataSourceFactory(null)
+                .setCacheWriteDataSinkFactory(null)
+                .createDataSource()
+            CacheSwitchDataSource(cached, savedOnly, upstream.createDataSource())
         }
     }
 
@@ -223,20 +231,28 @@ object SongCache {
     /** Picks the cached or the direct path each time a song is opened. */
     private class CacheSwitchDataSource(
         private val cached: DataSource,
+        private val savedOnly: DataSource,
         private val direct: DataSource,
     ) : DataSource {
         private var active: DataSource? = null
 
         override fun addTransferListener(transferListener: TransferListener) {
             cached.addTransferListener(transferListener)
+            savedOnly.addTransferListener(transferListener)
             direct.addTransferListener(transferListener)
         }
 
         override fun open(dataSpec: DataSpec): Long {
             val id = dataSpec.uri.lastPathSegment
             val useCache = enabled && dataSpec.uri.scheme == StreamDataSources.SCHEME && SafeInput.isVideoId(id)
-            if (useCache) prepareForRead(id!!)
-            val source = if (useCache) cached else direct
+            val source = when {
+                !useCache -> direct
+                isFullyCached(id!!) -> savedOnly
+                else -> {
+                    prepareForRead(id)
+                    cached
+                }
+            }
             active = source
             return source.open(dataSpec)
         }

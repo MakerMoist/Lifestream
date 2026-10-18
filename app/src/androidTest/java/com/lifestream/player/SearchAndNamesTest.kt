@@ -148,6 +148,14 @@ class SearchAndNamesTest {
         assertEquals(listOf(3, 2, 4, 0, 1), Matching.ordered(albums, ff14).map { albums.indexOf(it) })
     }
 
+    @Test
+    fun everyTitleIsCreditedInTrademarks() {
+        // Adding a soundtrack without its trademark line fails here.
+        val missing = com.lifestream.player.data.Catalog.games.map { it.id }
+            .filter { com.lifestream.player.ui.screens.Credits.gameTrademarks[it].isNullOrBlank() }
+        assertTrue("titles without a trademark credit: $missing", missing.isEmpty())
+    }
+
     // ---- Names ----
 
     @Test

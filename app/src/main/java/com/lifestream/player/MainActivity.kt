@@ -68,6 +68,7 @@ import com.lifestream.player.ui.screens.TabReselect
 import com.lifestream.player.ui.screens.NowPlayingRequest
 import com.lifestream.player.ui.screens.SettingsScreen
 import com.lifestream.player.ui.screens.ThemesScreen
+import com.lifestream.player.ui.screens.CreditsScreen
 import com.lifestream.player.ui.screens.TitlesScreen
 import com.lifestream.player.ui.screens.UpdatePrompt
 import com.lifestream.player.ui.theme.LifestreamTheme
@@ -75,7 +76,12 @@ import com.lifestream.player.ui.theme.LsColors
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
+        // LifeStream is always dark, so the status bar's clock, battery and notification icons stay
+        // light (following the phone's light theme would make them dark and unreadable here).
+        enableEdgeToEdge(
+            statusBarStyle = androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+        )
         super.onCreate(savedInstanceState)
         PlayerConnection.connect(this)
         setContent {
@@ -164,10 +170,12 @@ private fun LifestreamRoot() {
                     SettingsScreen(
                         onOpenThemes = { nav.navigate("settings/themes") },
                         onOpenTitles = { nav.navigate("settings/titles") },
+                        onOpenCredits = { nav.navigate("settings/credits") },
                     )
                 }
                 composable("settings/themes") { ThemesScreen(onBack = { nav.popBackStack() }) }
                 composable("settings/titles") { TitlesScreen(onBack = { nav.popBackStack() }) }
+                composable("settings/credits") { CreditsScreen(onBack = { nav.popBackStack() }) }
                 composable("game/{id}") { entry ->
                     val game = entry.arguments?.getString("id")?.let { Catalog.game(it) }
                     if (game != null) {

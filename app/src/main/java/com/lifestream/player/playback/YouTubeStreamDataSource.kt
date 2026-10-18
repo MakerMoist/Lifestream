@@ -216,6 +216,10 @@ object StreamDataSources {
      */
     private val mediaClient by lazy {
         Http.client.newBuilder()
+            // A download that stalls (often a network that just went away) gives up quickly, so
+            // it's retried, on whatever network is there now, instead of waiting 30 s.
+            .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(12, java.util.concurrent.TimeUnit.SECONDS)
             .addNetworkInterceptor { chain ->
                 val url = chain.request().url
                 if (!url.isHttps || !SafeInput.isGoogleVideoHost(url.host)) {

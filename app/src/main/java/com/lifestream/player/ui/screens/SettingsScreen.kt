@@ -1,5 +1,8 @@
 package com.lifestream.player.ui.screens
 
+import androidx.compose.material.icons.rounded.Info
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.TextButton
@@ -206,15 +209,21 @@ class SettingsViewModel : ViewModel() {
         }
     }
 
-    fun clearCache() {
+    /** Clears the saved songs, then restarts the app so playback starts fresh without them. */
+    fun clearCache(context: Context) {
         if (clearingCache) return
         clearingCache = true
+        val app = context.applicationContext
         viewModelScope.launch {
             cacheUsedBytes = withContext(Dispatchers.IO) {
                 SongCache.clear()
                 SongCache.usedBytes()
             }
-            clearingCache = false
+            // Keep where things are (playlists, the queue when Playlist Stays Open is on), then restart.
+            com.lifestream.player.playback.PlayerConnection.saveQueue(now = true)
+            com.lifestream.player.ui.components.VillainQuotes.save()
+            delay(1_000)
+            restartApp(app)
         }
     }
 
@@ -295,7 +304,7 @@ fun UpdatePrompt() {
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
+fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCredits: () -> Unit) {
     val vm = rememberUpdateViewModel()
     val autoUpdate by AppSettings.autoUpdate.collectAsStateWithLifecycle()
     val pauseAtZeroVolume by AppSettings.pauseAtZeroVolume.collectAsStateWithLifecycle()
@@ -320,13 +329,35 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
         onPauseOrDispose { }
     }
 
-    // Tapping the Settings tab while on Settings goes back to the top.
+    // Pull down to refresh, like Home: saved-song space is measured again and, with "Check
+    // Automatically" on, it looks for an update.
+    val scope = rememberCoroutineScope()
+    var refreshing by remember { mutableStateOf(false) }
+    fun refresh() {
+        if (refreshing) return
+        refreshing = true
+        vm.refreshCacheUsage()
+        if (AppSettings.autoUpdate.value) vm.recheck()
+        scope.launch {
+            delay(700) // long enough to see the spinner settle
+            refreshing = false
+        }
+    }
+
+    // Tapping the Settings tab while on Settings goes back to the top and refreshes.
     val scroll = rememberScrollState()
     val reselectAtStart = remember { TabReselect.settings }
     LaunchedEffect(TabReselect.settings) {
-        if (TabReselect.settings != reselectAtStart) scroll.animateScrollTo(0)
+        if (TabReselect.settings == reselectAtStart) return@LaunchedEffect
+        refresh()
+        scroll.animateScrollTo(0)
     }
 
+    androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+        isRefreshing = refreshing,
+        onRefresh = { refresh() },
+        modifier = Modifier.fillMaxSize(),
+    ) {
     Column(
         Modifier
             .fillMaxSize()
@@ -571,12 +602,13 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
                     text = {
                         Text(
                             "This deletes ${formatBytes(vm.cacheUsedBytes)} of saved songs from your phone. " +
-                                "They'll stream again the next time you play them.",
+                                "They'll stream again the next time you play them. LifeStream will restart " +
+                                "to finish.",
                         )
                     },
                     confirmButton = {
                         TextButton(onClick = {
-                            vm.clearCache()
+                            vm.clearCache(context)
                             confirmClear = false
                         }) { Text("Clear") }
                     },
@@ -620,7 +652,15 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
                 Spacer(Modifier.width(8.dp))
                 Text("Check for Updates")
             }
+            Spacer(Modifier.height(8.dp))
+            // Styled like Clear Cache; opens its own page, like Themes.
+            OutlinedButton(onClick = onOpenCredits, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Rounded.Info, null, Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Credits & Trademarks")
+            }
         }
+    }
     }
 }
 
@@ -855,4 +895,11 @@ private fun FitText(text: String) {
         autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 14.sp, stepSize = 0.5.sp),
         modifier = Modifier.fillMaxWidth(),
     )
+}
+
+/** Closes LifeStream and opens it again from the start. */
+private fun restartApp(context: Context) {
+    val launch = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return
+    context.startActivity(android.content.Intent.makeRestartActivityTask(launch.component))
+    Runtime.getRuntime().exit(0)
 }

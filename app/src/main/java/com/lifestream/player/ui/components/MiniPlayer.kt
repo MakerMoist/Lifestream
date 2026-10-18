@@ -55,11 +55,13 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Mo
     val scope = rememberCoroutineScope()
     val offsetX = remember { Animatable(0f) }
     var widthPx by remember { mutableFloatStateOf(1f) }
+    val open by androidx.compose.runtime.rememberUpdatedState(onOpen)
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         modifier = modifier
             .fillMaxWidth()
             .onSizeChanged { widthPx = it.width.toFloat().coerceAtLeast(1f) }
+            // Swipe up anywhere on the bar to open Now Playing.
             // Slide right to close: stops the song and clears the queue. Only a deliberate
             // sideways slide counts: a swipe that starts going up or down (scrolling past the
             // bar) is ignored, and it takes half the bar's width (or a quick flick a third of the
@@ -84,8 +86,14 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Mo
                         dy += step.y
                         tracker.addPosition(change.uptimeMillis, change.position)
                         if (!sliding) {
-                            // Up or down first: not a close; let it go.
-                            if (kotlin.math.abs(dy) > slop) break
+                            // Up or down first: not a close. Up opens Now Playing; down is let go.
+                            if (kotlin.math.abs(dy) > slop) {
+                                if (dy < 0 && kotlin.math.abs(dy) > kotlin.math.abs(dx)) {
+                                    change.consume()
+                                    open()
+                                }
+                                break
+                            }
                             // Clearly sideways (to the right) and well past the touch slop.
                             if (dx > slop * 2 && dx > kotlin.math.abs(dy) * 3) sliding = true else continue
                         }

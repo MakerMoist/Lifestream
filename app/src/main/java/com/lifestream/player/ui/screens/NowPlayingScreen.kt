@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.lifestream.player.playback.SafeInput
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -263,9 +264,13 @@ fun NowPlayingScreen(onClose: () -> Unit) {
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
+                        // The artist line's font, at the title's size.
                         Text(
                             track?.title ?: "",
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontSize = MaterialTheme.typography.titleLarge.fontSize,
+                                lineHeight = MaterialTheme.typography.titleLarge.lineHeight,
+                            ),
                             maxLines = 1,
                             modifier = Modifier.basicMarquee(),
                         )
@@ -414,7 +419,26 @@ private fun QueueList(state: PlayerUiState) {
         style = MaterialTheme.typography.titleLarge,
         modifier = Modifier.padding(start = 20.dp, bottom = 8.dp),
     )
-    LazyColumn(state = listState, modifier = Modifier.height(480.dp)) {
+    // Scrolling belongs to the list: whatever scroll or fling is left over when it reaches its top
+    // or bottom is kept here instead of passing to the sheet, so scrolling up the list can't
+    // pull the sheet closed. (Drag the handle above, tap outside or press Back to close it.)
+    val keepScroll = remember {
+        object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: androidx.compose.ui.geometry.Offset,
+                available: androidx.compose.ui.geometry.Offset,
+                source: androidx.compose.ui.input.nestedscroll.NestedScrollSource,
+            ) = available
+
+            override suspend fun onPostFling(consumed: androidx.compose.ui.unit.Velocity, available: androidx.compose.ui.unit.Velocity) = available
+        }
+    }
+    LazyColumn(
+        state = listState,
+        modifier = Modifier
+            .height(480.dp)
+            .nestedScroll(keepScroll),
+    ) {
         itemsIndexed(state.playOrder) { _, index ->
             val track = state.queue.getOrNull(index) ?: return@itemsIndexed
             val isCurrent = index == state.currentIndex

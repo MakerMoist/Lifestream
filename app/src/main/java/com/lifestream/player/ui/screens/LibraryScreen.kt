@@ -94,10 +94,12 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
         }
     }
 
-    // Tapping the Library tab while here returns to Playlists (and its top).
+    // Tapping the Library tab while here returns to Playlists (and its top) and refreshes, like
+    // Home (without the update check, which only Home and Settings do).
     val reselectAtStart = remember { TabReselect.library }
     LaunchedEffect(TabReselect.library) {
         if (TabReselect.library == reselectAtStart) return@LaunchedEffect
+        refresh()
         if (pager.currentPage != 0) pager.animateScrollToPage(0) else playlistList.animateScrollToItem(0)
     }
 
@@ -161,8 +163,15 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
                             item(key = "actions") {
                                 PlayShuffleRow(recents, onClear = { confirmClear = true })
                             }
-                            itemsIndexed(recents, key = { _, t: Track -> t.id }) { index, track ->
-                                TrackRow(track, onClick = { PlayerConnection.playTracks(recents, index) })
+                            itemsIndexed(recents, key = { _, t: Track -> t.id }) { _, track ->
+                                // A 50-song playlist like New Game's: this song, then the rest of
+                                // History shuffled (topped up from every enabled title); it can be saved.
+                                TrackRow(track, onClick = {
+                                    PlayerConnection.playTracks(
+                                        com.lifestream.player.data.Mixes.startingWith(track, recents),
+                                        0, shuffle = false, instant = true,
+                                    )
+                                })
                             }
                         }
                     }
@@ -188,7 +197,7 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
 
     if (creating) {
         PlaylistNameDialog(
-            title = "New playlist",
+            title = "New Playlist",
             initial = "",
             confirmLabel = "Create",
             onDismiss = { creating = false },
