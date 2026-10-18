@@ -40,6 +40,8 @@ object ArtistCredits {
         "ct" to listOf("Yasunori Mitsuda"),
         "cx" to listOf("Yasunori Mitsuda"),
         "lo" to listOf("Nobuo Uematsu"),
+        "ac" to listOf("Nobuo Uematsu", "Keiji Kawamori", "Kenichiro Fukui"),
+        "sop" to listOf("Naoshi Mizuta", "Ryo Yamazaki", "Hidenori Iwasaki"),
     )
 
     /** Credits that aren't a person: labels, placeholders and fan channels that uploaded songs. */

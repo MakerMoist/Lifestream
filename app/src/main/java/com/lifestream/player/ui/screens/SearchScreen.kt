@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import com.lifestream.player.ui.components.thinScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import com.lifestream.player.ui.components.rememberArt
@@ -174,12 +175,13 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
                 return@Column
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SectionLabel("Recent searches", Modifier.weight(1f))
+                SectionLabel("Recent Searches", Modifier.weight(1f))
                 TextButton(onClick = { confirmClear = true }, modifier = Modifier.padding(end = 8.dp)) {
                     Text("Clear")
                 }
             }
-            LazyColumn(Modifier.fillMaxSize()) {
+            val recentList = androidx.compose.foundation.lazy.rememberLazyListState()
+            LazyColumn(Modifier.fillMaxSize().thinScrollbar(recentList), state = recentList) {
                 items(recentSearches, key = { it }) { query ->
                     Row(
                         Modifier
@@ -210,7 +212,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
             if (confirmClear) {
                 AlertDialog(
                     onDismissRequest = { confirmClear = false },
-                    title = { Text("Clear recent searches?") },
+                    title = { Text("Clear Recent Searches?") },
                     text = { Text("This removes all ${recentSearches.size} recent searches.") },
                     confirmButton = {
                         TextButton(onClick = {
@@ -242,7 +244,8 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
             return@Column
         }
 
-        LazyColumn(Modifier.fillMaxSize()) {
+        val resultList = androidx.compose.foundation.lazy.rememberLazyListState()
+        LazyColumn(Modifier.fillMaxSize().thinScrollbar(resultList), state = resultList) {
             if (games.isNotEmpty()) {
                 item(key = "games-label") { SectionLabel("Soundtracks") }
                 items(games, key = { "g-${it.id}" }) { game ->

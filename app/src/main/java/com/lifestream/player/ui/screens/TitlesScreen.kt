@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import com.lifestream.player.ui.components.thinScrollbar
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,10 +47,13 @@ import com.lifestream.player.ui.components.rememberArt
 @Composable
 fun TitlesScreen(onBack: () -> Unit) {
     val hidden by AppSettings.hiddenTitles.collectAsStateWithLifecycle()
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     LazyColumn(
         Modifier
             .fillMaxSize()
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .thinScrollbar(listState),
+        state = listState,
     ) {
         item(key = "header") {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -59,7 +63,7 @@ fun TitlesScreen(onBack: () -> Unit) {
                 Text("Titles", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
                 if (hidden.isNotEmpty()) {
                     TextButton(onClick = { AppSettings.showAllTitles() }, modifier = Modifier.padding(end = 8.dp)) {
-                        Text("Turn all on")
+                        Text("Turn All On")
                     }
                 }
             }
@@ -70,7 +74,7 @@ fun TitlesScreen(onBack: () -> Unit) {
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
             )
         }
-        for (series in listOf(Series.MAINLINE, Series.SPINOFF)) {
+        for (series in Series.entries) {
             item(key = "label-${series.name}") { SectionLabel(series.label, Modifier.padding(top = 8.dp)) }
             items(Catalog.bySeries(series), key = { it.id }) { game ->
                 TitleRow(game, shown = game.id !in hidden) { AppSettings.setTitleShown(game.id, it) }

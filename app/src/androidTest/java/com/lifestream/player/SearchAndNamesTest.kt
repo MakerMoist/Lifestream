@@ -73,6 +73,11 @@ class SearchAndNamesTest {
         assertNotNull(Matching.searchScore("air buster", "Airbuster"))
         assertNotNull(Matching.searchScore("liberifatali", "Liberi Fatali"))
         assertNull(Matching.searchScore("chocobo", "One-Winged Angel"))
+        // ...but not too loose: a match starts at a word, and short words need the right spelling.
+        assertNull(Matching.searchScore("ark", "Dark Messenger"))
+        assertNull(Matching.searchScore("air", "Repair Shop"))
+        assertNull(Matching.searchScore("fire", "Five Hundred Miles"))
+        assertNotNull(Matching.searchScore("airbus", "Air Buster"))
         // Numbered songs, typed either way.
         assertNotNull(Matching.searchScore("Battle 2", "Battle 2"))
         assertNotNull(Matching.searchScore("battle 2", "Battle II"))
@@ -100,6 +105,8 @@ class SearchAndNamesTest {
         assertEquals("ff10-2", first("ffx2"))
         assertEquals("ff7", first("ff7"))
         assertEquals("ff1", first("ff1"))
+        assertEquals("ac", first("ac"))
+        assertEquals("sop", first("sop"))
         assertEquals("CT", com.lifestream.player.data.SoundtrackIndex.searchGames("CT").first().numeral)
     }
 

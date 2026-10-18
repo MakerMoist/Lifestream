@@ -163,9 +163,12 @@ data class ExtraSong(
     }
 }
 
+/** The Home tab's sections, in order. */
 enum class Series(val label: String) {
-    MAINLINE("Main series"),
-    SPINOFF("Other Games"),
+    MAINLINE("Main Series"),
+    VII("The VII Series"),
+    SPINOFF("Series Spin-Offs"),
+    OTHER("Other Games"),
 }
 
 fun formatDuration(seconds: Long): String {

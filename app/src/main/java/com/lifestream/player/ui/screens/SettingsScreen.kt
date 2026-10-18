@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import com.lifestream.player.ui.components.scrollWithBar
 import androidx.compose.material.icons.rounded.Info
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.rememberCoroutineScope
@@ -12,6 +13,7 @@ import android.content.ContextWrapper
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -28,7 +30,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -362,7 +363,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
         Modifier
             .fillMaxSize()
             .statusBarsPadding()
-            .verticalScroll(scroll)
+            .scrollWithBar(scroll)
             .padding(bottom = 24.dp),
     ) {
         Text(
@@ -459,13 +460,14 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = levelVolume, onCheckedChange = { AppSettings.setLevelVolume(it) })
             }
+            Spacer(Modifier.height(12.dp))
+            // Which titles appear on Home, in Search and in New Game (a page of its own, like Themes).
+            NavRow(
+                title = "Titles",
+                subtitle = if (hiddenTitles.isEmpty()) "All titles are on" else "${hiddenTitles.size} turned off",
+                onClick = onOpenTitles,
+            )
         }
-        // Which titles appear on Home, in Search and in New Game (a page of its own, like Themes).
-        NavRow(
-            title = "Titles",
-            subtitle = if (hiddenTitles.isEmpty()) "All titles are on" else "${hiddenTitles.size} turned off",
-            onClick = onOpenTitles,
-        )
 
         SectionLabel("Interface", Modifier.padding(top = 8.dp))
         SettingsCard {
@@ -488,13 +490,12 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                     label = { Text("Shuffled") },
                 )
             }
-        }
-        SettingsCard {
+            Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Hide Quotes", style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "Hides the random villain quotes from the home tab.",
+                        "Hides the random villain quotes from the Home tab.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -503,8 +504,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 // On means hidden (quotes show by default, so this starts off).
                 Switch(checked = !showQuotes, onCheckedChange = { AppSettings.setShowQuotes(!it) })
             }
-        }
-        SettingsCard {
+            Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Open Keyboard on Search", style = MaterialTheme.typography.bodyLarge)
@@ -517,9 +517,10 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = searchKeyboard, onCheckedChange = { AppSettings.setSearchKeyboard(it) })
             }
+            Spacer(Modifier.height(12.dp))
+            // Themes always sits at the bottom of Interface.
+            ThemeRow(Palettes.byId(themeId), onClick = onOpenThemes)
         }
-        // Themes always sits at the bottom of Interface.
-        ThemeRow(Palettes.byId(themeId), onClick = onOpenThemes)
 
         // System sits at the bottom: Android Auto, Cast, saved songs, then app updates last.
         SectionLabel("System", Modifier.padding(top = 8.dp))
@@ -537,8 +538,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 Switch(checked = androidAuto, onCheckedChange = { AppSettings.setAndroidAuto(it) })
             }
             if (androidAuto) AndroidAutoSetupHint(context)
-        }
-        SettingsCard {
+            Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Cast Support", style = MaterialTheme.typography.bodyLarge)
@@ -551,8 +551,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = castSupport, onCheckedChange = { AppSettings.setCastSupport(it) })
             }
-        }
-        SettingsCard {
+            Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Force Close App", style = MaterialTheme.typography.bodyLarge)
@@ -565,8 +564,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = closeFromRecents, onCheckedChange = { AppSettings.setCloseFromRecents(it) })
             }
-        }
-        SettingsCard {
+            Spacer(Modifier.height(16.dp))
             Text("Saved Songs", style = MaterialTheme.typography.bodyLarge)
             Text(
                 "Caches recently streamed songs locally so they don't use data again. This speeds up listening but uses more storage.",
@@ -624,11 +622,8 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 Spacer(Modifier.width(8.dp))
                 Text(if (vm.clearingCache) "Clearing…" else "Clear Cache")
             }
-        }
-
-
-        // App updates always stays last, with its check button always visible.
-        SettingsCard {
+            Spacer(Modifier.height(20.dp))
+            // App updates always stays last, with its check button always visible.
             Text("LifeStream ${Updater.currentVersionName}", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -812,17 +807,11 @@ private fun formatBytes(bytes: Long): String {
 }
 
 /** A setting that opens a page of its own (like Themes). */
+/** A row inside a settings card that opens a page of its own. */
 @Composable
 private fun NavRow(title: String, subtitle: String, onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-    ) {
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+    CardLink(onClick) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(title, style = MaterialTheme.typography.bodyLarge)
                 Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -835,15 +824,8 @@ private fun NavRow(title: String, subtitle: String, onClick: () -> Unit) {
 /** The current theme, with a tap through to the Themes page. */
 @Composable
 private fun ThemeRow(palette: Palette, onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-    ) {
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+    CardLink(onClick) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Themes", style = MaterialTheme.typography.bodyLarge)
                 Text(
@@ -869,6 +851,19 @@ private fun ThemeRow(palette: Palette, onClick: () -> Unit) {
     }
 }
 
+/** A tappable row inside a card; the press highlight reaches a little past the text. */
+@Composable
+private fun CardLink(onClick: () -> Unit, content: @Composable () -> Unit) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 6.dp),
+    ) { content() }
+}
+
+/** One section's settings, together on one card. */
 @Composable
 private fun SettingsCard(content: @Composable () -> Unit) {
     Surface(

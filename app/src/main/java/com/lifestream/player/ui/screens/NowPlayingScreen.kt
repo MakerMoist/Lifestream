@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import com.lifestream.player.ui.components.thinScrollbar
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.lifestream.player.playback.SafeInput
 import androidx.activity.compose.BackHandler
@@ -292,7 +293,7 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                         }
                         com.lifestream.player.ui.components.CastButton()
                         IconButton(onClick = { showQueue = true }) {
-                            Icon(Icons.AutoMirrored.Rounded.QueueMusic, "Up next")
+                            Icon(Icons.AutoMirrored.Rounded.QueueMusic, "Up Next")
                         }
                     }
                 }
@@ -416,7 +417,7 @@ private fun QueueList(state: PlayerUiState) {
     // Listed in play order, so "Up next" is what really plays next (shuffled or not).
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = state.playPosition.coerceAtLeast(0))
     Text(
-        "Up next",
+        "Up Next",
         style = MaterialTheme.typography.titleLarge,
         modifier = Modifier.padding(start = 20.dp, bottom = 8.dp),
     )
@@ -438,6 +439,7 @@ private fun QueueList(state: PlayerUiState) {
         state = listState,
         modifier = Modifier
             .height(480.dp)
+            .thinScrollbar(listState)
             .nestedScroll(keepScroll),
     ) {
         itemsIndexed(state.playOrder) { _, index ->

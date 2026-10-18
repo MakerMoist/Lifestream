@@ -821,11 +821,83 @@ def coe33(c):
     finish(c, "#120c08", "#fff0d0", amount=0.12, vignette=0.5, sat=0.95)
 
 
+# Final Fantasy VII: Advent Children: steel grey and silver after the storm. An empty highway runs
+# across the wasteland to a ruined city; dark mist clings to the ground while a healing rain
+# falls through a break in the clouds.
+def ac(c):
+    c.vgrad([(0, "#07090c"), (0.35, "#1c242c"), (0.58, "#6e7c86"), (0.66, "#c8d2d8"), (0.7, "#2a3036"), (1, "#08090b")])
+    c.clouds(0.0, 0.55, "#141a20", lit="#d8e2e8", cover=0.62, scale=2.0, seed=31, alpha=0.9, light_dir=(0.3, 1))
+    # The break in the clouds and its shaft of light.
+    c.radial(0.6, 0.3, 0.3, "#e8f0f4", 0.7, 2.2, squash=1.4)
+    c.god_rays(0.6, 0.26, c.circle(0.6, 0.26, 0.05), "#dfe8ee", 0.55, reach=0.75)
+    c.streaks(1100, "#cfd8e0", angle=97, length=(0.03, 0.08), alpha=0.16, seed=31)  # rain
+    # The ruined city on the horizon: broken towers, some leaning.
+    c.land(0.66, 0.02, "#3a424a", seed=31, haze="#c8d2d8", haze_amt=0.45)
+    c.skyline(0.665, "#2a3036", seed=32, x0=0.55, x1=0.98, hmin=0.02, hmax=0.11, wmin=0.01, wmax=0.03, spires=0.15)
+    for x, top, lean in [(0.66, 0.5, 0.02), (0.78, 0.54, -0.015), (0.9, 0.56, 0.01)]:
+        c.paint(c.poly([(x - 0.012, 0.67), (x + lean - 0.008, top), (x + lean + 0.008, top + 0.01), (x + 0.012, 0.67)]),
+                "#22282e")
+    # Wasteland and the highway running into the distance.
+    g = c.land(0.7, 0.02, "#1c2024", seed=33, texture=0.5)
+    road = c.poly([(0.535, 0.68), (0.55, 0.68), (0.8, 1.0), (0.32, 1.0)])
+    c.paint(road, hexc("#16191c")[None, None, :] * (0.8 + c.fbm(30, 3, 34)[..., None] * 0.3))
+    for t in np.linspace(0.08, 0.95, 9):
+        y = 0.68 + 0.32 * t ** 1.6
+        x = 0.54 + (0.575 - 0.54) * t ** 1.6
+        c.paint(c.rect(x - 0.002 - 0.006 * t, y, x + 0.002 + 0.006 * t, y + 0.004 + 0.02 * t), "#9aa4aa", 0.7)
+    c.water(0.995, "#9fb0bc", dim=0.95, tint_amt=0.0, ripple=0.003, sparkle="#e8f0f4", sparkle_amt=0.15)
+    # Dark mist drifting over the ground, a faint green light glinting through it.
+    c.fog(0.66, 0.86, "#0a0d10", 0.55, seed=35, patchy=0.7)
+    c.particles(90, 0.0, 1.0, 0.68, 0.9, "#7affb4", 0.4, 1.2, 4, 0.45, seed=36)
+    c.particles(140, 0.4, 0.8, 0.25, 0.6, "#ffffff", 0.3, 1.0, 3, 0.5, seed=37)
+    finish(c, "#06080a", "#eef4f8", amount=0.12, vignette=0.5, sat=0.85)
+
+
+# Stranger of Paradise: Final Fantasy Origin: black, violet and blood red. A dark crystal hangs
+# over a ruined shrine on a hill; red lightning cracks the sky and ash drifts down.
+def sop(c):
+    c.vgrad([(0, "#050307"), (0.35, "#1a0a1e"), (0.58, "#4a1630"), (0.68, "#a8283a"), (0.74, "#2a0e16"), (1, "#060406")])
+    c.clouds(0.0, 0.62, "#12060f", lit="#ff4a5a", cover=0.6, scale=2.3, seed=41, alpha=0.85, light_dir=(0, 1))
+    c.radial(0.5, 0.72, 0.5, "#ff3a4a", 0.5, 2.2, squash=1.6)
+    # Red lightning.
+    for k, (x0, x1) in enumerate([(0.15, 0.3), (0.82, 0.7)]):
+        pts = []
+        y = 0.0
+        x = x0
+        rng = c.rng
+        while y < 0.42:
+            pts.append((x, y))
+            y += rng.uniform(0.03, 0.06)
+            x += (x1 - x0) * 0.12 + rng.uniform(-0.025, 0.025)
+        c.glow(c.line(pts, 2.2), "#ff4050", 18, 1.0)
+        c.add(c.line(pts, 0.8), "#ffe0e4", 0.9)
+    # The hill and the ruined shrine.
+    c.land(0.74, 0.04, "#2a1018", seed=42, haze="#a8283a", haze_amt=0.35)
+    hill = c.below([(x, 0.76 + 0.12 * ((x - 0.5) / 0.5) ** 2) for x in np.linspace(0, 1, 60)])
+    c.paint(hill, "#0c0609")
+    ruin = np.zeros((c.h, c.w), np.float32)
+    ruin = np.maximum(ruin, c.rect(0.36, 0.735, 0.64, 0.77))
+    ruin = np.maximum(ruin, c.poly([(0.39, 0.735), (0.5, 0.67), (0.61, 0.735)]))  # broken pediment
+    for i, x in enumerate(np.linspace(0.4, 0.6, 6)):
+        top = 0.66 if i not in (1, 4) else 0.7
+        ruin = np.maximum(ruin, c.rect(x - 0.009, top, x + 0.009, 0.74))
+    c.paint(ruin, "#070406")
+    # The dark crystal: violet-black facets with a red heart.
+    c.crystal(0.5, 0.34, 0.1, 0.34, "#3a1450", glow=60, glow_s=0.9, tilt=0.06)
+    c.add(c.blur(c.circle(0.5, 0.34, 0.03), 30), "#ff3048", 0.9)
+    c.glow(c.circle(0.5, 0.34, 0.01), "#ff8090", 16, 1.0)
+    c.ribbon(lambda t: (0.5 + 0.02 * math.sin(t * 9), 0.46 + 0.22 * t), "#b04aff", 1.2, 14, 0.45, core=0.3)
+    # Ash.
+    c.particles(260, 0, 1, 0.05, 0.95, "#c8a8b8", 0.4, 1.3, 3, 0.55, seed=43)
+    c.particles(90, 0.3, 0.7, 0.55, 0.8, "#ff6070", 0.4, 1.2, 4, 0.7, seed=44)
+    finish(c, "#05020a", "#ffd8e0", amount=0.12, vignette=0.55, sat=1.05)
+
+
 SCENES = {
     "ff1": ff1, "ff2": ff2, "ff3": ff3, "ff4": ff4, "ff5": ff5, "ff6": ff6, "ff7": ff7, "ff8": ff8,
     "ff9": ff9, "ff10": ff10, "ff10_2": ff10_2, "ff11": ff11, "ff12": ff12, "ff13": ff13,
     "ff13_2": ff13_2, "ff14": ff14, "ff15": ff15, "ff16": ff16, "ff7r": ff7r, "ff7rb": ff7rb,
-    "ccr": ccr, "fft": fft, "ct": ct, "cx": cx, "lo": lo, "lr": lr, "coe33": coe33,
+    "ccr": ccr, "fft": fft, "ct": ct, "cx": cx, "lo": lo, "lr": lr, "coe33": coe33, "ac": ac, "sop": sop,
 }
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import com.lifestream.player.ui.components.scrollWithBar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,9 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Icon
@@ -105,8 +104,9 @@ object Credits {
         val finalFantasy = "FINAL FANTASY is a registered trademark of $SQUARE_ENIX"
         for (id in listOf(
             "ff1", "ff2", "ff3", "ff4", "ff5", "ff6", "ff7", "fft", "ff7r", "ff7rb", "ff8", "ff9", "ff10",
-            "ff10-2", "ff11", "ff12", "ff13", "ff13-2", "lr", "ff14", "ff15", "ff16",
+            "ff10-2", "ff11", "ff12", "ff13", "ff13-2", "lr", "ff14", "ff15", "ff16", "ac",
         )) put(id, finalFantasy)
+        put("sop", "$finalFantasy (developed with Team NINJA of KOEI TECMO GAMES)")
         put("ccr", "CRISIS CORE and FINAL FANTASY are registered trademarks of $SQUARE_ENIX")
         put("ct", "CHRONO TRIGGER is a registered trademark of $SQUARE_ENIX")
         put("cx", "CHRONO CROSS is a registered trademark of $SQUARE_ENIX")
@@ -121,8 +121,8 @@ object Credits {
     )
 
     const val DISCLAIMER = "LifeStream is an unofficial, fan-made player. It isn't affiliated with, sponsored or " +
-        "endorsed by Square Enix, Microsoft, Sandfall Interactive, Kepler Interactive or Google. All trademarks " +
-        "and music belong to their respective owners."
+        "endorsed by Square Enix, Koei Tecmo, Microsoft, Sandfall Interactive, Kepler Interactive or Google. " +
+        "All trademarks and music belong to their respective owners."
 }
 
 /** Settings → Credits & Trademarks. */
@@ -132,7 +132,7 @@ fun CreditsScreen(onBack: () -> Unit) {
         Modifier
             .fillMaxSize()
             .statusBarsPadding()
-            .verticalScroll(rememberScrollState())
+            .scrollWithBar()
             .padding(bottom = 24.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

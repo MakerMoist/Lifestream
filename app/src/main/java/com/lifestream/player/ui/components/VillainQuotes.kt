@@ -27,6 +27,7 @@ private const val DC = "Dirge of Cerberus: Final Fantasy VII"
 private const val CT = "Chrono Trigger"
 private const val CX = "Chrono Cross"
 private const val FFT = "Final Fantasy: Tactics"
+private const val SOP = "Stranger of Paradise"
 
 /** Checked against Wikiquote's game pages and the Final Fantasy Wiki; a few well-known lines from memory. */
 val villainQuotes = listOf(
@@ -571,6 +572,10 @@ val villainQuotes = listOf(
     VillainQuote("Opposing us is the same as blasphemy!", "Zalmo", FFT),
     VillainQuote("Repent! And your life will be saved!", "Zalmo", FFT),
     VillainQuote("You heretics don't fear God! I'll fix you!", "Zalmo", FFT),
+
+    // Stranger of Paradise
+    VillainQuote("CHAOS!!", "Jack Garland", SOP),
+    VillainQuote("Bullshit.", "Jack Garland", SOP),
 
     // Chrono Trigger, Chrono Cross
     VillainQuote("The black wind howls… One among you will shortly perish…", "Magus", CT),

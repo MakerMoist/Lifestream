@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import com.lifestream.player.ui.components.thinScrollbar
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.foundation.layout.PaddingValues
 import com.lifestream.player.ui.components.CenteredButtonLabel
@@ -126,7 +127,7 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
                         onRefresh = { refresh() },
                         modifier = Modifier.weight(1f).fillMaxWidth(),
                     ) {
-                        LazyColumn(Modifier.fillMaxSize(), state = playlistList) {
+                        LazyColumn(Modifier.fillMaxSize().thinScrollbar(playlistList), state = playlistList) {
                             if (playlists.isEmpty()) {
                                 item(key = "empty") {
                                     EmptyState("No playlists yet")
@@ -147,7 +148,7 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
                     ) {
                         Icon(Icons.Rounded.Add, null, Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("New playlist")
+                        Text("New Playlist")
                     }
                 }
             } else {
@@ -156,7 +157,7 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
                     onRefresh = { refresh() },
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    LazyColumn(Modifier.fillMaxSize(), state = historyList) {
+                    LazyColumn(Modifier.fillMaxSize().thinScrollbar(historyList), state = historyList) {
                         if (recents.isEmpty()) {
                             item(key = "empty") { EmptyState("Nothing played yet", "Songs you play will show up here.") }
                         } else {
@@ -183,7 +184,7 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
     if (confirmClear) {
         AlertDialog(
             onDismissRequest = { confirmClear = false },
-            title = { Text("Clear history?") },
+            title = { Text("Clear History?") },
             text = { Text("This removes all ${recents.size} songs from your history. Your playlists and saved songs aren't affected.") },
             confirmButton = {
                 TextButton(onClick = {
@@ -297,10 +298,13 @@ fun PlaylistScreen(playlistId: String, onBack: () -> Unit) {
     // Opening a playlist counts as using it, for Home's "Last Playlist".
     androidx.compose.runtime.LaunchedEffect(playlist.id) { Library.setLastPlaylist(playlist.id) }
 
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     LazyColumn(
         Modifier
             .fillMaxSize()
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .thinScrollbar(listState),
+        state = listState,
     ) {
         item(key = "header") {
             Column {
@@ -342,7 +346,7 @@ fun PlaylistScreen(playlistId: String, onBack: () -> Unit) {
 
     if (renaming) {
         PlaylistNameDialog(
-            title = "Rename playlist",
+            title = "Rename Playlist",
             initial = playlist.name,
             confirmLabel = "Save",
             onDismiss = { renaming = false },

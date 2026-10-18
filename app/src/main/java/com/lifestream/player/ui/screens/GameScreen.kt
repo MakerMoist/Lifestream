@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import com.lifestream.player.ui.components.thinScrollbar
 import com.lifestream.player.ui.components.CenteredButtonLabel
 import androidx.compose.runtime.getValue
 import com.lifestream.player.data.Track
@@ -87,7 +88,8 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
         if (filtering && !vm.tracks.endReached && !vm.tracks.loading) vm.tracks.loadMore()
     }
 
-    LazyColumn(Modifier.fillMaxSize()) {
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    LazyColumn(Modifier.fillMaxSize().thinScrollbar(listState), state = listState) {
         item(key = "header") {
             Box(
                 Modifier
@@ -163,13 +165,13 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White.copy(alpha = 0.75f),
                         )
-                        // Then how many songs (once known) and the year.
+                        // Then the year and how many songs (once known).
                         val songCount = if (vm.tracks.endReached) tracks.size
                         else com.lifestream.player.data.SoundtrackIndex.songsFor(game.id)?.size ?: 0
                         Text(
                             listOfNotNull(
-                                songCount.takeIf { it > 0 }?.let { if (it == 1) "1 song" else "$it songs" },
                                 game.year.toString(),
+                                songCount.takeIf { it > 0 }?.let { if (it == 1) "1 song" else "$it songs" },
                             ).joinToString(" · "),
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White.copy(alpha = 0.75f),
@@ -183,7 +185,7 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                                 enabled = tracks.isNotEmpty(),
                                 modifier = Modifier.weight(1f).height(44.dp),
                             ) {
-                                CenteredButtonLabel("Play all") { Icon(Icons.Rounded.PlayArrow, null, Modifier.size(20.dp)) }
+                                CenteredButtonLabel("Play All") { Icon(Icons.Rounded.PlayArrow, null, Modifier.size(20.dp)) }
                             }
                             OutlinedButton(
                                 onClick = { PlayerConnection.playTracks(tracks, randomStart = true) },
