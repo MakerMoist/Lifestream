@@ -264,12 +264,13 @@ fun NowPlayingScreen(onClose: () -> Unit) {
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        // The artist line's font, at the title's size.
+                        // The artist line's font, at the title's size, in bold.
                         Text(
                             track?.title ?: "",
                             style = MaterialTheme.typography.bodyLarge.copy(
                                 fontSize = MaterialTheme.typography.titleLarge.fontSize,
                                 lineHeight = MaterialTheme.typography.titleLarge.lineHeight,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                             ),
                             maxLines = 1,
                             modifier = Modifier.basicMarquee(),

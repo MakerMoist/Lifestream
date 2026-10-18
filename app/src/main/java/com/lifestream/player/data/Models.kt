@@ -131,7 +131,7 @@ data class Game(
     val coverArt: String? = null,
     /**
      * The soundtrack names songs "Area - Song" (e.g. "Spring Meadows - Cloud of Anxiety"), so the
-     * whole name identifies a song instead of the part before the dash.
+     * whole name identifies a song, even parts that read like a version note ("- Battle Edit").
      */
     val fullSongTitles: Boolean = false,
     /** Short names that find this title in Search, e.g. "FFT", "CC", "CT" (letters and digits only). */

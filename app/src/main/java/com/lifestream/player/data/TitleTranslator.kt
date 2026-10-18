@@ -151,7 +151,7 @@ object TitleTranslator {
         "ノウス＝パルトゥス" to "Nova Chrysalia", "ノウス=パルトゥス" to "Nova Chrysalia",
         "ルクセリオ" to "Luxerion", "ユスナーン" to "Yusnaan", "デッド･デューン" to "Dead Dunes",
         "デッド・デューン" to "Dead Dunes", "ウィルダネス" to "Wildlands", "ノエル" to "Noel",
-        "エクレール･ファロン" to "Éclair Farron", "エクレール・ファロン" to "Éclair Farron",
+        "エクレール･ファロン" to "Claire Farron", "エクレール・ファロン" to "Claire Farron",
         "ブーニベルゼ" to "Bhunivelze", "ルミナ" to "Lumina", "ホープ" to "Hope",
         "ノクティス" to "Noctis", "ルシス" to "Lucis", "インソムニア" to "Insomnia", "ハンマーヘッド" to "Hammerhead",
         "クライヴ" to "Clive", "ヴァリスゼア" to "Valisthea", "ドミナント" to "Dominant",

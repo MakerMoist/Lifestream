@@ -127,7 +127,9 @@ object Catalog {
                 ExtraSong("Shinryu", "Naoshi Mizuta", "x_XQmblQl3Q", 352),
             )),
         Game("ff12", "XII", "Final Fantasy XII", 2006, "Hitoshi Sakimoto",
-            "Final Fantasy XII original soundtrack", c(0xFF451A03), c(0xFFFDBA74), match = num("XII"), art = R.drawable.art_ff12),
+            "Final Fantasy XII original soundtrack", c(0xFF451A03), c(0xFFFDBA74), match = num("XII"), art = R.drawable.art_ff12,
+            // The licensed theme song, on the soundtrack CD but left off the streaming album.
+            extras = listOf(ExtraSong("Kiss Me Good-Bye", "Angela Aki", albumArt = true))),
         Game("ff13", "XIII", "Final Fantasy XIII", 2009, "Masashi Hamauzu",
             "Final Fantasy XIII original soundtrack", c(0xFF082F49), c(0xFFBAE6FD), match = num("XIII", exclude = listOf("LIGHTNING RETURNS"), notWith = setOf("XIII2")), art = R.drawable.art_ff13,
             // The Western release's theme song isn't on the Japanese soundtrack album.

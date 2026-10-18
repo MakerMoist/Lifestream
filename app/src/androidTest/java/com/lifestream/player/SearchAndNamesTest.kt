@@ -128,6 +128,20 @@ class SearchAndNamesTest {
         assertNotEquals(Matching.songKey("ザナルカンドにて - Piano Ver."), Matching.songKey("ビサイド島 - Piano Ver."))
         // A song sung in another language is its own recording.
         assertNotEquals(Matching.songKey("1000 Words"), Matching.songKey("1000 Words (English Version)"))
+        // A battle edit or mix is the same song, but a subtitle that names another song isn't.
+        assertEquals(Matching.songKey("Eclipse"), Matching.songKey("Eclipse - Aggressive Mix -"))
+        assertEquals(Matching.songKey("Mako Reactor 1"), Matching.songKey("FFVII REMAKE: Mako Reactor 1 - Battle Edit"))
+        assertNotEquals(
+            Matching.songKey("Let the Battles Begin! - Break Through"),
+            Matching.songKey("Let the Battles Begin! - The Hideout"),
+        )
+        assertNotEquals(
+            Matching.songKey("Lightning's Theme - A Distant Glimmer -"),
+            Matching.songKey("Lightning's Theme - Radiance -"),
+        )
+        // FINAL FANTASY XII's Imperial and Resistance arrangements, however each album writes them.
+        assertEquals(Matching.songKey("Sorrow (Imperial Version)"), Matching.songKey("Sorrow: Imperial (Zodiac Age Version)"))
+        assertNotEquals(Matching.songKey("Sorrow (Imperial Version)"), Matching.songKey("Sorrow (Resistance Version)"))
         // Soundtracks that name songs "Area - Song" keep the whole name.
         assertNotEquals(
             Matching.songKey("Spring Meadows - Cloud of Anxiety", fullTitle = true),

@@ -60,6 +60,18 @@ class PlayerTest {
             assertEquals(7, order[0])
             assertEquals(20, order[1])
 
+            // The same song can be queued again and again: each copy plays, back to back.
+            // (Copies go on the end of the queue list, so the indexes used below don't move.)
+            val again = track(20)
+            repeat(2) {
+                player.addMediaItem(again.toMediaItem())
+                QueueCommands.place(player, player.mediaItemCount - 1, QueueCommands.NEXT)
+            }
+            order = QueueCommands.playOrder(player)
+            assertEquals(List(3) { again.id }, order.drop(1).take(3).map { player.getMediaItemAt(it).mediaId })
+            player.removeMediaItem(22)
+            player.removeMediaItem(21)
+
             // Placing a song at the end of the play order.
             player.addMediaItem(track(21).toMediaItem())
             QueueCommands.place(player, 21, QueueCommands.END)

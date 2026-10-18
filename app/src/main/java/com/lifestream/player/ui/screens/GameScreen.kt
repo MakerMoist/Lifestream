@@ -147,22 +147,33 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                             fontSize = 56.sp,
                             modifier = Modifier.alpha(0f).clearAndSetSemantics { },
                         )
-                        Text(game.title, style = MaterialTheme.typography.headlineSmall, color = Color.White)
+                        // Always one line: a long name shrinks to fit instead of wrapping.
+                        androidx.compose.foundation.text.BasicText(
+                            game.title,
+                            style = MaterialTheme.typography.headlineSmall.copy(color = Color.White),
+                            maxLines = 1,
+                            autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(
+                                minFontSize = 14.sp,
+                                maxFontSize = MaterialTheme.typography.headlineSmall.fontSize,
+                                stepSize = 0.5.sp,
+                            ),
+                        )
                         Text(
-                            "${game.year} · ${game.composer}",
+                            game.composer,
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White.copy(alpha = 0.75f),
                         )
-                        // How many songs the soundtrack has (once it's known).
+                        // Then how many songs (once known) and the year.
                         val songCount = if (vm.tracks.endReached) tracks.size
                         else com.lifestream.player.data.SoundtrackIndex.songsFor(game.id)?.size ?: 0
-                        if (songCount > 0) {
-                            Text(
-                                if (songCount == 1) "1 song" else "$songCount songs",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.75f),
-                            )
-                        }
+                        Text(
+                            listOfNotNull(
+                                songCount.takeIf { it > 0 }?.let { if (it == 1) "1 song" else "$it songs" },
+                                game.year.toString(),
+                            ).joinToString(" · "),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.75f),
+                        )
                         Spacer(Modifier.height(16.dp))
                         // Play all and Shuffle share the full width.
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {

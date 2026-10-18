@@ -368,6 +368,12 @@ object Matching {
     private val numberingOnly = Regex("^(disc|cd|track|no|#|\\s|\\d|[.\\-])+$")
 
     /**
+     * FINAL FANTASY XII's songs come in Imperial and Resistance arrangements, which are different
+     * songs: "Sorrow (Imperial Version)" is the same song as "Sorrow: Imperial", not "Sorrow".
+     */
+    private val factionVersion = Regex("\\s*\\((imperial|resistance) version\\)")
+
+    /**
      * A key that is the same for every version of a song, so lists keep just one:
      * "One-Winged Angel (Remastered)", "01. One-Winged Angel" and
      * "FINAL FANTASY VII - One-Winged Angel [Piano Ver.]" all become "one winged angel".
@@ -428,12 +434,15 @@ object Matching {
     }
 
     private fun baseSongKey(lowered: String, title: String): String {
-        var t = lowered
+        var t = factionVersion.replace(lowered, " - $1 ")
         t = bracketed.replace(t, " ")
         t = tildeQuoted.replace(t, " ")
         val segments = t.split(segmentSplit).map { it.trim() }.filter { it.isNotEmpty() }
-        t = segments.firstOrNull { !versionWords.containsMatchIn(it) && !numberingOnly.matches(it) }
-            ?: segments.firstOrNull() ?: t
+        // Every part that names the song counts ("Let the Battles Begin! - Break Through" and
+        // "- The Hideout" are different songs); parts that only say which version it is
+        // ("Battle Edit", "Aggressive Mix", "FINAL FANTASY VII") are left out.
+        val naming = segments.filter { !versionWords.containsMatchIn(it) && !numberingOnly.matches(it) }
+        t = naming.joinToString(" ").ifEmpty { segments.firstOrNull() ?: t }
         t = leadingNumber.replace(t, "")
         t = nonLetterDigit.replace(t, " ").trim()
         return t.ifEmpty { title.lowercase(Locale.ROOT).trim() }
