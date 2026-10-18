@@ -54,6 +54,14 @@ fun main(args: Array<String>) {
         runArtists(args.filter { it != "--artists" }.toSet())
         return
     }
+    if ("--names" in args) {
+        runNames(args.filter { it != "--names" }.toSet())
+        return
+    }
+    if ("--compare" in args) {
+        runCompare(args.filter { it != "--compare" }.toSet())
+        return
+    }
     if ("--thumbs" in args) {
         runThumbs(args.filter { it != "--thumbs" }.toSet())
         return
