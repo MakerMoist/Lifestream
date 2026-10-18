@@ -24,18 +24,16 @@ fun runSearch(words: List<String>) {
 /** Several searches in one report: `--editions` looks for special and expanded soundtrack releases. */
 fun runEditions() {
     val queries = listOf(
-        "Final Fantasy Tactics The Ivalice Chronicles original soundtrack",
-        "Chrono Cross Radical Dreamers Edition original soundtrack",
-        "Final Fantasy X-2 International Last Mission original soundtrack",
-        "Final Fantasy X HD Remaster original soundtrack",
-        "Final Fantasy VII Rebirth original soundtrack plus",
-        "Final Fantasy XVI original soundtrack ultimate edition",
-        "Crisis Core Final Fantasy VII original soundtrack",
-        "Final Fantasy XII original soundtrack special",
-        "Chrono Trigger original sound version",
-        "Final Fantasy IV original sound version",
-        "Final Fantasy VI pixel remaster original soundtrack",
-        "Lost Odyssey original soundtrack",
+        "Stranger of Paradise Final Fantasy Origin original soundtrack",
+        "Stranger of Paradise Final Fantasy Origin soundtrack DLC",
+        "Stranger of Paradise Trials of the Dragon King",
+        "Stranger of Paradise Wanderer of the Rift",
+        "Stranger of Paradise Different Future",
+        "Final Fantasy VII Advent Children original soundtrack",
+        "Final Fantasy VII Advent Children Complete original soundtrack",
+        "Advent Children soundtrack",
+        "Florence + The Machine Stand By Me Final Fantasy XV",
+        "Florence The Machine Songs From Final Fantasy XV",
     )
     val out = StringBuilder()
     for (q in queries) {
