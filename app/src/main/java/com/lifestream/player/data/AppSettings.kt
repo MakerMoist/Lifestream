@@ -22,6 +22,7 @@ object AppSettings {
     private const val KEY_AUTO_PLAY_AT_END = "auto_play_at_end"
     private const val KEY_ANDROID_AUTO = "android_auto"
     private const val KEY_ANDROID_AUTO_SEEN = "android_auto_seen"
+    private const val KEY_CAST_SUPPORT = "cast_support"
     private const val KEY_CLOSE_FROM_RECENTS = "close_from_recents"
     private const val KEY_HIDDEN_TITLES = "hidden_titles"
     private const val KEY_CONTINUE_MODE = "continue_mode"
@@ -77,6 +78,16 @@ object AppSettings {
 
     /** Show LifeStream's library and player in Android Auto. Off unless turned on. */
     val androidAuto: StateFlow<Boolean> = _androidAuto.asStateFlow()
+
+    private val _castSupport = MutableStateFlow(true)
+
+    /** Settings → System → "Cast Support": the Cast button on Now Playing (on by default). */
+    val castSupport: StateFlow<Boolean> = _castSupport.asStateFlow()
+
+    fun setCastSupport(on: Boolean) {
+        _castSupport.value = on
+        prefs.edit().putBoolean(KEY_CAST_SUPPORT, on).apply()
+    }
 
     private val _androidAutoSeen = MutableStateFlow(false)
 
@@ -173,6 +184,7 @@ object AppSettings {
         _autoPlayAtEnd.value = prefs.getBoolean(KEY_AUTO_PLAY_AT_END, true)
         _androidAuto.value = prefs.getBoolean(KEY_ANDROID_AUTO, false)
         _androidAutoSeen.value = prefs.getBoolean(KEY_ANDROID_AUTO_SEEN, false)
+        _castSupport.value = prefs.getBoolean(KEY_CAST_SUPPORT, true)
         _closeFromRecents.value = prefs.getBoolean(KEY_CLOSE_FROM_RECENTS, true)
         // Only ids of titles that still exist.
         _hiddenTitles.value = prefs.getStringSet(KEY_HIDDEN_TITLES, emptySet()).orEmpty()

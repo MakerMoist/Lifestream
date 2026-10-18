@@ -253,6 +253,14 @@ class PlaybackService : MediaLibraryService() {
             override fun onCastSessionUnavailable() = switchToLocal()
         })
         if (cast.isCastSessionAvailable) switchToCast()
+        // Turning "Cast Support" off while casting ends the session (the music comes back here).
+        serviceScope.launch {
+            AppSettings.castSupport.drop(1).collect { on -> if (!on) endCastSession() }
+        }
+    }
+
+    private fun endCastSession() {
+        runCatching { CastContext.getSharedInstance(this).sessionManager.endCurrentSession(true) }
     }
 
     @Suppress("DEPRECATION")
@@ -275,10 +283,15 @@ class PlaybackService : MediaLibraryService() {
         val local = localPlayer ?: return
         val s = session ?: return
         if (s.player === cast) return
+        // "Cast Support" is off in Settings: don't take over a session (e.g. one being resumed).
+        if (!AppSettings.castSupport.value) {
+            endCastSession()
+            return
+        }
         if (!CastRelay.start(castDeviceAddress())) {
             // Not on the same Wi-Fi as the Cast device: keep playing on the phone.
             android.widget.Toast.makeText(this, "Casting needs the phone on the same Wi-Fi as the Cast device.", android.widget.Toast.LENGTH_LONG).show()
-            runCatching { CastContext.getSharedInstance(this).sessionManager.endCurrentSession(true) }
+            endCastSession()
             return
         }
         // The queue in the order it's playing (shuffle included), up to 200 songs around this one.

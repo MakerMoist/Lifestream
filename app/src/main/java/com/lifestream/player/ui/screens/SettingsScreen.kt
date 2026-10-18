@@ -303,6 +303,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
     val levelVolume by AppSettings.levelVolume.collectAsStateWithLifecycle()
     val autoPlayAtEnd by AppSettings.autoPlayAtEnd.collectAsStateWithLifecycle()
     val androidAuto by AppSettings.androidAuto.collectAsStateWithLifecycle()
+    val castSupport by AppSettings.castSupport.collectAsStateWithLifecycle()
     val closeFromRecents by AppSettings.closeFromRecents.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
@@ -476,7 +477,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
             }
         }
 
-        // System sits at the bottom: Android Auto, saved songs, then app updates last.
+        // System sits at the bottom: Android Auto, Cast, saved songs, then app updates last.
         SectionLabel("System", Modifier.padding(top = 8.dp))
         SettingsCard {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -492,6 +493,20 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
                 Switch(checked = androidAuto, onCheckedChange = { AppSettings.setAndroidAuto(it) })
             }
             if (androidAuto) AndroidAutoSetupHint(context)
+        }
+        SettingsCard {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Cast Support", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Cast to local, nearby devices.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = castSupport, onCheckedChange = { AppSettings.setCastSupport(it) })
+            }
         }
         SettingsCard {
             Row(verticalAlignment = Alignment.CenterVertically) {

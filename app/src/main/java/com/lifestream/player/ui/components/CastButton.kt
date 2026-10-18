@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.mediarouter.app.MediaRouteChooserDialog
 import androidx.mediarouter.app.MediaRouteControllerDialog
 import androidx.mediarouter.media.MediaRouteSelector
@@ -30,6 +31,9 @@ import com.lifestream.player.ui.theme.LsColors
  */
 @Composable
 fun CastButton(modifier: Modifier = Modifier) {
+    // Settings → System → "Cast Support".
+    val enabled by com.lifestream.player.data.AppSettings.castSupport.collectAsStateWithLifecycle()
+    if (!enabled) return
     val context = LocalContext.current
     val castContext = remember {
         runCatching { CastContext.getSharedInstance(context.applicationContext) }.getOrNull()
