@@ -107,7 +107,7 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
             .statusBarsPadding(),
     ) {
         Text(
-            "Your library",
+            "Library",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp),
         )
@@ -232,7 +232,7 @@ private fun PlaylistRow(p: Playlist, onClick: () -> Unit) {
 
 @Composable
 private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null, onClear: (() -> Unit)? = null) {
-    // Play and Shuffle (and History's Clear) share the full width evenly.
+    // Play and Shuffle share the width evenly; History's Clear is a small plain button after them.
     val padding = PaddingValues(horizontal = 10.dp)
     Row(
         Modifier
@@ -258,13 +258,15 @@ private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null, onCl
             CenteredButtonLabel("Shuffle") { Icon(Icons.Rounded.Shuffle, null, Modifier.size(20.dp)) }
         }
         if (onClear != null) {
-            OutlinedButton(
+            TextButton(
                 onClick = onClear,
                 enabled = tracks.isNotEmpty(),
-                modifier = Modifier.weight(1f).height(44.dp),
-                contentPadding = padding,
+                modifier = Modifier.height(44.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp),
             ) {
-                CenteredButtonLabel("Clear") { Icon(Icons.Rounded.DeleteSweep, null, Modifier.size(20.dp)) }
+                Icon(Icons.Rounded.DeleteSweep, null, Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Clear", style = MaterialTheme.typography.labelLarge)
             }
         }
     }

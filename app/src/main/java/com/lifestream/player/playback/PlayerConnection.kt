@@ -280,7 +280,8 @@ object PlayerConnection {
         }
     }
 
-    fun playNext(track: Track) = withController { c ->
+    /** "Add to queue": the song plays next, right after the one that's playing. */
+    fun addToQueue(track: Track) = withController { c ->
         if (!SafeInput.isVideoId(track.id)) return@withController
         if (c.mediaItemCount == 0) {
             playTracks(listOf(track))
@@ -288,16 +289,6 @@ object PlayerConnection {
             val position = c.currentMediaItemIndex + 1
             c.addMediaItem(position, track.toMediaItem())
             place(c, position, QueueCommands.NEXT)
-        }
-    }
-
-    fun addToQueue(track: Track) = withController { c ->
-        if (!SafeInput.isVideoId(track.id)) return@withController
-        if (c.mediaItemCount == 0) {
-            playTracks(listOf(track))
-        } else {
-            c.addMediaItem(track.toMediaItem())
-            place(c, c.mediaItemCount - 1, QueueCommands.END)
         }
     }
 

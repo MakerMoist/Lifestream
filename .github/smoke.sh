@@ -23,9 +23,12 @@ fi
 tap_text() {
   adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
   adb pull /sdcard/ui.xml ui.xml >/dev/null 2>&1
-  python3 - "$1" <<'PY' > tap.txt
+  # With "lowest" as a second argument, the match nearest the bottom (e.g. a tab, when the
+  # page's own title says the same thing).
+  python3 - "$1" "${2:-}" <<'PY' > tap.txt
 import re, sys
 xml = open("ui.xml", encoding="utf-8", errors="ignore").read()
+hits = []
 for m in re.finditer(r'<node [^>]*>', xml):
     node = m.group(0)
     t = re.search(r'text="([^"]*)"', node)
@@ -33,8 +36,10 @@ for m in re.finditer(r'<node [^>]*>', xml):
         b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', node)
         if b:
             x1, y1, x2, y2 = map(int, b.groups())
-            print((x1 + x2) // 2, (y1 + y2) // 2)
-            break
+            hits.append(((x1 + x2) // 2, (y1 + y2) // 2))
+if hits:
+    x, y = max(hits, key=lambda h: h[1]) if sys.argv[2] == "lowest" else hits[0]
+    print(x, y)
 PY
   if [ -s tap.txt ]; then adb shell input tap $(cat tap.txt); return 0; fi
   return 1
@@ -107,7 +112,7 @@ if [ -n "$dots" ]; then
   # Hold a row a little to the left of its ⋮ button.
   hx=$(( dx / 2 ))
   adb shell input swipe "$hx" "$dy" "$hx" "$dy" 900; sleep 2
-  item=$(find_node "Play next")
+  item=$(find_node "Add to queue")
   [ -z "$item" ] && item=$(find_node "Add to playlist")
   if [ -n "$item" ]; then
     set -- $item
@@ -121,7 +126,7 @@ else
 fi
 
 # Library: swipe from Playlists to History and back with the Library tab.
-if tap_text "Library"; then
+if tap_text "Library" lowest; then
   sleep 3
   size=$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1)
   sw=${size%x*}; sh=${size#*x}
@@ -131,7 +136,7 @@ if tap_text "Library"; then
   else
     echo "::warning::Library: swiping left didn't open History"
   fi
-  tap_text "Library"; sleep 2
+  tap_text "Library" lowest; sleep 2
   if [ -n "$(find_node "New playlist")" ]; then
     echo "::notice::Library: tapping the Library tab returns to Playlists"
   else

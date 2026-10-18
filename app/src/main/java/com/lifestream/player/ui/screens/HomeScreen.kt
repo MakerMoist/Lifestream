@@ -528,13 +528,12 @@ fun GameCard(
                 .align(Alignment.BottomStart)
                 .padding(horizontal = 12.dp, vertical = 10.dp),
         ) {
-            Text(
+            // Always one line: a long name (like Lightning Returns) shrinks to fit instead of wrapping.
+            BasicText(
                 game.title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = Color.White),
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = MaterialTheme.typography.titleSmall.fontSize, stepSize = 0.5.sp),
             )
             Text(
                 "${game.year} · ${game.composer}",

@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.screens
 
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.AlertDialog
@@ -355,18 +356,21 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
             }
             // What it continues with (only while it's on).
             Spacer(Modifier.height(8.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Both on one line, sharing it evenly (the text shrinks a little on narrow phones).
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
                     selected = continueMode == AppSettings.ContinueMode.SAME_TITLE,
                     onClick = { AppSettings.setContinueMode(AppSettings.ContinueMode.SAME_TITLE) },
                     enabled = continueFromSearch,
-                    label = { Text("Same Title Shuffled") },
+                    label = { FitText("Same Title Shuffled") },
+                    modifier = Modifier.weight(1f),
                 )
                 FilterChip(
                     selected = continueMode == AppSettings.ContinueMode.ALL_TITLES,
                     onClick = { AppSettings.setContinueMode(AppSettings.ContinueMode.ALL_TITLES) },
                     enabled = continueFromSearch,
-                    label = { Text("All Titles Shuffled") },
+                    label = { FitText("Enabled Titles Shuffled") },
+                    modifier = Modifier.weight(1f),
                 )
             }
             Spacer(Modifier.height(12.dp))
@@ -445,7 +449,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
                 FilterChip(
                     selected = !randomSongOrder,
                     onClick = { AppSettings.setRandomSongOrder(false) },
-                    label = { Text("Soundtrack Order") },
+                    label = { Text("Soundtrack") },
                 )
                 FilterChip(
                     selected = randomSongOrder,
@@ -520,7 +524,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit) {
         SettingsCard {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Close Fully From Recent Apps", style = MaterialTheme.typography.bodyLarge)
+                    Text("Force Close App", style = MaterialTheme.typography.bodyLarge)
                     Text(
                         "Swiping the app closed in your recent apps list force-closes it.",
                         style = MaterialTheme.typography.bodySmall,
@@ -706,20 +710,10 @@ private const val ANDROID_AUTO_PACKAGE = "com.google.android.projection.gearhead
  */
 @Composable
 private fun AndroidAutoSetupHint(context: Context) {
+    // Once Android Auto has opened LifeStream's library, "Unknown sources" is on: nothing to explain.
     val seen by AppSettings.androidAutoSeen.collectAsStateWithLifecycle()
+    if (seen) return
     Spacer(Modifier.height(12.dp))
-    if (seen) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.CheckCircle, null, tint = LsColors.Mako, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
-            Text(
-                "Android Auto has opened LifeStream's library.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        return
-    }
     Text(
         "If tapping LifeStream in the car opens it on your phone instead, Android Auto is hiding it " +
             "because it isn't from the Play Store. To allow it (once):",
@@ -846,4 +840,19 @@ private fun SettingsCard(content: @Composable () -> Unit) {
     ) {
         Column(Modifier.padding(16.dp)) { content() }
     }
+}
+
+/** One line of chip text that shrinks to fit its space instead of wrapping. */
+@Composable
+private fun FitText(text: String) {
+    androidx.compose.foundation.text.BasicText(
+        text,
+        maxLines = 1,
+        style = MaterialTheme.typography.labelLarge.copy(
+            color = androidx.compose.material3.LocalContentColor.current,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        ),
+        autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 14.sp, stepSize = 0.5.sp),
+        modifier = Modifier.fillMaxWidth(),
+    )
 }

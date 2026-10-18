@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.components
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAddCheck
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.rounded.Search
@@ -307,4 +308,36 @@ fun CenteredButtonLabel(text: String, icon: @Composable () -> Unit) {
         Spacer(Modifier.width(8.dp))
         Text(text, style = MaterialTheme.typography.titleSmall, maxLines = 1)
     }
+}
+
+/**
+ * One line of text that, when it doesn't fit, scrolls slowly to its end, rests, scrolls back to
+ * the start, rests, and repeats, so the whole thing can be read. Text that fits stays still.
+ */
+@Composable
+fun BackAndForthText(text: String, style: androidx.compose.ui.text.TextStyle, modifier: Modifier = Modifier) {
+    val scroll = androidx.compose.foundation.rememberScrollState()
+    val speed = with(LocalDensity.current) { 32.dp.toPx() } // per second
+    val overflow = scroll.maxValue
+    androidx.compose.runtime.LaunchedEffect(text, overflow) {
+        scroll.scrollTo(0)
+        if (overflow <= 0) return@LaunchedEffect
+        val glide = androidx.compose.animation.core.tween<Float>(
+            durationMillis = (overflow / speed * 1000).toInt().coerceAtLeast(600),
+            easing = androidx.compose.animation.core.LinearEasing,
+        )
+        while (true) {
+            kotlinx.coroutines.delay(2_500)
+            scroll.animateScrollTo(overflow, glide)
+            kotlinx.coroutines.delay(2_500)
+            scroll.animateScrollTo(0, glide)
+        }
+    }
+    Text(
+        text,
+        style = style,
+        maxLines = 1,
+        softWrap = false,
+        modifier = modifier.horizontalScroll(scroll, enabled = false),
+    )
 }

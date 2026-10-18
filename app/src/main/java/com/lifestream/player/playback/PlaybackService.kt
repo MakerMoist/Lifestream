@@ -25,6 +25,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.session.CommandButton
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
@@ -54,6 +55,9 @@ import com.lifestream.player.R
  * Runs the player in the background with a media notification, lock-screen controls,
  * headset buttons and audio focus handling.
  */
+/** How far rewind and fast-forward move. */
+private const val SEEK_STEP_MS = 10_000L
+
 @OptIn(UnstableApi::class)
 class PlaybackService : MediaLibraryService() {
 
@@ -125,6 +129,10 @@ class PlaybackService : MediaLibraryService() {
             // Lets the player follow the phone's media volume (see VolumeListener).
             .setDeviceVolumeControlEnabled(true)
             .setWakeMode(C.WAKE_MODE_NETWORK)
+            // Rewind / fast-forward (shown by Android Auto and media controls) move 10 seconds,
+            // matching their "10" icons.
+            .setSeekBackIncrementMs(SEEK_STEP_MS)
+            .setSeekForwardIncrementMs(SEEK_STEP_MS)
             .build()
 
         player.addListener(RecoveryListener(player).also { recovery = it })
@@ -168,6 +176,7 @@ class PlaybackService : MediaLibraryService() {
 
         session = MediaLibrarySession.Builder(this, player, SessionCallback())
             .setSessionActivity(openApp)
+            .setMediaButtonPreferences(mediaButtons())
             .build()
         localPlayer = player
         // Cast starts only while "Cast Support" is on (no Cast framework running otherwise).
@@ -253,7 +262,9 @@ class PlaybackService : MediaLibraryService() {
     private fun setUpCasting() {
         if (castPlayer != null) return
         val castContext = runCatching { CastContext.getSharedInstance(this) }.getOrNull() ?: return
-        val cast = runCatching { CastPlayer(castContext) }.getOrNull() ?: return
+        val cast = runCatching {
+            CastPlayer(castContext, androidx.media3.cast.DefaultMediaItemConverter(), SEEK_STEP_MS, SEEK_STEP_MS)
+        }.getOrNull() ?: return
         castPlayer = cast
         cast.setSessionAvailabilityListener(object : SessionAvailabilityListener {
             override fun onCastSessionAvailable() = switchToCast()
@@ -354,6 +365,34 @@ class PlaybackService : MediaLibraryService() {
         }
         return out
     }
+
+    /**
+     * The control layout for Android Auto and the system media controls: Back and Next always hold
+     * the main spots beside play/pause (some cars otherwise put rewind and fast-forward there), with
+     * 10-second rewind and fast-forward in the smaller spots next to them.
+     */
+    private fun mediaButtons(): List<CommandButton> = listOf(
+        CommandButton.Builder(CommandButton.ICON_PREVIOUS)
+            .setPlayerCommand(Player.COMMAND_SEEK_TO_PREVIOUS)
+            .setDisplayName("Previous")
+            .setSlots(CommandButton.SLOT_BACK)
+            .build(),
+        CommandButton.Builder(CommandButton.ICON_NEXT)
+            .setPlayerCommand(Player.COMMAND_SEEK_TO_NEXT)
+            .setDisplayName("Next")
+            .setSlots(CommandButton.SLOT_FORWARD)
+            .build(),
+        CommandButton.Builder(CommandButton.ICON_SKIP_BACK_10)
+            .setPlayerCommand(Player.COMMAND_SEEK_BACK)
+            .setDisplayName("Back 10 seconds")
+            .setSlots(CommandButton.SLOT_BACK_SECONDARY)
+            .build(),
+        CommandButton.Builder(CommandButton.ICON_SKIP_FORWARD_10)
+            .setPlayerCommand(Player.COMMAND_SEEK_FORWARD)
+            .setDisplayName("Forward 10 seconds")
+            .setSlots(CommandButton.SLOT_FORWARD_SECONDARY)
+            .build(),
+    )
 
     /** LifeStream itself: its package name and its own app user id (which no other app shares). */
     private fun isOurs(controller: MediaSession.ControllerInfo) =

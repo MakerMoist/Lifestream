@@ -76,6 +76,11 @@ class OnlineFeaturesTest {
         assertTrue(mix.size <= Mixes.INSTANT_SIZE)
         assertEquals(mix.size, mix.map { it.id }.toSet().size)
         assertTrue(mix.none { Matching.isFillerTrack(it.title) })
+        // Every indexed title that's turned on gets in (one song each before any gets a second).
+        val titles = com.lifestream.player.data.AppSettings.shownGames.count { g ->
+            SoundtrackIndex.songsFor(g.id)?.any { !Matching.isFillerTrack(it.title) && it.durationSec !in 1L..44L } == true
+        }
+        assertEquals(minOf(titles, Mixes.INSTANT_SIZE), mix.mapNotNull { it.gameId }.toSet().size)
     }
 
     @Test

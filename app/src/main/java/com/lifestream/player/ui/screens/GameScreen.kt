@@ -193,7 +193,7 @@ fun GameScreen(game: Game, onBack: () -> Unit) {
                 placeholder = "Search ${game.title}",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 32.dp, vertical = 4.dp),
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
                 onSearch = { focus.clearFocus() },
             )
         }

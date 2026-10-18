@@ -26,7 +26,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.concurrent.TimeUnit
 
-/** Queue order (shuffle from the chosen song, Play next, Add to queue), media items, Android Auto. */
+/** Queue order (shuffle from the chosen song, Add to queue), media items, Android Auto. */
 @UnstableApi
 @RunWith(AndroidJUnit4::class)
 class PlayerTest {
@@ -53,14 +53,14 @@ class PlayerTest {
             assertEquals("starts from the chosen song", 7, order.first())
             assertEquals("every song once", 20, order.toSet().size)
 
-            // Play next lands right after the current song.
+            // Add to queue lands right after the current song (it plays next).
             player.addMediaItem(track(20).toMediaItem())
             QueueCommands.place(player, 20, QueueCommands.NEXT)
             order = QueueCommands.playOrder(player)
             assertEquals(7, order[0])
             assertEquals(20, order[1])
 
-            // Add to queue goes last.
+            // Placing a song at the end of the play order.
             player.addMediaItem(track(21).toMediaItem())
             QueueCommands.place(player, 21, QueueCommands.END)
             assertEquals(21, QueueCommands.playOrder(player).last())

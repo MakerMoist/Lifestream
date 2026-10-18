@@ -31,7 +31,6 @@ import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.QueuePlayNext
 import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.AlertDialog
@@ -264,19 +263,13 @@ private fun SongMenu(
 
     val items = remember(track, target.playlistId, playlists, instantQueue, isPlaying, game) {
         buildList {
-            // The song that's playing (e.g. Now Playing's ⋮) can't also play next or be queued.
-            if (!isPlaying) {
-                add(MenuItem(Icons.Rounded.QueuePlayNext, "Play next") {
-                    PlayerConnection.playNext(track)
-                    toast(context, "Playing next")
-                    close()
-                })
-                add(MenuItem(Icons.AutoMirrored.Rounded.QueueMusic, "Add to queue") {
-                    PlayerConnection.addToQueue(track)
-                    toast(context, "Added to queue")
-                    close()
-                })
-            }
+            // Queued right after the song that's playing (it plays next), for any song, including
+            // the one that's playing (to hear it again).
+            add(MenuItem(Icons.AutoMirrored.Rounded.QueueMusic, "Add to queue") {
+                PlayerConnection.addToQueue(track)
+                toast(context, "Added to queue")
+                close()
+            })
             add(MenuItem(Icons.AutoMirrored.Rounded.PlaylistAdd, "Add to playlist") {
                 close()
                 onAddToPlaylist(track)
@@ -306,16 +299,16 @@ private fun SongMenu(
                     onRemoveFromSeveral(track)
                 })
             }
+            add(MenuItem(Icons.Rounded.Share, "Share") {
+                shareTrack(context, track)
+                close()
+            })
             if (game != null) {
                 add(MenuItem(Icons.Rounded.Album, "Open ${game.title}") {
                     close()
                     onOpenGame(game)
                 })
             }
-            add(MenuItem(Icons.Rounded.Share, "Share") {
-                shareTrack(context, track)
-                close()
-            })
         }
     }
 
