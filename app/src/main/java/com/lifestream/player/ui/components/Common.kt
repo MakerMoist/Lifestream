@@ -1,5 +1,6 @@
 package com.lifestream.player.ui.components
 
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAddCheck
 import androidx.compose.foundation.layout.height
@@ -316,22 +317,33 @@ fun CenteredButtonLabel(text: String, icon: @Composable () -> Unit) {
  * the start, rests, and repeats, so the whole thing can be read. Text that fits stays still.
  */
 @Composable
-fun BackAndForthText(text: String, style: androidx.compose.ui.text.TextStyle, modifier: Modifier = Modifier) {
+fun BackAndForthText(
+    text: String,
+    style: androidx.compose.ui.text.TextStyle,
+    modifier: Modifier = Modifier,
+    /** False holds it still at the start (e.g. while something covers it), so it doesn't redraw unseen. */
+    moving: Boolean = true,
+) {
     val scroll = androidx.compose.foundation.rememberScrollState()
     val speed = with(LocalDensity.current) { 32.dp.toPx() } // per second
     val overflow = scroll.maxValue
-    androidx.compose.runtime.LaunchedEffect(text, overflow) {
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    androidx.compose.runtime.LaunchedEffect(text, overflow, moving) {
         scroll.scrollTo(0)
-        if (overflow <= 0) return@LaunchedEffect
+        if (overflow <= 0 || !moving) return@LaunchedEffect
         val glide = androidx.compose.animation.core.tween<Float>(
             durationMillis = (overflow / speed * 1000).toInt().coerceAtLeast(600),
             easing = androidx.compose.animation.core.LinearEasing,
         )
-        while (true) {
-            kotlinx.coroutines.delay(2_500)
-            scroll.animateScrollTo(overflow, glide)
-            kotlinx.coroutines.delay(2_500)
-            scroll.animateScrollTo(0, glide)
+        // Only while the app is on screen: no wake-ups every few seconds in the background.
+        lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+            scroll.scrollTo(0)
+            while (true) {
+                kotlinx.coroutines.delay(2_500)
+                scroll.animateScrollTo(overflow, glide)
+                kotlinx.coroutines.delay(2_500)
+                scroll.animateScrollTo(0, glide)
+            }
         }
     }
     Text(

@@ -184,9 +184,12 @@ object SoundtrackIndex {
 
     /** A fingerprint of where [game]'s songs come from, to notice when an update changes it. */
     private fun sourcesKey(game: Game): String = listOf(
-        game.query, game.albumQueries, game.match, game.maxAlbums, game.releaseOrder,
-        game.extras.map { "${it.title}|${it.artist}|${it.videoId}" },
+        SONG_RULES, game.query, game.albumQueries, game.match, game.maxAlbums, game.releaseOrder,
+        game.extras.map { "${it.title}|${it.artist}|${it.videoId}" }, game.skipIds.sorted(),
     ).toString().hashCode().toString(16)
+
+    /** Bump when the rules for which names are the same song change, so titles are re-listed. */
+    private const val SONG_RULES = 2
 
     /**
      * A title's extra songs that are pinned to a known recording (e.g. Final Fantasy XV's "Stand

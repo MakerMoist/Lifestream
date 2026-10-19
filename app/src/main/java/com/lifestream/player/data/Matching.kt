@@ -407,6 +407,17 @@ object Matching {
     private val bracketed = Regex("[(\\[【〔{「].*?[)\\]】〕}」]")
     private val tildeQuoted = Regex("[~〜].*?[~〜]")
     private val segmentSplit = Regex("\\s+[-–—|/]\\s+|\\s*[:：]\\s+")
+    /** For a song's identity, an underscore also separates parts ("Noel's Theme_guitar demo version"). */
+    private val keySegmentSplit = Regex("\\s+[-–—|/]\\s+|\\s*[:：]\\s+|\\s*_+\\s*")
+
+    /**
+     * A version named at the end without brackets: "SUTEKI DA NE Orchestra Version" is still
+     * "SUTEKI DA NE", and "Noel's Theme_guitar demo version" still "Noel's Theme".
+     */
+    private val trailingVersion = Regex(
+        "(?:^|\\s+)(?:(?:orchestra|orchestral|piano|guitar|demo|instrumental|acoustic|vocal|original|short|full|" +
+            "arranged|alternate|alt|game|movie|single|album|tv|radio|extended)\\s+){1,3}(?:version|ver\\.?)$"
+    )
     private val leadingNumber = Regex("^(disc\\s*\\d+\\s*)?(track\\s*)?\\d{1,3}(?=[.\\s_-])[.\\s_-]+")
     private val nonLetterDigit = Regex("[^\\p{L}\\p{N}]+")
 
@@ -463,7 +474,8 @@ object Matching {
         var t = factionVersion.replace(lowered, " - $1 ")
         t = bracketed.replace(t, " ")
         t = tildeQuoted.replace(t, " ")
-        val segments = t.split(segmentSplit).map { it.trim() }.filter { it.isNotEmpty() }
+        val segments = t.split(keySegmentSplit).map { it.trim() }.filter { it.isNotEmpty() }
+            .map { seg -> trailingVersion.replace(seg, "").trim().ifEmpty { seg } }
         // Every part that names the song counts ("Let the Battles Begin! - Break Through" and
         // "- The Hideout" are different songs); parts that only say which version it is
         // ("Battle Edit", "Aggressive Mix", "FINAL FANTASY VII") are left out.

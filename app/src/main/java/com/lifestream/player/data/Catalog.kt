@@ -34,7 +34,10 @@ object Catalog {
         Game("ff2", "II", "Final Fantasy II", 1988, "Nobuo Uematsu",
             "Final Fantasy II original soundtrack", c(0xFF7F1D1D), c(0xFFF87171), match = num("II"), art = R.drawable.art_ff2),
         Game("ff3", "III", "Final Fantasy III", 1990, "Nobuo Uematsu",
-            "Final Fantasy III original soundtrack", c(0xFF14532D), c(0xFF4ADE80), match = num("III"), art = R.drawable.art_ff3),
+            "Final Fantasy III original soundtrack", c(0xFF14532D), c(0xFF4ADE80), match = num("III"), art = R.drawable.art_ff3,
+            // "Battle 1" again (it's already there as "Battle 1 ～Fanfare").
+            skipIds = setOf("VvFT8IMsOWY"),
+        ),
         Game("ff4", "IV", "Final Fantasy IV", 1991, "Nobuo Uematsu",
             "Final Fantasy IV original soundtrack", c(0xFF312E81), c(0xFFA5B4FC), match = num("IV"), art = R.drawable.art_ff4),
         Game("ff5", "V", "Final Fantasy V", 1992, "Nobuo Uematsu",
@@ -112,7 +115,10 @@ object Catalog {
             "Final Fantasy XIII-2 original soundtrack", c(0xFF1E0B3A), c(0xFFB9A2FF),
             match = num("XIII2", notWith = setOf("XIII")), art = R.drawable.art_ff13_2,
             // Every song shows the soundtrack's own cover (the PLUS album's songs included).
-            coverArt = "https://yt3.googleusercontent.com/ANeue4kg4eZs4pSCeAtuyZLBA1qP3Lb7zo_S5p3RvdLFpKhNNd08HuN4DjldSRzB2abzbPEbNU6i5yU1KQ=w544-h544-s-l90-rj"),
+            coverArt = "https://yt3.googleusercontent.com/ANeue4kg4eZs4pSCeAtuyZLBA1qP3Lb7zo_S5p3RvdLFpKhNNd08HuN4DjldSRzB2abzbPEbNU6i5yU1KQ=w544-h544-s-l90-rj",
+            // A remix of "Noel's Theme - Final Journey", named only for its remixer.
+            skipIds = setOf("vGlKQhtLKiM"),
+        ),
         // The third XIII game; its Original Soundtrack PLUS (extra tracks) is included.
         Game("lr", "LR", "Final Fantasy XIII: Lightning Returns", 2013, "Hamauzu · Mizuta · Suzuki",
             "Lightning Returns Final Fantasy XIII original soundtrack", c(0xFF2A0E2E), c(0xFFF5A3D0),

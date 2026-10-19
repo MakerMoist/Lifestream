@@ -270,13 +270,24 @@ object Library {
      * refused). Every song is checked like any saved song.
      */
     fun importText(text: String): ImportResult {
-        if (text.length > MAX_EXPORT_BYTES) return ImportResult.NotAPlaylist
-        val o = runCatching { JSONObject(text) }.getOrNull() ?: return ImportResult.NotAPlaylist
-        if (o.optString("format") != EXPORT_FORMAT || o.optInt("version", -1) != EXPORT_VERSION) return ImportResult.NotAPlaylist
+        val (name, tracks) = readImport(text) ?: return ImportResult.NotAPlaylist
+        return addImported(name, tracks)
+    }
+
+    /** A LifeStream export file's playlist name and songs, or null if it isn't one. Any thread. */
+    fun readImport(text: String): Pair<String, List<Track>>? {
+        if (text.length > MAX_EXPORT_BYTES) return null
+        val o = runCatching { JSONObject(text) }.getOrNull() ?: return null
+        if (o.optString("format") != EXPORT_FORMAT || o.optInt("version", -1) != EXPORT_VERSION) return null
         val name = o.optString("name")
         val data = o.optString("tracks")
-        if (name.isBlank() || data.isEmpty() || o.optString("check") != fingerprint(name, data)) return ImportResult.NotAPlaylist
-        val tracks = runCatching { readTracks(JSONArray(data)) }.getOrNull() ?: return ImportResult.NotAPlaylist
+        if (name.isBlank() || data.isEmpty() || o.optString("check") != fingerprint(name, data)) return null
+        val tracks = runCatching { readTracks(JSONArray(data)) }.getOrNull() ?: return null
+        return name to tracks
+    }
+
+    /** Adds a playlist read by [readImport]. Main thread. */
+    fun addImported(name: String, tracks: List<Track>): ImportResult {
         if (!canCreatePlaylist()) return ImportResult.TooMany
         val p = Playlist(UUID.randomUUID().toString(), uniqueName(cleanName(name, "Imported Playlist")), tracks.take(MAX_TRACKS_PER_PLAYLIST))
         _playlists.value = _playlists.value + p

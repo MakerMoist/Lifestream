@@ -362,7 +362,10 @@ private suspend fun importPlaylist(context: android.content.Context, uri: androi
                 }
                 out.toByteArray()
             } ?: return@runCatching Library.ImportResult.NotAPlaylist
-            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { Library.importText(String(bytes, Charsets.UTF_8)) }
+            // Read and checked here, off the main thread; only adding it happens there.
+            val (listName, songs) = Library.readImport(String(bytes, Charsets.UTF_8))
+                ?: return@runCatching Library.ImportResult.NotAPlaylist
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { Library.addImported(listName, songs) }
         }.getOrDefault(Library.ImportResult.NotAPlaylist)
     }
     val message = when (result) {
