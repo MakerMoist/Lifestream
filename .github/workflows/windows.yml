@@ -107,6 +107,10 @@ jobs:
           $titles = Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object { $_.MainWindowTitle }
           $opened = $titles -contains "LifeStream"
           $exited = $p.HasExited
+          if (-not $exited) {
+            $proc = Get-Process -Id $p.Id
+            Write-Output ("::notice::Memory Windows counts: {0} MB private, {1} MB in use" -f [math]::Round($proc.PrivateMemorySize64 / 1MB), [math]::Round($proc.WorkingSet64 / 1MB))
+          }
           # Opening it again hands over to the running copy (which shows itself) and quits.
           $second = Start-Process -FilePath $exe -PassThru
           Start-Sleep -Seconds 8
@@ -132,6 +136,10 @@ jobs:
           [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
           $bmp.Save("shots/compact-settings.png")
           if (Test-Path $log) { Get-Content $log | Select-String "Memory|Tray" | ForEach-Object { Write-Output "::notice::Without hardware acceleration: $($_.Line)" } }
+          if (-not $p.HasExited) {
+            $proc = Get-Process -Id $p.Id
+            Write-Output ("::notice::Without hardware acceleration, memory Windows counts: {0} MB private, {1} MB in use" -f [math]::Round($proc.PrivateMemorySize64 / 1MB), [math]::Round($proc.WorkingSet64 / 1MB))
+          }
           Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

@@ -68,7 +68,7 @@ object SelfTest {
         line("Done")
     }
 
-    /** What LifeStream is using: its Java memory, and what Windows counts for the whole program. */
+    /** What LifeStream's Java side is using (the launch check adds Windows' figure for the whole program). */
     private fun memory(): String {
         val mb = 1024 * 1024
         val rt = Runtime.getRuntime()
@@ -77,13 +77,7 @@ object SelfTest {
         val nonHeap = java.lang.management.ManagementFactory.getMemoryPoolMXBeans()
             .filter { it.type == java.lang.management.MemoryType.NON_HEAP }
             .sumOf { it.usage.committed } / mb
-        val process = runCatching {
-            val counters = com.sun.jna.platform.win32.Psapi.PROCESS_MEMORY_COUNTERS()
-            val handle = com.sun.jna.platform.win32.Kernel32.INSTANCE.GetCurrentProcess()
-            com.sun.jna.platform.win32.Psapi.INSTANCE.GetProcessMemoryInfo(handle, counters, counters.size())
-            "Windows counts ${counters.PagefileUsage.toLong() / mb} MB private, ${counters.WorkingSetSize.toLong() / mb} MB in use"
-        }.getOrDefault("Windows' figure unavailable")
-        return "Java objects $heapUsed MB of $heapCommitted MB held, code and classes $nonHeap MB; $process"
+        return "Java objects $heapUsed MB of $heapCommitted MB held, code and classes $nonHeap MB"
     }
 
     private fun step(name: String, block: () -> String) {
