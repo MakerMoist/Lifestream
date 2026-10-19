@@ -68,6 +68,7 @@ class HomeViewModel : ViewModel() {
                     message = "Couldn't load tracks. Check your connection."
                 } else {
                     PlayerConnection.playTracks(tracks, randomStart = shuffle)
+                    NowPlayingRequest.open() // straight to the player, like any song you pick
                     selected = emptySet()
                 }
             } finally {
@@ -94,8 +95,8 @@ class HomeViewModel : ViewModel() {
                 val mix = withContext(Dispatchers.Default) { com.lifestream.player.data.Mixes.instant() }
                 val titles = mix.mapNotNull { it.gameId }.distinct().size
                 if (mix.size >= 20 && titles >= 3) {
+                    // New Game starts playing where you are; Now Playing stays closed.
                     PlayerConnection.playTracks(mix, instant = true)
-                    NowPlayingRequest.open() // straight to the player, like any song you pick
                     val note = "Shuffling ${mix.size} songs from $titles soundtracks"
                     surpriseNote = note
                     clearNoteLater(note)
@@ -109,7 +110,6 @@ class HomeViewModel : ViewModel() {
                     if (tracks.isNotEmpty()) {
                         lastSurprise = game.id
                         PlayerConnection.playTracks(tracks, randomStart = true, instant = true)
-                        NowPlayingRequest.open()
                         surpriseNote = "Shuffling ${game.title}"
                         clearNoteLater("Shuffling ${game.title}")
                         return@launch

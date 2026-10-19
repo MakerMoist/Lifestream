@@ -531,12 +531,17 @@ fun GameCard(
             color = game.colorB,
             style = TextStyle(shadow = Shadow(Color.Black.copy(alpha = 0.7f), Offset(0f, 2f), 10f)),
         )
+        // A name on two lines is centred on the card (with its year and composer line under it);
+        // one-line names keep to the left, like the rest.
+        var twoLines by remember { mutableStateOf(false) }
         Column(
             Modifier
+                .fillMaxWidth()
                 .align(Alignment.BottomStart)
                 .padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalAlignment = if (twoLines) Alignment.CenterHorizontally else Alignment.Start,
         ) {
-            CardTitle(game.title)
+            CardTitle(game.title, onLines = { twoLines = it > 1 })
             Text(
                 "${game.year} · ${game.composer}",
                 style = MaterialTheme.typography.bodySmall,
@@ -554,7 +559,7 @@ fun GameCard(
  * and composer line stays where it is, under it. This applies to any title, new ones included.
  */
 @Composable
-private fun CardTitle(title: String) {
+private fun CardTitle(title: String, onLines: (Int) -> Unit = {}) {
     val style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = Color.White)
     val measurer = androidx.compose.ui.text.rememberTextMeasurer()
     androidx.compose.foundation.layout.BoxWithConstraints {
@@ -562,10 +567,12 @@ private fun CardTitle(title: String) {
         val fitsOnOneLine = remember(title, constraints.maxWidth, style) {
             measurer.measure(title, style, maxLines = 1, softWrap = false).size.width <= constraints.maxWidth
         }
-        if (fitsOnOneLine || split < 0) {
+        val two = !fitsOnOneLine && split >= 0
+        LaunchedEffect(two) { onLines(if (two) 2 else 1) }
+        if (!two) {
             OneLine(title, style)
         } else {
-            Column {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 OneLine(title.substring(0, split + 1), style)
                 OneLine(title.substring(split + 2), style)
             }

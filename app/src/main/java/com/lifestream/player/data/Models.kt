@@ -20,7 +20,33 @@ private val gameTag = Regex(
 
 private val repeatedSpaces = Regex("\\s{2,}")
 
-fun tidySongTitle(title: String): String {
+/**
+ * Text from outside the app (song and artist names from YouTube, an imported playlist's
+ * name) without invisible characters that could disguise it: control characters (line
+ * breaks become spaces) and the direction overrides that make text display in a different
+ * order from what it says (U+202A–202E, U+2066–2069), plus the line/paragraph separators.
+ * Joiners used by emoji and scripts that need them are kept. Text that has none of these is
+ * returned as it is, without copying.
+ */
+fun plainText(text: String): String {
+    if (text.none(::isHiddenChar)) return text
+    val out = StringBuilder(text.length)
+    for (c in text) {
+        when {
+            c == '\n' || c == '\r' || c == '\t' || c == '\u2028' || c == '\u2029' -> out.append(' ')
+            isHiddenChar(c) -> Unit
+            else -> out.append(c)
+        }
+    }
+    return out.toString()
+}
+
+private fun isHiddenChar(c: Char): Boolean =
+    c.isISOControl() || c in '\u202A'..'\u202E' || c in '\u2066'..'\u2069' ||
+        c == '\u2028' || c == '\u2029' || c == '\u200E' || c == '\u200F' || c == '\u061C'
+
+fun tidySongTitle(raw: String): String {
+    val title = plainText(raw)
     val cleaned = title.replace(uploadTag, "").replace(gameTag, "").replace(repeatedSpaces, " ").trim().trimEnd('-', '–', '|', ' ')
     return cleaned.ifBlank { title }
 }

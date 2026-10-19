@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -177,26 +178,26 @@ fun TrackRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        // In at least one of your playlists.
+        // In at least one of your playlists, and saved on the phone in full (plays without
+        // streaming), snug against the ⋮ menu (drawn over the edge of its touch area, which
+        // still opens the menu).
         val inPlaylists by com.lifestream.player.data.Library.inPlaylists.collectAsStateWithLifecycle()
-        if (track.id in inPlaylists) {
-            Icon(
-                Icons.AutoMirrored.Rounded.PlaylistAddCheck,
-                "In a playlist",
-                tint = Color.Gray,
-                modifier = Modifier.size(18.dp),
-            )
-        }
-        // Saved on the phone in full (plays without streaming): an outlined circle with an arrow,
-        // right beside the ⋮ menu.
         val savedIds by SongCache.cachedIds.collectAsStateWithLifecycle()
-        if (track.id in savedIds) {
-            Icon(
-                Icons.Outlined.DownloadForOffline,
-                "Saved on this phone",
-                tint = Color.Gray,
-                modifier = Modifier.padding(start = 6.dp).size(18.dp),
-            )
+        val inAPlaylist = track.id in inPlaylists
+        val saved = track.id in savedIds
+        if (inAPlaylist || saved) {
+            Row(
+                Modifier.padding(start = 6.dp).offset(x = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (inAPlaylist) {
+                    Icon(Icons.AutoMirrored.Rounded.PlaylistAddCheck, "In a playlist", tint = Color.Gray, modifier = Modifier.size(18.dp))
+                }
+                if (saved) {
+                    Icon(Icons.Outlined.DownloadForOffline, "Saved on this phone", tint = Color.Gray, modifier = Modifier.size(18.dp))
+                }
+            }
         }
         Box {
             IconButton(

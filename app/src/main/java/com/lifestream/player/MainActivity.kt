@@ -13,6 +13,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -47,8 +48,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -144,6 +143,12 @@ private fun LifestreamRoot() {
         switchSection(nav, next.route)
     }
 
+    // Made once: a swipe handler rebuilt on every redraw of this screen restarts its gesture
+    // tracking, so a swipe that's in progress (or every swipe, when a page redraws often, like
+    // Home's quotes and artwork) is lost.
+    val latestSwipe = androidx.compose.runtime.rememberUpdatedState<(Int) -> Unit> { step -> swipeTab(step) }
+    val swipeModifier = remember { Modifier.swipeBetweenTabs { step -> latestSwipe.value(step) } }
+
     Box(Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -163,7 +168,7 @@ private fun LifestreamRoot() {
                     .padding(padding)
                     // Swipe left or right anywhere to move to the next or previous tab (lists and
                     // pages that swipe sideways themselves, like Library's, get the swipe first).
-                    .swipeBetweenTabs(::swipeTab),
+                    .then(swipeModifier),
                 // Quick cross-fades between screens instead of the long default.
                 enterTransition = { fadeIn(tween(220, delayMillis = 60)) },
                 exitTransition = { fadeOut(tween(140)) },
@@ -215,8 +220,9 @@ private fun LifestreamRoot() {
         LaunchedEffect(playerOpen) { HomeReselect.covered = playerOpen }
         AnimatedVisibility(
             visible = playerOpen,
-            enter = slideInVertically { it } + fadeIn(),
-            exit = slideOutVertically { it } + fadeOut(),
+            // A fixed-length slide, so it always ends fully open (or fully closed).
+            enter = slideInVertically(tween(300, easing = FastOutSlowInEasing)) { it } + fadeIn(tween(200)),
+            exit = slideOutVertically(tween(260, easing = FastOutSlowInEasing)) { it } + fadeOut(tween(200)),
         ) {
             NowPlayingScreen(onClose = { showPlayer = false })
         }
@@ -302,28 +308,45 @@ private fun switchSection(nav: NavHostController, route: String) {
 }
 
 /**
- * A sideways swipe across the screen: calls [onSwipe] with +1 (swiped left: the next tab) or -1
- * (swiped right: the previous one). It only counts if it's clearly sideways and long enough, and
- * nothing on the page used it first (a row or pager that scrolls sideways, a slider).
+ * A sideways swipe across the screen moves toward the tab in that direction: calls [onSwipe] with
+ * +1 (swiped right: the tab to the right) or -1 (swiped left: the tab to the left). It only
+ * counts if it's clearly sideways and long enough, and nothing on the page used it first (a row
+ * or pager that scrolls sideways, a slider).
+ *
+ * Every touch is followed on its own, event by event, and a new touch always starts afresh: a
+ * touch whose end never arrived (a tap that opened another page, say) can't leave swiping stuck
+ * waiting for it.
  */
 private fun Modifier.swipeBetweenTabs(onSwipe: (Int) -> Unit): Modifier = pointerInput(Unit) {
     val distance = 72.dp.toPx()
-    awaitEachGesture {
-        val down = awaitFirstDown(requireUnconsumed = false)
+    awaitPointerEventScope {
+        var tracking: androidx.compose.ui.input.pointer.PointerId? = null
         var dx = 0f
         var dy = 0f
         var usedByPage = false
         while (true) {
             // Seen after the page has had its turn, so its own scrolling wins.
             val event = awaitPointerEvent(PointerEventPass.Final)
-            val change = event.changes.firstOrNull { it.id == down.id } ?: break
-            if (change.isConsumed) usedByPage = true
-            if (!change.pressed) break
-            dx += change.position.x - change.previousPosition.x
-            dy += change.position.y - change.previousPosition.y
-        }
-        if (!usedByPage && kotlin.math.abs(dx) > distance && kotlin.math.abs(dx) > kotlin.math.abs(dy) * 2) {
-            onSwipe(if (dx < 0) 1 else -1)
+            for (change in event.changes) {
+                if (change.pressed && !change.previousPressed) {
+                    // A finger touching down: follow this one from here.
+                    tracking = change.id
+                    dx = 0f
+                    dy = 0f
+                    usedByPage = false
+                    continue
+                }
+                if (change.id != tracking) continue
+                if (change.isConsumed) usedByPage = true
+                dx += change.position.x - change.previousPosition.x
+                dy += change.position.y - change.previousPosition.y
+                if (!change.pressed) {
+                    tracking = null
+                    if (!usedByPage && kotlin.math.abs(dx) > distance && kotlin.math.abs(dx) > kotlin.math.abs(dy) * 2) {
+                        onSwipe(if (dx > 0) 1 else -1)
+                    }
+                }
+            }
         }
     }
 }

@@ -41,14 +41,14 @@ object Mixes {
     }
 
     /**
-     * A New Game-sized playlist that starts with [first]: then [rest] in random order, topped up
-     * from New Game's mix of every enabled title until it has [INSTANT_SIZE] songs. Used when a
-     * song is started from History or Recommended.
+     * A New Game-sized playlist that starts with [first]: then [rest] (shuffled, or as listed
+     * with [keepOrder]), topped up from New Game's mix of every enabled title until it has
+     * [INSTANT_SIZE] songs. Used when a song is started from History or Recommended.
      */
-    fun startingWith(first: Track, rest: List<Track>): List<Track> {
+    fun startingWith(first: Track, rest: List<Track>, keepOrder: Boolean = false): List<Track> {
         val seen = hashSetOf(first.id)
         val out = mutableListOf(first)
-        for (t in rest.shuffled()) {
+        for (t in if (keepOrder) rest else rest.shuffled()) {
             if (out.size >= INSTANT_SIZE) break
             if (seen.add(t.id)) out += t
         }

@@ -208,6 +208,12 @@ val villainQuotes = listOf(
     VillainQuote("Two!!! Number Two!!!", "Don Corneo", VII),
     VillainQuote("I will never be a memory.", "Sephiroth", AC),
     VillainQuote("Tell me what you cherish most. Give me the pleasure of taking it away.", "Sephiroth", AC),
+    VillainQuote("Shall I give you despair?", "Sephiroth", AC),
+    VillainQuote("On your knees. I want you to beg for forgiveness.", "Sephiroth", AC),
+    VillainQuote("I've thought of a wonderful present for you.", "Sephiroth", AC),
+    VillainQuote("Boy, do I hate liars!", "Kadaj", AC),
+    VillainQuote("Why does humankind even bother?", "Kadaj", AC),
+    VillainQuote("Look what Brother was hiding. Powers forged in the Lifestream.", "Kadaj", AC),
     VillainQuote("Seven seconds till the end.", "Sephiroth", "Final Fantasy VII: Remake"),
     VillainQuote("Even if the morrow is barren of promises, nothing shall forestall my return.", "Genesis", CC),
     VillainQuote(
@@ -576,6 +582,8 @@ val villainQuotes = listOf(
     // Stranger of Paradise
     VillainQuote("CHAOS!!", "Jack Garland", SOP),
     VillainQuote("Bullshit.", "Jack Garland", SOP),
+    VillainQuote("I'm here to kill Chaos.", "Jack Garland", SOP),
+    VillainQuote("It's a mercy to forget.", "Jack Garland", SOP),
 
     // Chrono Trigger, Chrono Cross
     VillainQuote("The black wind howls… One among you will shortly perish…", "Magus", CT),

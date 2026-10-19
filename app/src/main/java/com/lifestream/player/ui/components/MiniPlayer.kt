@@ -77,6 +77,7 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Mo
                     var dx = 0f
                     var dy = 0f
                     var sliding = false
+                    var opening = false
                     while (true) {
                         val event = awaitPointerEvent()
                         val change = event.changes.firstOrNull { it.id == down.id } ?: break
@@ -85,12 +86,20 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Mo
                         dx += step.x
                         dy += step.y
                         tracker.addPosition(change.uptimeMillis, change.position)
+                        if (opening) {
+                            // Keep the rest of this swipe up; Now Playing opens when it's let go.
+                            change.consume()
+                            continue
+                        }
                         if (!sliding) {
-                            // Up or down first: not a close. Up opens Now Playing; down is let go.
+                            // Up or down first: not a close. Up opens Now Playing (once the finger
+                            // lifts, so the screen slides all the way up in one go instead of
+                            // racing a finger still moving); down is let go.
                             if (kotlin.math.abs(dy) > slop) {
                                 if (dy < 0 && kotlin.math.abs(dy) > kotlin.math.abs(dx)) {
                                     change.consume()
-                                    open()
+                                    opening = true
+                                    continue
                                 }
                                 break
                             }
@@ -99,6 +108,10 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Mo
                         }
                         change.consume()
                         scope.launch { offsetX.snapTo((offsetX.value + step.x).coerceAtLeast(0f)) }
+                    }
+                    if (opening) {
+                        open()
+                        return@awaitEachGesture
                     }
                     if (!sliding) {
                         if (offsetX.value != 0f) scope.launch { offsetX.animateTo(0f, spring()) }
@@ -141,6 +154,7 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Mo
                     .height(2.dp),
                 color = LsColors.Mako,
                 trackColor = Color.Transparent,
+                drawStopIndicator = {}, // no dot at the end of the bar
             )
             Row(
                 Modifier.padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),

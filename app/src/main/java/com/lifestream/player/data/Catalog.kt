@@ -148,11 +148,18 @@ object Catalog {
         Game("ff15", "XV", "Final Fantasy XV", 2016, "Yoko Shimomura",
             "Final Fantasy XV original soundtrack", c(0xFF0A0A0A), c(0xFFA3A3A3), match = num("XV"), art = R.drawable.art_ff15,
             // Volume 2 (two albums) has the DLC: Episodes Gladiolus, Prompto, Ignis and Ardyn,
-            // Comrades and the Royal Edition.
-            albumQueries = listOf("Final Fantasy XV original soundtrack volume 2"),
-            // The game's theme song, from Florence + The Machine's official "Songs From Final
-            // Fantasy XV" release rather than the soundtrack albums.
-            extras = listOf(ExtraSong("Stand By Me", "Florence + The Machine", "Mn37d5ne2Zw", 246))),
+            // Comrades and the Royal Edition. Then the film made with the game, Kingsglaive.
+            albumQueries = listOf(
+                "Final Fantasy XV original soundtrack volume 2",
+                "Kingsglaive Final Fantasy XV original soundtrack",
+            ),
+            // Florence + The Machine's official "Songs From Final Fantasy XV": the theme song
+            // and the other two songs written for the game.
+            extras = listOf(
+                ExtraSong("Stand by Me", "Florence + The Machine", "Mn37d5ne2Zw", 246),
+                ExtraSong("Too Much Is Never Enough", "Florence + The Machine", "lxTKlBFIPfM", 349),
+                ExtraSong("I Will Be", "Florence + The Machine", "UEQN-AlqD_w", 325),
+            )),
         Game("ff16", "XVI", "Final Fantasy XVI", 2023, "Masayoshi Soken",
             "Final Fantasy XVI original soundtrack", c(0xFF450A0A), c(0xFFFB923C), match = num("XVI"), art = R.drawable.art_ff16),
 

@@ -340,7 +340,7 @@ object Library {
     }
 
     private fun cleanName(raw: String, fallback: String): String =
-        raw.replace(whitespace, " ").trim().take(MAX_NAME_LENGTH).ifBlank { fallback }
+        plainText(raw).replace(whitespace, " ").trim().take(MAX_NAME_LENGTH).ifBlank { fallback }
 
     /** From the playlists file, or (before 1.5.1) from SharedPreferences. */
     private fun readPlaylists(): List<Playlist> = runCatching {

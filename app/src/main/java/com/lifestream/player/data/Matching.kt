@@ -484,7 +484,7 @@ object Matching {
         "ARRANGEMENT", "ARRANGEMENTS", "VOCAL", "VOCALS", "ACOUSTIC", "GUITAR", "JAZZ", "BRASS", "STRINGS",
         "CONCERT", "LIVE", "SELECTION", "SELECTIONS", "COLLECTION", "COLLECTIONS", "BEST", "SPECIAL",
         "DISTANT WORLDS", "TRIBUTE", "COVER", "COVERS", "REMIX", "REMIXES", "REMIXED", "MUSIC BOX", "SINGLE",
-        "BATTLE TRAX", "BLACK MAGES", "PRELUDE", "PREVIEW", "KINGSGLAIVE", "BROTHERHOOD",
+        "BATTLE TRAX", "BLACK MAGES", "PRELUDE", "PREVIEW", "BROTHERHOOD",
         "SPIRITS WITHIN",
     )
 
@@ -492,6 +492,9 @@ object Matching {
 
     /** Later re-releases of a game's music; the original release should play first. */
     private val laterVersionWords = listOf("PS VERSION", "DS VERSION", "DS EDITION", "ZODIAC AGE", "DLC", "VOLUME 2", "VOL 2")
+
+    /** A film made alongside the game (Kingsglaive, for XV): its soundtrack plays after the game's. */
+    private val filmWords = listOf("KINGSGLAIVE")
 
     /**
      * True only for a game's official original soundtrack: titled as an OST (or the older
@@ -528,6 +531,7 @@ object Matching {
         if (isOfficialArtist(album.artist)) s += 3
         if (remasterWords.any { hasWord(t, it) }) s -= 3
         if (laterVersionWords.any { hasWord(t, it) }) s -= 1
+        if (filmWords.any { hasWord(t, it) }) s -= 2
         if (album.trackCount >= 20) s += 1
         return s
     }

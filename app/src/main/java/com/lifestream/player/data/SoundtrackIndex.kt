@@ -182,6 +182,31 @@ object SoundtrackIndex {
         emptyList() // left out of the index; retried next time
     }
 
+    /** A fingerprint of where [game]'s songs come from, to notice when an update changes it. */
+    private fun sourcesKey(game: Game): String = listOf(
+        game.query, game.albumQueries, game.match, game.maxAlbums, game.releaseOrder,
+        game.extras.map { "${it.title}|${it.artist}|${it.videoId}" },
+    ).toString().hashCode().toString(16)
+
+    /**
+     * A title's extra songs that are pinned to a known recording (e.g. Final Fantasy XV's "Stand
+     * by Me"), added to or renamed in a saved index without rebuilding it, so an extra added or
+     * renamed in an update shows straight away.
+     */
+    private fun withPinnedExtras(game: Game, tracks: List<Track>): List<Track> {
+        val pinned = game.extras.mapNotNull { it.pinnedTrack() }
+        if (pinned.isEmpty()) return tracks
+        val byId = pinned.associateBy { it.id }
+        val have = HashSet<String>()
+        val out = tracks.map { t ->
+            val p = byId[t.id] ?: return@map t
+            have += t.id
+            if (t.title == p.title) t else t.copy(title = p.title)
+        }
+        val missing = pinned.filter { it.id !in have }.map { ArtistCredits.fix(it.copy(gameId = game.id)) }
+        return if (missing.isEmpty()) out else out + missing
+    }
+
     // ---- Search ----
 
     data class Hit(val track: Track, val game: Game)
@@ -279,14 +304,20 @@ object SoundtrackIndex {
                                     r.skipValue()
                                     continue
                                 }
-                                val (built, tracks) = readGame(r, id)
+                                val (built, sources, tracks) = readGame(r, id)
                                 // A soundtrack that has since been given one official cover shows it
                                 // on every song, without rebuilding the index.
-                                val cover = Catalog.game(id)?.coverArt
-                                map[id] = if (cover == null) tracks else tracks.map { t ->
+                                val game = Catalog.game(id)
+                                val cover = game?.coverArt
+                                val covered = if (cover == null) tracks else tracks.map { t ->
                                     if (t.thumbnail == cover) t else t.copy(thumbnail = cover)
                                 }
-                                stamps[id] = built
+                                // Where a title's songs come from has changed in an update (another
+                                // album, an extra song): it's rebuilt soon, and its pinned extras
+                                // show straight away.
+                                val changed = game != null && sources != sourcesKey(game)
+                                map[id] = if (changed) withPinnedExtras(game!!, covered) else covered
+                                stamps[id] = if (changed) 0L else built
                             }
                             r.endObject()
                         }
@@ -327,13 +358,15 @@ object SoundtrackIndex {
         return null
     }
 
-    private fun readGame(r: android.util.JsonReader, id: String): Pair<Long, List<Track>> {
+    private fun readGame(r: android.util.JsonReader, id: String): Triple<Long, String, List<Track>> {
         var built = 0L
+        var sources = ""
         val tracks = ArrayList<Track>()
         r.beginObject()
         while (r.hasNext()) {
             when (r.nextName()) {
                 "built" -> built = r.nextLong()
+                "sources" -> sources = r.nextString()
                 "tracks" -> {
                     r.beginArray()
                     while (r.hasNext()) {
@@ -345,7 +378,7 @@ object SoundtrackIndex {
             }
         }
         r.endObject()
-        return built to tracks.distinctBy { it.id }
+        return Triple(built, sources, tracks.distinctBy { it.id })
     }
 
     /** One stored song; checked exactly like any other stored song (see [Track.fromJson]). */
@@ -373,6 +406,7 @@ object SoundtrackIndex {
                 for ((id, list) in tracks) {
                     w.name(id).beginObject()
                     w.name("built").value(builtAt[id] ?: 0L)
+                    Catalog.game(id)?.let { w.name("sources").value(sourcesKey(it)) }
                     w.name("tracks").beginArray()
                     for (t in list) {
                         w.beginObject()

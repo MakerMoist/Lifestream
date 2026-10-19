@@ -21,7 +21,6 @@ import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.onSizeChanged
 import kotlin.math.abs
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -237,6 +236,8 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     IconButton(onClick = onClose) { Icon(Icons.Rounded.KeyboardArrowDown, "Close player") }
+                    // Balances Cast on the right, so "Now Playing" stays in the middle.
+                    Spacer(Modifier.width(48.dp))
                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("NOW PLAYING", style = MaterialTheme.typography.labelSmall, color = LsColors.Gold)
                         if (state.queue.size > 1 && state.playPosition >= 0) {
@@ -247,6 +248,8 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             )
                         }
                     }
+                    // Cast, then the song's ⋮ menu.
+                    com.lifestream.player.ui.components.CastButton()
                     val dots = rememberMenuAnchor()
                     IconButton(
                         onClick = { track?.let { TrackActions.show(it, at = dots.at(center = true)) } },
@@ -265,16 +268,16 @@ fun NowPlayingScreen(onClose: () -> Unit) {
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        // The artist line's font, at the title's size, in bold.
-                        Text(
+                        // The artist line's font, at the title's size, in bold. A long title glides to
+                        // its end and back, like the mini player's.
+                        com.lifestream.player.ui.components.BackAndForthText(
                             track?.title ?: "",
-                            style = MaterialTheme.typography.bodyLarge.copy(
+                            MaterialTheme.typography.bodyLarge.copy(
                                 fontSize = MaterialTheme.typography.titleLarge.fontSize,
                                 lineHeight = MaterialTheme.typography.titleLarge.lineHeight,
                                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                color = Color.White,
                             ),
-                            maxLines = 1,
-                            modifier = Modifier.basicMarquee(),
                         )
                         Text(
                             track?.artist ?: "",
@@ -284,14 +287,13 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    // Beside the title, top to bottom: Save as playlist (New Game only), Cast, Up next.
+                    // Beside the title, top to bottom: Save as playlist (New Game only), Up next.
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         if (instantQueue) {
                             IconButton(onClick = { savingInstant = true }) {
                                 Icon(Icons.Rounded.Add, "Save as playlist")
                             }
                         }
-                        com.lifestream.player.ui.components.CastButton()
                         IconButton(onClick = { showQueue = true }) {
                             Icon(Icons.AutoMirrored.Rounded.QueueMusic, "Up Next")
                         }
@@ -336,6 +338,7 @@ fun NowPlayingScreen(onClose: () -> Unit) {
     }
 }
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun SeekBar(state: PlayerUiState) {
     var dragging by remember { mutableStateOf<Float?>(null) }
@@ -343,6 +346,12 @@ private fun SeekBar(state: PlayerUiState) {
     val positionMs by PlayerConnection.position.collectAsStateWithLifecycle()
     val duration = state.durationMs.coerceAtLeast(1)
     val fraction = dragging ?: (positionMs.toFloat() / duration).coerceIn(0f, 1f)
+    val seekColors = SliderDefaults.colors(
+        thumbColor = LsColors.Crystal,
+        activeTrackColor = LsColors.Crystal,
+        inactiveTrackColor = Color.White.copy(alpha = 0.15f),
+    )
+    val seekInteraction = remember { MutableInteractionSource() }
 
     Column {
         Slider(
@@ -353,11 +362,27 @@ private fun SeekBar(state: PlayerUiState) {
                 dragging = null
             },
             enabled = state.durationMs > 0,
-            colors = SliderDefaults.colors(
-                thumbColor = LsColors.Crystal,
-                activeTrackColor = LsColors.Crystal,
-                inactiveTrackColor = Color.White.copy(alpha = 0.15f),
-            ),
+            colors = seekColors,
+            interactionSource = seekInteraction,
+            // A little slimmer than the standard slider, and without the dot at the end of the track.
+            thumb = {
+                SliderDefaults.Thumb(
+                    interactionSource = seekInteraction,
+                    colors = seekColors,
+                    enabled = state.durationMs > 0,
+                    thumbSize = androidx.compose.ui.unit.DpSize(4.dp, 34.dp),
+                )
+            },
+            track = { sliderState ->
+                SliderDefaults.Track(
+                    sliderState = sliderState,
+                    colors = seekColors,
+                    enabled = state.durationMs > 0,
+                    drawStopIndicator = null,
+                    modifier = Modifier.height(12.dp),
+                )
+            },
+            modifier = Modifier.height(36.dp),
         )
         Row(Modifier.fillMaxWidth()) {
             val shownPos = if (dragging != null) (fraction * duration).toLong() else positionMs

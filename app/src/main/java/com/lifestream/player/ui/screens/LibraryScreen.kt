@@ -148,8 +148,9 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit, onSwipePastEdge: (Int) -> 
             Tab(selected = pager.currentPage == 1, onClick = { scope.launch { pager.animateScrollToPage(1) } }, text = { Text("History") })
         }
 
-        // Swiping on past Playlists (to the right) or History (to the left) moves to the next tab,
-        // like a swipe anywhere else in the app.
+        // Swiping on past the end of Playlists or History moves to the tab that way (a swipe right
+        // on Playlists goes to Settings, a swipe left on History to Search), like a swipe anywhere
+        // else in the app.
         val pastEdge = remember {
             object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
                 var leftover = 0f
@@ -165,7 +166,7 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit, onSwipePastEdge: (Int) -> 
                 override suspend fun onPreFling(available: androidx.compose.ui.unit.Velocity): androidx.compose.ui.unit.Velocity {
                     val pulled = leftover
                     leftover = 0f
-                    if (kotlin.math.abs(pulled) > 160f) onSwipePastEdge(if (pulled < 0) 1 else -1)
+                    if (kotlin.math.abs(pulled) > 160f) onSwipePastEdge(if (pulled > 0) 1 else -1)
                     return androidx.compose.ui.unit.Velocity.Zero
                 }
             }
@@ -254,12 +255,13 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit, onSwipePastEdge: (Int) -> 
                                 PlayShuffleRow(recents, onClear = { confirmClear = true })
                             }
                             itemsIndexed(recents, key = { _, t: Track -> t.id }) { _, track ->
-                                // A 50-song playlist like New Game's: this song, then the rest of
-                                // History shuffled (topped up from every enabled title); it can be saved.
+                                // This song, then the rest of History in its order, topped up with
+                                // random songs from every enabled title to 50 (not offered to save
+                                // as a playlist: it's your History).
                                 TrackRow(track, onClick = {
                                     PlayerConnection.playTracks(
-                                        com.lifestream.player.data.Mixes.startingWith(track, recents),
-                                        0, shuffle = false, instant = true,
+                                        com.lifestream.player.data.Mixes.startingWith(track, recents, keepOrder = true),
+                                        0, shuffle = false, instant = false,
                                     )
                                 })
                             }

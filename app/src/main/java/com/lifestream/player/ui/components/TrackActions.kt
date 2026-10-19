@@ -275,6 +275,10 @@ fun AppMenuHost() {
         if (open) backDispatcher?.addCallback(lifecycleOwner, callback)
         onDispose { callback.remove() }
     }
+    // A menu's actions belong to the screen that opened it (a file picker it launches, say): when
+    // that screen goes (the phone is turned and the app redraws), the menu goes too, rather than
+    // reappearing with actions that point at the old screen and keeping it in memory.
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { AppMenu.dismiss() } }
     shown?.let { r -> ContextMenuLayer(r.at, progress, r.items, onDismiss = { AppMenu.dismiss() }, isOpen = { AppMenu.request.value != null }) }
 }
 
@@ -470,7 +474,7 @@ private fun AddToPlaylistDialog(track: Track, onDismiss: () -> Unit, onNewPlayli
     val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add to playlist") },
+        title = { Text("Add to Playlist") },
         text = {
             // Scrolls when there are many playlists.
             Column(Modifier.scrollWithBar()) {
