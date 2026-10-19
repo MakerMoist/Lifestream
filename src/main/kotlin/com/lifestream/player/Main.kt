@@ -255,7 +255,7 @@ private fun startApp() {
 
     application {
         AppExit.exit = ::exitApplication
-        val windowState = rememberWindowState(size = DpSize(1240.dp, 820.dp), position = WindowPosition(Alignment.Center))
+        val windowState = rememberWindowState(size = startingSize(), position = WindowPosition(Alignment.Center))
         val playerState by PlayerConnection.state.collectAsState()
         MediaKeys.wanted = playerState.queue.isNotEmpty()
         val navigator = remember { Navigator() }
@@ -293,6 +293,14 @@ private fun startApp() {
             )
         }
     }
+}
+
+/** 1240 x 820, or a little smaller than the screen on small displays. */
+private fun startingSize(): DpSize {
+    val screen = runCatching { java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds }.getOrNull()
+        ?: return DpSize(1240.dp, 820.dp)
+    // AWT reports the work area in the same scaled units Compose uses for the window.
+    return DpSize(minOf(1240, (screen.width * 0.92).toInt()).dp, minOf(820, (screen.height * 0.92).toInt()).dp)
 }
 
 /** LifeStream's crystal icon, for the window, the tray and the sidebar. */
