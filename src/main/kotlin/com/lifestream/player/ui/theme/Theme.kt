@@ -85,5 +85,12 @@ private val typography = base.copy(
 fun LifestreamTheme(content: @Composable () -> Unit) {
     val palette = ThemeState.current
     val scheme = remember(palette) { schemeFor(palette) }
-    MaterialTheme(colorScheme = scheme, typography = typography, content = content)
+    MaterialTheme(colorScheme = scheme, typography = typography) {
+        // On Android the app's background surface sets the default text colour; on the desktop
+        // nothing does, so text without its own colour came out black. Light text by default.
+        androidx.compose.runtime.CompositionLocalProvider(
+            androidx.compose.material3.LocalContentColor provides scheme.onBackground,
+            content = content,
+        )
+    }
 }

@@ -99,6 +99,16 @@ jobs:
           Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
           if ((-not $opened) -or $exited) { Write-Output "::error::LifeStream's window didn't open (windows: $($titles -join ', '))"; exit 1 }
           Write-Output "::notice::LifeStream opened its window on Windows and kept running"
+          # Once more in Compact View, on Settings, to check that layout too.
+          Start-Sleep -Seconds 3
+          '{"compact_view":true}' | Out-File -Encoding ascii (Join-Path $data "settings.json")
+          $env:LIFESTREAM_SELFTEST = "settings"
+          $p = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 30
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          $bmp.Save("shots/compact-settings.png")
+          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: LifeStream-Windows

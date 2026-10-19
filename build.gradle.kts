@@ -7,7 +7,17 @@ plugins {
 }
 
 /** LifeStream for Windows. Its own version, separate from the Android app's. */
-val appVersion = "0.1.0"
+val appVersion = "0.1.0a"
+
+/**
+ * Windows installers only take plain numbers (major.minor.build), so a letter is folded into the
+ * last number: 0.1.0 → 0.1.0, 0.1.0a → 0.1.1, 0.1.0b → 0.1.2, 0.1.1 → 0.1.100. Each release
+ * still gets a higher number than the one before, so it installs over it.
+ */
+val installerVersion = Regex("""(\d+)\.(\d+)\.(\d+)([a-z]?)""").matchEntire(appVersion)!!.groupValues.let { g ->
+    val letter = g[4].firstOrNull()?.let { it - 'a' + 1 } ?: 0
+    "${g[1]}.${g[2]}.${g[3].toInt() * 100 + letter}"
+}
 group = "com.lifestream"
 version = appVersion
 
@@ -90,7 +100,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Msi)
             packageName = "LifeStream"
-            packageVersion = appVersion
+            packageVersion = installerVersion
             description = "Final Fantasy soundtracks, streamed"
             vendor = "MakerMoist"
             // The whole Java runtime: the extractor and FFmpeg's loader use parts a trimmed one leaves out.

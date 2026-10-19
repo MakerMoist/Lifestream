@@ -510,7 +510,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
             Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Discord Integration", style = MaterialTheme.typography.bodyLarge)
+                    Text("Discord Integration (Doesn't Work)", style = MaterialTheme.typography.bodyLarge)
                     Text(
                         "Shows the currently playing song underneath your name in Discord. Like how Spotify does.",
                         style = MaterialTheme.typography.bodySmall,

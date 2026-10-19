@@ -228,7 +228,7 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
                     if (showQuotes) {
                         val quote = villainQuotes[quoteIndex]
                         val quoteHeight = with(LocalDensity.current) { (QuoteSize * QuoteLines * 1.32f).toDp() + 6.dp + 18.sp.toDp() }
-                        val quoteColor = LocalContentColor.current
+                        val quoteColor = MaterialTheme.colorScheme.onBackground
                         AnimatedContent(
                             targetState = quote,
                             transitionSpec = { fadeIn(tween(600, delayMillis = 250)) togetherWith fadeOut(tween(350)) },

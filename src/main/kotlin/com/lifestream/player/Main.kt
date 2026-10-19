@@ -25,11 +25,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.MenuOpen
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -352,6 +355,10 @@ private fun AppRoot(navigator: Navigator) {
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) { Toasts.messages.collect { snackbar.showSnackbar(it) } }
+    // The release build's launch check also pictures Settings in Compact View.
+    LaunchedEffect(Unit) {
+        if (System.getenv("LIFESTREAM_SELFTEST") == "settings") navigator.select(Page.Settings)
+    }
     LaunchedEffect(playerState.error) {
         val error = playerState.error ?: return@LaunchedEffect
         snackbar.showSnackbar(error)
@@ -456,23 +463,47 @@ private fun Pages(navigator: Navigator) {
  */
 @Composable
 private fun Sidebar(navigator: Navigator, compact: Boolean, onSelect: (Page) -> Unit) {
-    Surface(color = LsColors.Panel, modifier = Modifier.fillMaxHeight().width(if (compact) 76.dp else 220.dp)) {
+    Surface(color = LsColors.Panel, modifier = Modifier.fillMaxHeight().width(if (compact) 76.dp else 240.dp)) {
         Column(
             Modifier.padding(horizontal = if (compact) 10.dp else 14.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
             horizontalAlignment = if (compact) Alignment.CenterHorizontally else Alignment.Start,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 18.dp, start = if (compact) 0.dp else 6.dp)) {
-                val logo = remember { appIcon(96) }
-                logo?.let { Image(it, null, Modifier.size(34.dp).clip(RoundedCornerShape(8.dp))) }
-                if (!compact) {
+            val logo = remember { appIcon(96) }
+            // The button beside the name switches Compact View on (and, in the narrow strip, back off).
+            val toggle: @Composable () -> Unit = {
+                IconButton(onClick = { AppSettings.setCompactView(!compact) }, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        if (compact) Icons.Rounded.Menu else Icons.AutoMirrored.Rounded.MenuOpen,
+                        if (compact) "Turn off Compact View" else "Turn on Compact View",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+            }
+            if (compact) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(bottom = 12.dp)) {
+                    logo?.let { Image(it, null, Modifier.size(34.dp).clip(RoundedCornerShape(8.dp))) }
+                    Spacer(Modifier.height(8.dp))
+                    toggle()
+                }
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp, start = 6.dp),
+                ) {
+                    logo?.let { Image(it, null, Modifier.size(34.dp).clip(RoundedCornerShape(8.dp))) }
                     Spacer(Modifier.width(10.dp))
                     Text(
                         "LifeStream",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier.weight(1f),
                     )
+                    toggle()
                 }
             }
             sections.forEach { s ->
