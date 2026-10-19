@@ -64,12 +64,12 @@ jobs:
       - name: Build release APK (not debuggable)
         env:
           LIFESTREAM_VERSION_CODE: ${{ github.run_number }}
-          # Build 95 was 1.7.0, 96 1.7.1, 97 1.7.2, 98 1.7.2a, 99 1.7.2b, 100 1.7.2c and 101 1.7.3;
-          # builds count up from base 98. Before 95: 83-94 were 1.6.0-1.6.10b. A letter after a
+          # Build 95 was 1.7.0, 96 1.7.1, 97 1.7.2, 98 1.7.2a, 99 1.7.2b, 100 1.7.2c, 101 1.7.3 and
+          # 102 1.7.3a; from 103 (1.7.4) builds count up from base 99. Before 95: 83-94 were 1.6.0-1.6.10b. A letter after a
           # version (e.g. 1.7.2a) is set below, per build.
           # (Earlier: 69 = 1.5.0, 64 = 1.4.5, 49 = 1.1.0, 50 = 1.1.5, 51 = 1.2.0, 53 = 1.3.0, 54 = 1.3.5, 56 = 1.3.7.)
           VERSION_PREFIX: "1.7"
-          VERSION_BASE_RUN: 98
+          VERSION_BASE_RUN: 99
           LIFESTREAM_KEYSTORE_PASSWORD: ${{ secrets.LIFESTREAM_KEYSTORE_PASSWORD }}
           LIFESTREAM_KEY_ALIAS: ${{ secrets.LIFESTREAM_KEY_ALIAS }}
           LIFESTREAM_KEY_PASSWORD: ${{ secrets.LIFESTREAM_KEY_PASSWORD }}
@@ -83,6 +83,8 @@ jobs:
             98) export LIFESTREAM_VERSION_NAME="1.7.2a" ;;
             99) export LIFESTREAM_VERSION_NAME="1.7.2b" ;;
             100) export LIFESTREAM_VERSION_NAME="1.7.2c" ;;
+            101) export LIFESTREAM_VERSION_NAME="1.7.3" ;;
+            102) export LIFESTREAM_VERSION_NAME="1.7.3a" ;;
             *) ;;
           esac
           chmod +x ./gradlew

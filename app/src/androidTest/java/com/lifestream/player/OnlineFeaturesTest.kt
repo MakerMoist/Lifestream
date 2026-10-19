@@ -100,8 +100,8 @@ class OnlineFeaturesTest {
         Log.i("LSTEST", "English names: ${index.size} titles, ${index.values.sumOf { it.size }} songs; still Japanese: " +
             if (japanese.isEmpty()) "none" else japanese.entries.joinToString { (g, l) -> "$g ${l.size} (${l.take(3).joinToString(" / ") { "${it.id} ${it.title}" }})" })
 
-        // DS / PSP releases: their songs join the original's, marked where the original has one by that name.
-        for (id in listOf("ff3", "ff4", "ccr")) {
+        // DS releases: their songs join the original's, marked where the original has one by that name.
+        for (id in listOf("ff3", "ff4")) {
             val list = index[id] ?: continue
             val game = Catalog.game(id)!!
             val tag = game.versions.first().tag
