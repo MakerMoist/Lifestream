@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
@@ -45,6 +44,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -105,10 +109,11 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private data class TopLevel(val route: String, val label: String, val icon: ImageVector)
+/** A bottom-bar section. [icon] null: drawn with the LifeStream icon instead (Home). */
+private data class TopLevel(val route: String, val label: String, val icon: ImageVector?)
 
 private val topLevel = listOf(
-    TopLevel("home", "Home", Icons.Rounded.Home),
+    TopLevel("home", "Home", null),
     TopLevel("search", "Search", Icons.Rounded.Search),
     TopLevel("library", "Library", Icons.Rounded.LibraryMusic),
     TopLevel("settings", "Settings", Icons.Rounded.Settings),
@@ -262,7 +267,7 @@ private fun BottomBar(nav: NavHostController, section: String, onSection: (Strin
                         switchSection(nav, item.route)
                     }
                 },
-                icon = { Icon(item.icon, null) },
+                icon = { if (item.icon != null) Icon(item.icon, null) else AppIconMark() },
                 label = { Text(item.label) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = LsColors.Night,
@@ -301,5 +306,23 @@ private fun NotificationPermissionRequest() {
             asked = true
             launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
+    }
+}
+
+/** The LifeStream icon (as on the home screen), at the size of the bar's other icons. */
+@Composable
+private fun AppIconMark() {
+    Box(
+        Modifier
+            .size(24.dp)
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
+            .background(androidx.compose.ui.res.colorResource(R.color.ls_icon_bg)),
+    ) {
+        androidx.compose.foundation.Image(
+            androidx.compose.ui.res.painterResource(R.drawable.ic_launcher_foreground),
+            contentDescription = null,
+            // The icon's drawing leaves a wide margin for launcher shapes; trimmed here.
+            modifier = Modifier.fillMaxSize().scale(1.3f),
+        )
     }
 }

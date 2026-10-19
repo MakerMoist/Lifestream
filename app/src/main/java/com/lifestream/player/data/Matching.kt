@@ -433,6 +433,9 @@ object Matching {
     /** A song sung in another language is its own recording ("1000 Words (English Version)"). */
     private val languageVersion = Regex("\\b(english|japanese)\\s+(version|ver\\.?|vocal)")
 
+    /** A song from a title's DS or PSP release: "Battle 1 (DS)" is its own song, not "Battle 1". */
+    private val platformVersion = Regex("\\((ds|psp)\\)\\s*$")
+
     private val songKeys = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     /**
@@ -454,6 +457,9 @@ object Matching {
             ?.takeIf { english -> !versionWords.containsMatchIn(english) && english.count { it.isLetter() } >= 3 }
             ?.let { t = it }
         val language = languageVersion.find(t)?.groupValues?.get(1)
+        // A DS / PSP song is told apart by its whole name: that release can have several takes
+        // of one song ("Ending Theme -1-", "-2-"), each its own.
+        platformVersion.find(t)?.let { return nonLetterDigit.replace(t, " ").trim() }
         val key = if (fullTitle) fullSongKey(t, title) else baseSongKey(t, title)
         return if (language != null) "$key $language" else key
     }

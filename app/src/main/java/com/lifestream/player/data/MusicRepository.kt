@@ -119,6 +119,11 @@ object MusicRepository {
         private var extrasDone = game.extras.isEmpty()
         /** The soundtrack album's cover (from its first song), for extras shown with it. */
         private var albumCover: String? = null
+        /** Songs of the original release, by name, so a DS/PSP song of the same name is marked. */
+        private val originalKeys = HashSet<String>()
+        private val versionKeys = HashSet<String>()
+        private var versionIndex = 0
+        private var versionPage: Any? = null
 
         override suspend fun load(page: Any?): Paged<Track> {
             val list = albums ?: gameAlbums(game).also { albums = it }
@@ -161,10 +166,48 @@ object MusicRepository {
                 extrasDone = true
                 out += findExtras(game, albumCover)
             }
+            val original = out.filterNot { it.id in game.skipIds }
+            original.forEach { originalKeys += Matching.songKey(it.title, game.fullSongTitles) }
+            // Last, the DS / PSP release's soundtrack.
+            val versions = if (original.isEmpty() && index >= max && extrasDone) loadVersions() else emptyList()
             return Paged(
-                out.filterNot { it.id in game.skipIds }.map { ArtistCredits.fix(it.copy(gameId = game.id)) },
-                if (index < max || !extrasDone) More else null,
+                (original + versions).map { ArtistCredits.fix(it.copy(gameId = game.id)) },
+                if (index < max || !extrasDone || versionIndex < game.versions.size) More else null,
             )
+        }
+
+        /**
+         * The next page of the title's DS / PSP soundtrack. A song named like one of the original's
+         * gets the release after its name ("Battle 1 (DS)"); a recording or name already listed
+         * isn't listed again; every song shows the original soundtrack's cover.
+         */
+        private suspend fun loadVersions(): List<Track> {
+            val out = mutableListOf<Track>()
+            while (out.isEmpty() && versionIndex < game.versions.size) {
+                val version = game.versions[versionIndex]
+                val result = try {
+                    albumTracks(version.url).load(versionPage)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Paged(emptyList(), null) // this release is skipped; the original still plays
+                }
+                for (t in result.items) {
+                    if (t.id in version.skipIds || t.id in game.skipIds) continue
+                    val tagged = version.tagAll || t.id in version.tagIds ||
+                        Matching.songKey(t.title, game.fullSongTitles) in originalKeys
+                    val title = if (tagged) "${t.title} (${version.tag})" else t.title
+                    if (!versionKeys.add(Matching.songKey(title, game.fullSongTitles))) continue
+                    out += t.copy(title = title, thumbnail = albumCover ?: game.coverArt ?: t.thumbnail)
+                }
+                if (result.next != null) {
+                    versionPage = result.next
+                } else {
+                    versionIndex++
+                    versionPage = null
+                }
+            }
+            return out
         }
     }
 

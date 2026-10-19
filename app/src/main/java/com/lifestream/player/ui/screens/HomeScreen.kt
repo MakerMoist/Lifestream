@@ -435,21 +435,24 @@ private fun RecommendedRow(songs: List<Track>) {
             ) {
                 Artwork(track.thumbnail, Modifier.size(120.dp), size = 120.dp)
                 Spacer(Modifier.height(6.dp))
+                // Every card is the same height (two lines for the name, one for the title, even
+                // when shorter): the row is as tall as its tallest card, so cards of different
+                // heights made it grow and shrink while scrolling, bouncing everything below it.
                 Text(
                     track.title,
+                    minLines = 2,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodySmall,
                 )
-                track.gameId?.let { Catalog.game(it) }?.let { game ->
-                    Text(
-                        game.title,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                Text(
+                    track.gameId?.let { Catalog.game(it) }?.title.orEmpty(),
+                    minLines = 1,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
