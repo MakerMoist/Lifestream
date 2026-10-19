@@ -126,6 +126,21 @@ fun runLostOdyssey() {
         }
         out.append("\n")
     }
+    // Plain videos whose full-size (1280x720) frame may show the soundtrack's cover sharply.
+    out.append("## HD videos\n\n")
+    val vids = LinkedHashMap<String, String>()
+    for (q in listOf("Lost Odyssey original soundtrack", "Lost Odyssey OST full", "Lost Odyssey soundtrack Uematsu", "Lost Odyssey OST")) {
+        runCatching { search(q, F.VIDEOS, pages = 1) }.getOrDefault(emptyList())
+            .filterIsInstance<org.schabi.newpipe.extractor.stream.StreamInfoItem>()
+            .forEach { s ->
+                val id = runCatching { ServiceList.YouTube.streamLHFactory.getId(s.url) }.getOrNull() ?: return@forEach
+                vids.putIfAbsent(id, "${s.name} — ${s.uploaderName} — ${s.duration}s")
+            }
+    }
+    for ((id, label) in vids.entries.take(40)) {
+        out.append("- `$id` $label — maxres ${save("v-$id.jpg", "https://i.ytimg.com/vi/$id/maxresdefault.jpg")}\n")
+    }
+    out.append("\n")
     val game = Catalog.game("lo")!!
     val src = sourcesFor(game, StringBuilder())
     out.append("## Source now\n\n")
