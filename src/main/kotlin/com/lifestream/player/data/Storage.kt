@@ -115,15 +115,20 @@ class Prefs private constructor(private val file: File) {
 /** Writes [text] to [file] through a temporary file, so the file is never left half-written. */
 fun writeAtomically(file: File, text: String): Boolean = writeAtomicallyBytes(file, text.toByteArray(Charsets.UTF_8))
 
-/** One lock per file, so two saves of the same file (a background save and the one on closing) take turns. */
-private val fileLocks = java.util.concurrent.ConcurrentHashMap<String, Any>()
+/**
+ * Two saves of the same file (a background save and the one on closing) take turns. A fixed set of
+ * locks, picked by the file's path, so remembering them never grows with the number of files.
+ */
+private val fileLocks = Array(32) { Any() }
+
+private fun lockFor(file: File): Any = fileLocks[(file.absolutePath.hashCode() and Int.MAX_VALUE) % fileLocks.size]
 
 /**
  * Writes [bytes] to [file] through a temporary file of its own, then moves it into place in one
  * step. The old file is only replaced once the new one is completely written: a full disk or a
  * crash part-way leaves the previous version as it was.
  */
-fun writeAtomicallyBytes(file: File, bytes: ByteArray, durable: Boolean = true): Boolean = synchronized(fileLocks.computeIfAbsent(file.absolutePath) { Any() }) {
+fun writeAtomicallyBytes(file: File, bytes: ByteArray, durable: Boolean = true): Boolean = synchronized(lockFor(file)) {
     val dir = file.absoluteFile.parentFile ?: return false
     var tmp: File? = null
     try {
