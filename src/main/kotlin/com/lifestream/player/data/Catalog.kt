@@ -1,0 +1,261 @@
+package com.lifestream.player.data
+
+import androidx.compose.ui.graphics.Color
+
+/** The built-in library of games and collections the app is organised around. */
+object Catalog {
+
+    private fun c(hex: Long) = Color(hex)
+
+    private fun num(vararg n: String, exclude: List<String> = emptyList(), notWith: Set<String> = emptySet()) =
+        MatchSpec(numerals = n.toSet(), exclude = exclude, excludeNumerals = notWith)
+
+    private const val X2_CREDIT = "Noriko Matsueda & Takahito Eguchi"
+
+    /** Other entries in the franchise that must not leak into the original VII. */
+    private val notOriginalVII = listOf(
+        "REMAKE", "REBIRTH", "INTERGRADE", "INTERMISSION", "CRISIS CORE", "ADVENT CHILDREN",
+        "DIRGE", "BEFORE CRISIS", "EVER CRISIS", "FIRST SOLDIER",
+    )
+
+    val games: List<Game> = listOf(
+
+        // Main series
+        Game("ff1", "I", "Final Fantasy", 1987, "Nobuo Uematsu",
+            "Final Fantasy I original soundtrack", c(0xFF1E3A8A), c(0xFF60A5FA),
+            match = MatchSpec(
+                numerals = setOf("I"),
+                allowBare = true,
+                exclude = listOf("PIANO", "DISTANT WORLDS", "WORLD OF", "TACTICS", "DISSIDIA", "ORCHESTRA",
+                    "RECORD KEEPER", "BRAVE EXVIUS", "CRYSTAL CHRONICLES", "THEATRHYTHM", "ORIGINS",
+                    "ORIGIN", "STRANGER OF PARADISE"),
+            ), art = "art/art_ff1.webp"),
+        Game("ff2", "II", "Final Fantasy II", 1988, "Nobuo Uematsu",
+            "Final Fantasy II original soundtrack", c(0xFF7F1D1D), c(0xFFF87171), match = num("II"), art = "art/art_ff2.webp"),
+        Game("ff3", "III", "Final Fantasy III", 1990, "Nobuo Uematsu",
+            "Final Fantasy III original soundtrack", c(0xFF14532D), c(0xFF4ADE80), match = num("III"), art = "art/art_ff3.webp",
+            // "Battle 1" again (it's already there as "Battle 1 ～Fanfare").
+            skipIds = setOf("VvFT8IMsOWY"),
+        ),
+        Game("ff4", "IV", "Final Fantasy IV", 1991, "Nobuo Uematsu",
+            "Final Fantasy IV original soundtrack", c(0xFF312E81), c(0xFFA5B4FC), match = num("IV"), art = "art/art_ff4.webp"),
+        Game("ff5", "V", "Final Fantasy V", 1992, "Nobuo Uematsu",
+            "Final Fantasy V original soundtrack", c(0xFF134E4A), c(0xFF5EEAD4), match = num("V"), art = "art/art_ff5.webp",
+            // YouTube only has small (480x360) frames for this soundtrack's songs, which look
+            // blurry when shown large; the album's own cover is sharp.
+            coverArt = "https://yt3.googleusercontent.com/Oz0XyLPOF78ND3kUtozAGDOUTlkDQT-hcuuu2hXYoeRubap3fTDAylrVoxLzc7EBtH4ltassBQ6xJQY-=w544-h544-l90-rj"),
+        Game("ff6", "VI", "Final Fantasy VI", 1994, "Nobuo Uematsu",
+            "Final Fantasy VI original soundtrack", c(0xFF4A044E), c(0xFFE879F9), match = num("VI"), art = "art/art_ff6.webp",
+            // YouTube only has small (480x360) frames for this soundtrack's songs, which look
+            // blurry when shown large; the album's own cover is sharp.
+            coverArt = "https://yt3.googleusercontent.com/yrm6nocGlOsaKN6w2xdmncbfuFHVdlUP4DvJfg0Tpivky3XhYVLYsg8fB__eqjaS_z9J_AN7WMi8JMsYhw=w544-h544-l90-rj"),
+        Game("ff7", "VII", "Final Fantasy VII", 1997, "Nobuo Uematsu",
+            "Final Fantasy VII original soundtrack", c(0xFF052E16), c(0xFF6EF2B5),
+            match = num("VII", exclude = notOriginalVII), art = "art/art_ff7.webp"),
+        Game("ff8", "VIII", "Final Fantasy VIII", 1999, "Nobuo Uematsu",
+            "Final Fantasy VIII original soundtrack", c(0xFF1F2937), c(0xFF93C5FD), match = num("VIII"), art = "art/art_ff8.webp",
+            // Licensed vocal theme, left off the streaming album.
+            extras = listOf(ExtraSong("Eyes on Me", "Nobuo Uematsu", "vuB5NSuF2U8", 342))),
+        Game("ff9", "IX", "Final Fantasy IX", 2000, "Nobuo Uematsu",
+            "Final Fantasy IX original soundtrack", c(0xFF422006), c(0xFFFCD34D), match = num("IX"), art = "art/art_ff9.webp"),
+        Game("ff10", "X", "Final Fantasy X", 2001, "Uematsu · Hamauzu · Nakano",
+            "Final Fantasy X original soundtrack", c(0xFF0C4A6E), c(0xFF7DD3FC), match = num("X", notWith = setOf("X2")), art = "art/art_ff10.webp"),
+        Game("ff10-2", "X-2", "Final Fantasy X-2", 2003, "Noriko Matsueda · Takahito Eguchi",
+            "Final Fantasy X-2 original soundtrack", c(0xFF500724), c(0xFFF9A8D4), match = num("X2", notWith = setOf("X")), art = "art/art_ff10_2.webp",
+            extras = listOf(
+                ExtraSong("real Emotion", "Kumi Koda", "ec6gB4QH5jU", 240),
+                // The English version sung by Jade (Sweetbox) for the Western release. Square Enix
+                // has no upload of it, so this one song comes from a fan upload of the full track.
+                ExtraSong("1000 Words (English Version)", "Jade Valerie", "r4voJjkJevs", 361, albumArt = true),
+                // The songs added by FINAL FANTASY X-2 International + Last Mission Original
+                // Soundtrack (its new mixes of 1000 Words and real Emotion are the same songs, so
+                // they're left out). Not on YouTube Music as an album; these are uploads of it.
+                ExtraSong("Last Mission No. 1", X2_CREDIT, "wQbLGGQ53yg", 326, albumArt = true),
+                ExtraSong("Last Mission No. 2", X2_CREDIT, "uBxaDw0MNhM", 348, albumArt = true),
+                ExtraSong("Last Mission No. 3", X2_CREDIT, "U82kO_Sqbsg", 272, albumArt = true),
+                ExtraSong("Flash Over", X2_CREDIT, "FCcOqCAsYEQ", 325, albumArt = true),
+                ExtraSong("To You", X2_CREDIT, "cKcMUoSp0SQ", 299, albumArt = true),
+                ExtraSong("Wind Crest ~The Three Trails~", X2_CREDIT, "RRyMcJcV-nQ", 148, albumArt = true),
+                ExtraSong("Creature Create", X2_CREDIT, "s2xywlpPaBc", 226, albumArt = true),
+            )),
+        Game("ff11", "XI", "Final Fantasy XI", 2002, "Uematsu · Mizuta · Tanioka",
+            "Final Fantasy XI original soundtrack", c(0xFF1C1917), c(0xFFD6D3D1), match = num("XI"), art = "art/art_ff11.webp",
+            // The original game, each expansion (Rise of the Zilart, Chains of Promathia, Treasures
+            // of Aht Urhgan, Wings of the Goddess, Seekers of Adoulin), the PLUS albums, and the two
+            // "Gifts from Vana'diel" albums with the later Rhapsodies of Vana'diel and Voracious
+            // Resurgence music.
+            albumQueries = listOf(
+                "Final Fantasy XI Rise of the Zilart original soundtrack",
+                "Final Fantasy XI Chains of Promathia original soundtrack",
+                "Final Fantasy XI Treasures of Aht Urhgan original soundtrack",
+                "Final Fantasy XI Wings of the Goddess original soundtrack",
+                "Final Fantasy XI Seekers of Adoulin original soundtrack",
+                "Final Fantasy XI Gifts from Vana'diel Songs of Rebirth soundtrack",
+                "Final Fantasy XI Gifts from Vana'diel Prime Memories soundtrack",
+            ),
+            maxAlbums = 12,
+            // Songs like "Conflict: March of the Hero" and "Conflict: You Want to Live Forever?" are
+            // different songs, so the whole name identifies each.
+            fullSongTitles = true,
+            // From later add-on soundtracks (also on the PLUS album; kept in case it isn't found).
+            extras = listOf(
+                ExtraSong("Melodies Errant", "Naoshi Mizuta", "n4-yiZpK81g", 205),
+                ExtraSong("Shinryu", "Naoshi Mizuta", "x_XQmblQl3Q", 352),
+            )),
+        Game("ff12", "XII", "Final Fantasy XII", 2006, "Hitoshi Sakimoto",
+            "Final Fantasy XII original soundtrack", c(0xFF451A03), c(0xFFFDBA74), match = num("XII"), art = "art/art_ff12.webp",
+            // The licensed theme song, on the soundtrack CD but left off the streaming album.
+            extras = listOf(ExtraSong("Kiss Me Good-Bye", "Angela Aki", albumArt = true))),
+        Game("ff13", "XIII", "Final Fantasy XIII", 2009, "Masashi Hamauzu",
+            "Final Fantasy XIII original soundtrack", c(0xFF082F49), c(0xFFBAE6FD), match = num("XIII", exclude = listOf("LIGHTNING RETURNS"), notWith = setOf("XIII2")), art = "art/art_ff13.webp",
+            // The Western release's theme song isn't on the Japanese soundtrack album.
+            extras = listOf(ExtraSong("My Hands", "Leona Lewis", albumArt = true))),
+        Game("ff13-2", "XIII-2", "Final Fantasy XIII-2", 2011, "Hamauzu · Mizuta · Suzuki",
+            "Final Fantasy XIII-2 original soundtrack", c(0xFF1E0B3A), c(0xFFB9A2FF),
+            match = num("XIII2", notWith = setOf("XIII")), art = "art/art_ff13_2.webp",
+            // Every song shows the soundtrack's own cover (the PLUS album's songs included).
+            coverArt = "https://yt3.googleusercontent.com/ANeue4kg4eZs4pSCeAtuyZLBA1qP3Lb7zo_S5p3RvdLFpKhNNd08HuN4DjldSRzB2abzbPEbNU6i5yU1KQ=w544-h544-s-l90-rj",
+            // A remix of "Noel's Theme - Final Journey", named only for its remixer.
+            skipIds = setOf("vGlKQhtLKiM"),
+        ),
+        // The third XIII game; its Original Soundtrack PLUS (extra tracks) is included.
+        Game("lr", "LR", "Final Fantasy XIII: Lightning Returns", 2013, "Hamauzu · Mizuta · Suzuki",
+            "Lightning Returns Final Fantasy XIII original soundtrack", c(0xFF2A0E2E), c(0xFFF5A3D0),
+            match = MatchSpec(numerals = setOf("XIII"), allOf = listOf("LIGHTNING RETURNS")), art = "art/art_lr.webp",
+            aliases = listOf("LR", "LRFF13", "LRFFXIII"),
+            albumQueries = listOf("Lightning Returns Final Fantasy XIII original soundtrack plus"),
+            // Every song shows the soundtrack's own cover (the PLUS album's songs included).
+            coverArt = "https://yt3.googleusercontent.com/1sgEQx_DcyXjwRqrj2BIH6qCfRdxWw4vW3yrSjtbkrY3mxrnTLIMCHBX8QD6f4AKMw1pisJZFCNzVEs=w544-h544-s-l90-rj"),
+        Game("ff14", "XIV", "Final Fantasy XIV", 2013, "Masayoshi Soken",
+            "Final Fantasy XIV original soundtrack", c(0xFF2E1065), c(0xFFC4B5FD), match = num("XIV"), art = "art/art_ff14.webp",
+            // Each expansion and each run of patches has its own official album.
+            // (A Realm Reborn and Before Meteor for 2.x, Heavensward and The Far Edge of Fate for 3.x,
+            // Stormblood, Shadowbringers and Death Unto Dawn for 5.x, Endwalker and Growing Light for
+            // 6.x, Dawntrail; each named so none depends on turning up in a general search.)
+            albumQueries = listOf(
+                "A Realm Reborn Final Fantasy XIV original soundtrack",
+                "Before Meteor Final Fantasy XIV original soundtrack",
+                "Before the Fall Final Fantasy XIV original soundtrack",
+                "Heavensward Final Fantasy XIV original soundtrack",
+                "The Far Edge of Fate Final Fantasy XIV original soundtrack",
+                "Stormblood Final Fantasy XIV original soundtrack",
+                "Shadowbringers Final Fantasy XIV original soundtrack",
+                "Death Unto Dawn Final Fantasy XIV original soundtrack",
+                "Endwalker Final Fantasy XIV original soundtrack",
+                "Growing Light Final Fantasy XIV original soundtrack",
+                "Dawntrail Final Fantasy XIV original soundtrack",
+            ),
+            releaseOrder = listOf(
+                "A Realm Reborn", "Before Meteor", "Heavensward", "Before the Fall", "Far Edge of Fate",
+                "Stormblood", "Shadowbringers", "Death Unto Dawn", "Endwalker", "Growing Light", "Dawntrail",
+            ),
+            maxAlbums = 16),
+        Game("ff15", "XV", "Final Fantasy XV", 2016, "Yoko Shimomura",
+            "Final Fantasy XV original soundtrack", c(0xFF0A0A0A), c(0xFFA3A3A3), match = num("XV"), art = "art/art_ff15.webp",
+            // Volume 2 (two albums) has the DLC: Episodes Gladiolus, Prompto, Ignis and Ardyn,
+            // Comrades and the Royal Edition. Then the film made with the game, Kingsglaive.
+            albumQueries = listOf(
+                "Final Fantasy XV original soundtrack volume 2",
+                "Kingsglaive Final Fantasy XV original soundtrack",
+            ),
+            // Florence + The Machine's official "Songs From Final Fantasy XV": the theme song
+            // and the other two songs written for the game, shown with the soundtrack's cover.
+            extras = listOf(
+                ExtraSong("Stand by Me", "Florence + The Machine", "Mn37d5ne2Zw", 246, albumArt = true),
+                ExtraSong("Too Much Is Never Enough", "Florence + The Machine", "lxTKlBFIPfM", 349, albumArt = true),
+                ExtraSong("I Will Be", "Florence + The Machine", "UEQN-AlqD_w", 325, albumArt = true),
+            )),
+        Game("ff16", "XVI", "Final Fantasy XVI", 2023, "Masayoshi Soken",
+            "Final Fantasy XVI original soundtrack", c(0xFF450A0A), c(0xFFFB923C), match = num("XVI"), art = "art/art_ff16.webp"),
+
+        // The VII Series
+        Game("ccr", "CC·R", "Crisis Core: Reunion", 2022, "Takeharu Ishimoto",
+            "Crisis Core Final Fantasy VII Reunion original soundtrack", c(0xFF172554), c(0xFF93C5FD), Series.VII,
+            match = MatchSpec(allOf = listOf("CRISIS CORE", "REUNION")), art = "art/art_ccr.webp",
+            aliases = listOf("CCR", "CCFF7", "CCFFVII", "CCFF7R"),
+            // Reunion's soundtrack isn't on YouTube Music; its songs show Square Enix's official
+            // Crisis Core soundtrack cover (the game's logo) instead of the uploader's thumbnails.
+            coverArt = "https://yt3.googleusercontent.com/NUroKdpFTlpUapk0E2XKyYWogJie3XlaXlalTiEBLmhLdZUEWu1ZWz2bebbfIeX1_AKjq3BR3rcasEoW=w544-h544-s-l90-rj"),
+        // The film's soundtrack.
+        Game("ac", "VII·AC", "Final Fantasy VII: Advent Children", 2005, "Nobuo Uematsu · Kawamori · Fukui",
+            "Final Fantasy VII Advent Children original soundtrack", c(0xFF0B0F14), c(0xFF9CA3AF), Series.VII,
+            match = MatchSpec(numerals = setOf("VII"), allOf = listOf("ADVENT CHILDREN")), art = "art/art_ac.webp",
+            aliases = listOf("AC", "ACC", "FF7AC", "FFVIIAC"),
+        ),
+        // Includes Intergrade's INTERmission episode (DLC): its soundtrack is part of Remake's.
+        Game("ff7r", "VII·R", "Final Fantasy VII: Remake", 2020, "Hamauzu · Suzuki · Uematsu",
+            "Final Fantasy VII Remake original soundtrack", c(0xFF022C22), c(0xFF34D399), Series.VII,
+            match = MatchSpec(
+                numerals = setOf("VII"),
+                allOf = listOf("REMAKE"),
+                exclude = listOf("REBIRTH"),
+            ), art = "art/art_ff7r.webp",
+            aliases = listOf("FF7R", "FFVIIR"),
+            albumQueries = listOf("Final Fantasy VII Remake Intergrade original soundtrack")),
+        Game("ff7rb", "VII·RB", "Final Fantasy VII: Rebirth", 2024, "Mitsuto Suzuki · various",
+            "Final Fantasy VII Rebirth original soundtrack", c(0xFF0F172A), c(0xFF67E8F9), Series.VII,
+            match = MatchSpec(numerals = setOf("VII"), allOf = listOf("REBIRTH")), art = "art/art_ff7rb.webp",
+            aliases = listOf("FF7RB", "FFVIIRB"),
+        ),
+
+        // Series Spin-Offs
+        Game("fft", "T", "Final Fantasy: Tactics", 1997, "Hitoshi Sakimoto · Masaharu Iwata",
+            "Final Fantasy Tactics original soundtrack", c(0xFF3F2A14), c(0xFFE7C78A), Series.SPINOFF,
+            match = MatchSpec(allOf = listOf("TACTICS"), exclude = listOf("ADVANCE", "A2")), art = "art/art_fft.webp",
+            aliases = listOf("FFT"),
+        ),
+        // The game's soundtrack (its DLC music, Trials of the Dragon King, Wanderer of the Rift and
+        // Different Future, joins it if Square Enix puts it on YouTube Music).
+        Game("sop", "SoP", "Stranger of Paradise: Final Fantasy Origin", 2022, "Mizuta · Yamazaki · Iwasaki",
+            "Stranger of Paradise Final Fantasy Origin original soundtrack", c(0xFF0A0A12), c(0xFF8B5CF6), Series.SPINOFF,
+            match = MatchSpec(allOf = listOf("STRANGER OF PARADISE")), art = "art/art_sop.webp",
+            aliases = listOf("SOP", "SOPFFO", "FFO"),
+            albumQueries = listOf("Stranger of Paradise Final Fantasy Origin original soundtrack DLC"),
+        ),
+
+        // Other Games
+        // The game's soundtrack and its Verso's Drafts expansion soundtrack; not the bonus album
+        // ("Nos vies en Lumière (Bonus Edition)") or the pre-release trailer EPs ("Reveal Edition",
+        // "Gustave Edition", "Cast Reveal Edition").
+        Game("coe33", "E33", "Clair Obscur: Expedition 33", 2025, "Lorien Testard",
+            "Clair Obscur Expedition 33 original soundtrack", c(0xFF1F1611), c(0xFFE9C46A), Series.OTHER,
+            match = MatchSpec(
+                allOf = listOf("CLAIR OBSCUR"),
+                exclude = listOf("EDITION", "BONUS", "NOS VIES", "TRAILER", "REVEAL"),
+                requireFinalFantasy = false,
+            ), art = "art/art_coe33.webp", fullSongTitles = true,
+            aliases = listOf("E33", "COE33", "CO33", "CO E33"),
+            albumQueries = listOf("Clair Obscur Expedition 33 Verso's Drafts original soundtrack")),
+        Game("lo", "LO", "Lost Odyssey", 2007, "Nobuo Uematsu",
+            "Lost Odyssey original soundtrack", c(0xFF292524), c(0xFFE7B76B), Series.OTHER,
+            match = MatchSpec(allOf = listOf("LOST ODYSSEY"), requireFinalFantasy = false), art = "art/art_lo.webp",
+            aliases = listOf("LO"),
+        ),
+        Game("ct", "CT", "Chrono Trigger", 1995, "Yasunori Mitsuda · Nobuo Uematsu",
+            "Chrono Trigger original soundtrack", c(0xFF1E3A5F), c(0xFFFFD166), Series.OTHER,
+            match = MatchSpec(allOf = listOf("CHRONO", "TRIGGER"), requireFinalFantasy = false), art = "art/art_ct.webp",
+            aliases = listOf("CT"),
+            // YouTube only has small (480x360) frames for this soundtrack's songs, which look
+            // blurry when shown large; the album's own cover is sharp.
+            coverArt = "https://yt3.googleusercontent.com/Nt784WTZYI6WHUjn6UGg_IbTIzfHeNBN_Lj17t7YvP9lK1WL5L3ZH_uWna9th7EGAvr5HTTxYNAm1Fs=w544-h544-s-l90-rj",
+        ),
+        Game("cx", "CC", "Chrono Cross", 1999, "Yasunori Mitsuda",
+            "Chrono Cross original soundtrack", c(0xFF083344), c(0xFF22D3EE), Series.OTHER,
+            match = MatchSpec(allOf = listOf("CHRONO", "CROSS"), requireFinalFantasy = false), art = "art/art_cx.webp",
+            aliases = listOf("CC"),
+        ),
+    )
+
+    /** Soundtracks that were folded into another (saved songs and playlists still use the old id). */
+    private val merged = mapOf("ff7int" to "ff7r")
+
+    // Looked up for every song while searching and sorting, so by key rather than a scan.
+    private val byId: Map<String, Game> by lazy { games.associateBy { it.id } }
+
+    fun game(id: String): Game? = byId[id] ?: merged[id]?.let { byId[it] }
+
+    /** The current id for a soundtrack id that may have been merged into another. */
+    fun currentId(id: String?): String? = id?.let { merged[it] ?: it }
+
+    fun bySeries(series: Series): List<Game> = games.filter { it.series == series }
+}

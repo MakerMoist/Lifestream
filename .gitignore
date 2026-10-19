@@ -1,0 +1,12 @@
+.gradle/
+build/
+.kotlin/
+.idea/
+*.iml
+local.properties
+.DS_Store
+# signing keys never go in the repo
+*.jks
+*.keystore
+*.p12
+*.pfx

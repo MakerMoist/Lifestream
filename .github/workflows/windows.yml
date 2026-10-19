@@ -1,0 +1,114 @@
+name: LifeStream for Windows
+
+# Builds and tests the Windows app on every push to the windows branch. It's published (as its
+# own "windows-latest" release on the same releases page, leaving the Android release alone) only
+# when the commit message asks for it with [release].
+on:
+  push:
+    branches: [ windows ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
+      - name: Compile and test
+        run: |
+          chmod +x ./gradlew
+          set -o pipefail
+          if ! ./gradlew --no-daemon test 2>&1 | tee "$RUNNER_TEMP/gradle.log"; then
+            grep -E '^e: |FAILED|Exception|expected' "$RUNNER_TEMP/gradle.log" | head -40 | sed 's/^/::error::/' || true
+            exit 1
+          fi
+          grep -E "LSTEST" "$RUNNER_TEMP/gradle.log" | sed -E 's/^.*LSTEST //' | sort -u | head -40 | sed 's/^/::notice::/' || true
+
+  package:
+    needs: test
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
+      - name: Build the installer and the portable app
+        shell: pwsh
+        run: |
+          ./gradlew.bat --no-daemon packageMsi createDistributable
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          New-Item -ItemType Directory -Force out | Out-Null
+          $msi = Get-ChildItem build/compose/binaries/main/msi/*.msi | Select-Object -First 1
+          Copy-Item $msi.FullName out/LifeStream-Windows-Setup.msi
+          Compress-Archive -Path build/compose/binaries/main/app/LifeStream -DestinationPath out/LifeStream-Windows-Portable.zip
+          $version = (Select-String -Path build.gradle.kts -Pattern 'val appVersion = "([^"]+)"').Matches[0].Groups[1].Value
+          $msiHash = (Get-FileHash out/LifeStream-Windows-Setup.msi -Algorithm SHA256).Hash.ToLower()
+          $zipHash = (Get-FileHash out/LifeStream-Windows-Portable.zip -Algorithm SHA256).Hash.ToLower()
+          "$msiHash  LifeStream-Windows-Setup.msi" | Out-File -Encoding ascii out/LifeStream-Windows-Setup.msi.sha256
+          "$zipHash  LifeStream-Windows-Portable.zip" | Out-File -Encoding ascii out/LifeStream-Windows-Portable.zip.sha256
+          @{ versionName = $version; msiSha256 = $msiHash; zipSha256 = $zipHash } | ConvertTo-Json -Compress | Out-File -Encoding ascii out/version-windows.json
+          Get-ChildItem out
+      - name: Start the app and check it keeps running
+        shell: pwsh
+        run: |
+          $exe = "build/compose/binaries/main/app/LifeStream/LifeStream.exe"
+          $env:LIFESTREAM_SELFTEST = "1"
+          $p = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 40
+          if ($p.HasExited) { Write-Output "::error::LifeStream closed by itself (exit code $($p.ExitCode))"; exit 1 }
+          Write-Output "::notice::LifeStream started on Windows and kept running"
+          $log = Join-Path $env:APPDATA "LifeStream/selftest.log"
+          if (Test-Path $log) { Get-Content $log | ForEach-Object { Write-Output "::notice::$_" } }
+          Stop-Process -Id $p.Id -Force
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: LifeStream-Windows
+          path: out/
+          if-no-files-found: error
+
+  # Only this job can write to the repo, and only when a release was asked for.
+  publish:
+    needs: package
+    if: contains(github.event.head_commit.message, '[release]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: LifeStream-Windows
+      - name: Publish to the "windows-latest" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          VERSION=$(python3 -c "import json; print(json.load(open('version-windows.json'))['versionName'])")
+          if ! gh release view windows-latest -R "$REPO" >/dev/null 2>&1; then
+            gh release create windows-latest -R "$REPO" --target "$GITHUB_SHA" --prerelease \
+              --title "LifeStream for Windows $VERSION" \
+              --notes "LifeStream for Windows. Install with LifeStream-Windows-Setup.msi, or unzip LifeStream-Windows-Portable.zip and run LifeStream.exe. The .sha256 files are checksums."
+          fi
+          gh release upload windows-latest -R "$REPO" --clobber \
+            LifeStream-Windows-Setup.msi LifeStream-Windows-Setup.msi.sha256 \
+            LifeStream-Windows-Portable.zip LifeStream-Windows-Portable.zip.sha256 version-windows.json
+          gh release edit windows-latest -R "$REPO" --title "LifeStream for Windows $VERSION"
+          gh api -X PATCH "repos/$REPO/git/refs/tags/windows-latest" -f sha="$GITHUB_SHA" -F force=true >/dev/null || \
+            echo "::warning::Couldn't move the windows-latest tag; the release itself is published."
