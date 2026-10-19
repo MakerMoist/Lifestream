@@ -49,7 +49,7 @@ object AppIcon {
     }
 
     /** The icon as a picture of exactly [px] × [px] pixels (for Windows' icons). */
-    fun image(px: Int, painter: Painter): java.awt.image.BufferedImage =
+    fun image(px: Int, painter: Painter): java.awt.Image =
         painter.toAwtImage(Density(1f), LayoutDirection.Ltr, Size(px.toFloat(), px.toFloat()))
 
     /** Every size Windows may ask for, so it never has to stretch or shrink one itself. */
