@@ -56,7 +56,7 @@ jobs:
           ./gradlew.bat --no-daemon test *> test.log
           $ok = $LASTEXITCODE -eq 0
           Get-Content test.log | Select-String "LSTEST" | ForEach-Object { "::notice::Windows " + ($_.Line -replace '^.*LSTEST ', '') } | Sort-Object -Unique
-          if (-not $ok) { Get-Content test.log | Select-String -Pattern '^e: |FAILED|Exception|expected' | Select-Object -First 40 | ForEach-Object { "::error::" + $_.Line }; exit 1 }
+          if (-not $ok) { Get-Content test.log -Tail 80 | ForEach-Object { Write-Output $_ }; Get-Content test.log | Select-String -Pattern '^e: |FAILED|Exception|expected|went wrong|Could not' | Select-Object -First 40 | ForEach-Object { "::error::" + $_.Line }; exit 1 }
       - name: Build the installer and the portable app
         shell: pwsh
         run: |

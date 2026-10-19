@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -255,7 +256,7 @@ private fun startApp() {
     application {
         AppExit.exit = ::exitApplication
         val windowState = rememberWindowState(size = DpSize(1240.dp, 820.dp), position = WindowPosition(Alignment.Center))
-        val playerState by PlayerConnection.state.collectAsStateWithLifecycle()
+        val playerState by PlayerConnection.state.collectAsState()
         MediaKeys.wanted = playerState.queue.isNotEmpty()
         val navigator = remember { Navigator() }
         Window(
