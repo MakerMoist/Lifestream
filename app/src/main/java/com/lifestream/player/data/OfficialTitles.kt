@@ -39,8 +39,12 @@ object OfficialTitles {
     /** The official English name for a song, if Square Enix gives one. Call off the main thread. */
     fun forId(id: String): String? = names[id]?.let(::tidySongTitle)
 
+    /** A DS / PSP song already named after its original ("The Red Wings (DS)"); kept as it is. */
+    private val versionTag = Regex("\\((DS|PSP)\\)$")
+
     /** Uses the official English name for a stored or loaded song when there is one. */
     fun fix(track: Track): Track {
+        if (versionTag.containsMatchIn(track.title)) return track
         val official = forId(track.id) ?: return track
         if (official == track.title) return track
         val alt = track.altTitle ?: track.title.takeIf { japanese.containsMatchIn(it) }

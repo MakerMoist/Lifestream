@@ -84,6 +84,42 @@ class OnlineFeaturesTest {
     }
 
     @Test
+    fun everyTitleHasEnglishNamesAndItsDsPspSongs() {
+        SoundtrackIndex.ensureBuilt()
+        // The whole index (every title), not just the first few.
+        val deadline = System.currentTimeMillis() + 900_000
+        while (System.currentTimeMillis() < deadline &&
+            (SoundtrackIndex.progress.value.running || SoundtrackIndex.tracks.value.size < Catalog.games.size / 2)
+        ) Thread.sleep(2_000)
+        val index = SoundtrackIndex.tracks.value
+        assumeTrue("YouTube Music unreachable from here", index.isNotEmpty())
+
+        // Names still in Japanese, per title (official English names cover them; the rest is
+        // machine-translated, which may not be available here).
+        val japanese = index.mapValues { (_, list) -> list.filter { Matching.hasJapanese(it.title) } }.filterValues { it.isNotEmpty() }
+        Log.i("LSTEST", "English names: ${index.size} titles, ${index.values.sumOf { it.size }} songs; still Japanese: " +
+            if (japanese.isEmpty()) "none" else japanese.entries.joinToString { (g, l) -> "$g ${l.size} (${l.take(3).joinToString(" / ") { "${it.id} ${it.title}" }})" })
+
+        // DS / PSP releases: their songs join the original's, marked where the original has one by that name.
+        for (id in listOf("ff3", "ff4", "ccr")) {
+            val list = index[id] ?: continue
+            val game = Catalog.game(id)!!
+            val tag = game.versions.first().tag
+            val tagged = list.filter { it.title.endsWith("($tag)") }
+            Log.i("LSTEST", "$id: ${list.size} songs, ${tagged.size} marked ($tag), e.g. ${tagged.take(4).joinToString(" / ") { it.title }}")
+            assertTrue("$id has its $tag songs", tagged.isNotEmpty())
+            // One of each: no name twice.
+            assertEquals("$id: no song listed twice", list.size, list.map { Matching.songKey(it) }.toSet().size)
+            // DS / PSP songs show the original soundtrack's cover.
+            val cover = list.first().thumbnail
+            assertTrue("$id: $tag songs show the original's cover", tagged.all { it.thumbnail == cover })
+        }
+        index["ff10-2"]?.firstOrNull { it.title.equals("real Emotion", true) }?.let { re ->
+            assertEquals("real Emotion shows X-2's cover", index["ff10-2"]!!.first().thumbnail, re.thumbnail)
+        }
+    }
+
+    @Test
     fun recommendationsSkipWhatYouHeardAndMixTitles() {
         fun t(game: String, n: Int) = Track("rec%s%05d".format(game.take(3).padEnd(3, 'x'), n).take(11), "$game song $n", "A", 200, null, game)
         val index = listOf("ff7", "ff10", "ff6", "ff9", "ff8").associateWith { g -> (0 until 30).map { t(g, it) } }
