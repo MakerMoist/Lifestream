@@ -23,10 +23,12 @@ class AudioEngine(private val listener: Listener) {
         fun onError(session: Any, error: Throwable)
     }
 
-    private companion object {
-        const val RATE = 48_000
-        const val CHANNELS = 2
-        val FORMAT = AudioFormat(RATE.toFloat(), 16, CHANNELS, true, false)
+    companion object {
+        /** Any size above zero makes the decoder treat the stream as seekable. */
+        internal const val SEEKABLE = Int.MAX_VALUE - 8
+        private const val RATE = 48_000
+        private const val CHANNELS = 2
+        private val FORMAT = AudioFormat(RATE.toFloat(), 16, CHANNELS, true, false)
 
         init {
             runCatching { avutil.av_log_set_level(avutil.AV_LOG_QUIET) }
@@ -77,6 +79,7 @@ class AudioEngine(private val listener: Listener) {
         s.halt()
     }
 
+
     private inner class Session(
         private val source: SongSource,
         startMs: Long,
@@ -118,7 +121,9 @@ class AudioEngine(private val listener: Listener) {
             var input: SongInputStream? = null
             try {
                 input = source.open()
-                grabber = FFmpegFrameGrabber(input, 0).apply {
+                // A non-zero size is what turns on seeking in the decoder (needed for songs whose index is at
+                // the end of the file, and for moving through a song); the stream itself seeks.
+                grabber = FFmpegFrameGrabber(input, SEEKABLE).apply {
                     sampleMode = FrameGrabber.SampleMode.SHORT
                     sampleFormat = avutil.AV_SAMPLE_FMT_S16
                     sampleRate = RATE

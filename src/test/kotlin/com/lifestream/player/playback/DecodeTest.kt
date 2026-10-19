@@ -36,7 +36,7 @@ class DecodeTest {
             release()
         }
         val source = SongSource("AbCdEfGhIjK", 140, file, file.length(), file.length(), true)
-        val grabber = FFmpegFrameGrabber(source.open(), 0).apply {
+        val grabber = FFmpegFrameGrabber(source.open(), AudioEngine.SEEKABLE).apply {
             sampleMode = FrameGrabber.SampleMode.SHORT
             sampleFormat = avutil.AV_SAMPLE_FMT_S16
             sampleRate = 48000

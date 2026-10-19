@@ -42,7 +42,7 @@ object SelfTest {
         step("Download + decode") {
             val source = SongStore.open("Mn37d5ne2Zw")
             try {
-                val grabber = org.bytedeco.javacv.FFmpegFrameGrabber(source.open())
+                val grabber = org.bytedeco.javacv.FFmpegFrameGrabber(source.open(), com.lifestream.player.playback.AudioEngine.SEEKABLE)
                 grabber.sampleRate = 48000
                 grabber.audioChannels = 2
                 grabber.start()
