@@ -32,7 +32,16 @@ object ArtCache {
     fun load(context: Context, res: Int): ImageBitmap? = bitmaps[res] ?: runCatching {
         // A card is a little under half the screen wide.
         val target = (context.resources.displayMetrics.widthPixels * 0.48f).toInt().coerceIn(320, 1080)
-        val options = BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.RGB_565 }
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeResource(context.resources, res, bounds)
+        val options = BitmapFactory.Options().apply {
+            inPreferredConfig = Bitmap.Config.RGB_565
+            // Decode at half size (or less) straight away when the card is that small, instead of
+            // decoding everything and then shrinking it: less work and a smaller peak in memory.
+            var sample = 1
+            while (bounds.outWidth / (sample * 2) >= target) sample *= 2
+            inSampleSize = sample
+        }
         val full = BitmapFactory.decodeResource(context.resources, res, options) ?: return@runCatching null
         val scaled = if (full.width > target) {
             Bitmap.createScaledBitmap(full, target, (full.height.toLong() * target / full.width).toInt(), true)

@@ -149,6 +149,14 @@ class SearchAndNamesTest {
         // FINAL FANTASY XII's Imperial and Resistance arrangements, however each album writes them.
         assertEquals(Matching.songKey("Sorrow (Imperial Version)"), Matching.songKey("Sorrow: Imperial (Zodiac Age Version)"))
         assertNotEquals(Matching.songKey("Sorrow (Imperial Version)"), Matching.songKey("Sorrow (Resistance Version)"))
+        // A version named at the end without brackets, or after an underscore, is the same song.
+        assertEquals(
+            Matching.songKey("SUTEKI DA NE (Isn't It Wonderful?)"),
+            Matching.songKey("SUTEKI DA NE (Isn't It Wonderful?) Orchestra Version"),
+        )
+        assertEquals(Matching.songKey("Noel's Theme"), Matching.songKey("Noel's Theme_guitar demo version"))
+        // ...but not a song whose name only ends in a word like it.
+        assertNotEquals(Matching.songKey("Final Fantasy XIII-2 - Wishes"), Matching.songKey("Final Fantasy XIII-2 - The Future"))
         // Soundtracks that name songs "Area - Song" keep the whole name.
         assertNotEquals(
             Matching.songKey("Spring Meadows - Cloud of Anxiety", fullTitle = true),

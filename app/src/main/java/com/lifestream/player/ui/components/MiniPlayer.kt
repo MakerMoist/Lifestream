@@ -165,7 +165,12 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit, modifier: Modifier = Mo
                 Column(Modifier.weight(1f)) {
                     // A long title glides to its end and back so it can be read; the artist line
                     // stays still (cut off if too long).
-                    BackAndForthText(track.title, MaterialTheme.typography.bodyMedium)
+                    BackAndForthText(
+                        track.title,
+                        MaterialTheme.typography.bodyMedium,
+                        // Still while Now Playing covers the mini player.
+                        moving = !com.lifestream.player.ui.screens.HomeReselect.covered,
+                    )
                     Text(
                         track.artist,
                         maxLines = 1,

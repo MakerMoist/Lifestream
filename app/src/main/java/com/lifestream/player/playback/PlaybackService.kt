@@ -585,7 +585,9 @@ class PlaybackService : MediaLibraryService() {
             if (page < 0 || pageSize <= 0 || pageSize == Int.MAX_VALUE) return ImmutableList.copyOf(all)
             val from = page.toLong() * pageSize
             if (from >= all.size) return ImmutableList.of()
-            return ImmutableList.copyOf(all.subList(from.toInt(), minOf(all.size, from.toInt() + pageSize)))
+            // In Longs, so a huge page size from a controller can't overflow into a crash.
+            val to = minOf(all.size.toLong(), from + pageSize).toInt()
+            return ImmutableList.copyOf(all.subList(from.toInt(), to))
         }
     }
 

@@ -49,6 +49,8 @@ object SongCache {
     private val evictor = AdjustableLruEvictor(AppSettings.DEFAULT_CACHE_LIMIT_MB * MB)
 
     private const val MB = 1024L * 1024L
+    /** Free space always left on the phone, whatever the song cache limit. */
+    private const val MIN_FREE_BYTES = 500L * MB
 
     fun init(context: Context) {
         if (cache != null) return
@@ -56,6 +58,7 @@ object SongCache {
             if (cache != null) return
             evictor.maxBytes = AppSettings.cacheLimitMb.value * MB
             val dir = File(context.applicationContext.cacheDir, "songs")
+            evictor.dir = dir
             // If the cache can't open (e.g. its database is damaged), songs simply stream.
             cache = runCatching {
                 SimpleCache(dir, evictor, StandaloneDatabaseProvider(context.applicationContext))
@@ -273,6 +276,9 @@ object SongCache {
 
     /** Least-recently-played eviction whose size limit can change while the app runs. */
     private class AdjustableLruEvictor(@Volatile var maxBytes: Long) : CacheEvictor {
+        /** Where the songs are kept, to check the phone's free space. */
+        @Volatile var dir: File? = null
+        private var spaceCheckedAt = 0L
         private val spans = TreeSet<CacheSpan> { a, b ->
             when {
                 a.lastTouchTimestamp < b.lastTouchTimestamp -> -1
@@ -311,7 +317,10 @@ object SongCache {
         fun trim(cache: Cache) = evict(cache, 0)
 
         private fun evict(cache: Cache, required: Long) {
-            while (size + required > maxBytes && spans.isNotEmpty()) {
+            // However big a limit was chosen, saved songs never fill the phone: the oldest give way
+            // so that some space always stays free for everything else.
+            var short = spaceShortfall(required)
+            while ((size + required > maxBytes || short > 0) && spans.isNotEmpty()) {
                 val oldest = spans.first()
                 try {
                     cache.removeSpan(oldest)
@@ -319,7 +328,20 @@ object SongCache {
                 }
                 // If the cache didn't report the removal, forget the span anyway so this ends.
                 if (spans.remove(oldest)) size -= oldest.length
+                short -= oldest.length
             }
+        }
+
+        /** Bytes to free to keep [MIN_FREE_BYTES] free after writing [required] more (0 if fine). */
+        private fun spaceShortfall(required: Long): Long {
+            val d = dir ?: return 0
+            // Asked often while a song downloads; the phone's free space is looked up at most every
+            // few seconds then (always when a new file is about to start).
+            val now = android.os.SystemClock.elapsedRealtime()
+            if (required == 0L && now - spaceCheckedAt < 5_000) return 0
+            spaceCheckedAt = now
+            val free = runCatching { d.usableSpace }.getOrDefault(Long.MAX_VALUE)
+            return (MIN_FREE_BYTES + required - free).coerceAtLeast(0)
         }
     }
 }

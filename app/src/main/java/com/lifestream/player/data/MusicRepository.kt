@@ -162,7 +162,7 @@ object MusicRepository {
                 out += findExtras(game, albumCover)
             }
             return Paged(
-                out.map { ArtistCredits.fix(it.copy(gameId = game.id)) },
+                out.filterNot { it.id in game.skipIds }.map { ArtistCredits.fix(it.copy(gameId = game.id)) },
                 if (index < max || !extrasDone) More else null,
             )
         }

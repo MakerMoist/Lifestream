@@ -167,6 +167,11 @@ data class Game(
      * Albums play in this order, and a song on several keeps its first (original) version.
      */
     val releaseOrder: List<String> = emptyList(),
+    /**
+     * Recordings left out by their YouTube id: the same song again under a name that doesn't
+     * show it (e.g. a second album's copy, or a remix named only for its remixer).
+     */
+    val skipIds: Set<String> = emptySet(),
 )
 
 /**
