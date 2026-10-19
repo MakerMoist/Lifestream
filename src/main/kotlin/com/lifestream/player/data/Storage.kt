@@ -23,12 +23,13 @@ object AppDirs {
         cache = cacheDir ?: System.getenv("LOCALAPPDATA")?.let { File(it, "LifeStream") } ?: File(home, ".lifestream/cache")
         data.mkdirs()
         cache.mkdirs()
+        removeLeftoverTempFiles(data)
+        removeLeftoverTempFiles(cache)
     }
 }
 
 /**
- * A small key-value store saved as one JSON file, with the same calls the Android app's
- * SharedPreferences used (so the shared code reads the same). Changes are written to disk shortly
+ * A small key-value store saved as one JSON file. Changes are written to disk shortly
  * after (or straight away with [Editor.commit]), always to a temporary file first and then moved
  * into place, so a crash or power cut can't leave a half-written file.
  */
@@ -49,9 +50,7 @@ class Prefs private constructor(private val file: File) {
     @Synchronized fun getString(key: String, def: String?): String? = values[key] as? String ?: def
     @Synchronized fun getBoolean(key: String, def: Boolean): Boolean = values[key] as? Boolean ?: def
     @Synchronized fun getInt(key: String, def: Int): Int = (values[key] as? Number)?.toInt() ?: def
-    @Synchronized fun getLong(key: String, def: Long): Long = (values[key] as? Number)?.toLong() ?: def
     @Synchronized fun getFloat(key: String, def: Float): Float = (values[key] as? Number)?.toFloat() ?: def
-    @Synchronized fun contains(key: String): Boolean = key in values
 
     fun edit() = Editor()
 
@@ -61,7 +60,6 @@ class Prefs private constructor(private val file: File) {
         fun putString(key: String, value: String?) = apply { changes[key] = value }
         fun putBoolean(key: String, value: Boolean) = apply { changes[key] = value }
         fun putInt(key: String, value: Int) = apply { changes[key] = value }
-        fun putLong(key: String, value: Long) = apply { changes[key] = value }
         fun putFloat(key: String, value: Float) = apply { changes[key] = value }
         fun remove(key: String) = apply { changes[key] = null }
         fun clear() = apply { clear = true }
@@ -90,7 +88,10 @@ class Prefs private constructor(private val file: File) {
     }
 
     private fun writeNow(): Boolean {
-        val text = synchronized(this) { JSONObject(values as Map<*, *>).toString() }
+        val text = synchronized(this) {
+            pending = null
+            JSONObject(values as Map<*, *>).toString()
+        }
         return writeAtomically(file, text)
     }
 
@@ -112,28 +113,43 @@ class Prefs private constructor(private val file: File) {
 }
 
 /** Writes [text] to [file] through a temporary file, so the file is never left half-written. */
-fun writeAtomically(file: File, text: String): Boolean = runCatching {
-    file.parentFile?.mkdirs()
-    val tmp = File(file.parentFile, file.name + ".tmp")
-    tmp.writeText(text)
-    java.nio.file.Files.move(
-        tmp.toPath(), file.toPath(),
-        java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE,
-    )
-    true
-}.getOrElse {
-    runCatching {
-        val tmp = File(file.parentFile, file.name + ".tmp")
-        java.nio.file.Files.move(tmp.toPath(), file.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+fun writeAtomically(file: File, text: String): Boolean = writeAtomicallyBytes(file, text.toByteArray(Charsets.UTF_8))
+
+/** One lock per file, so two saves of the same file (a background save and the one on closing) take turns. */
+private val fileLocks = java.util.concurrent.ConcurrentHashMap<String, Any>()
+
+/**
+ * Writes [bytes] to [file] through a temporary file of its own, then moves it into place in one
+ * step. The old file is only replaced once the new one is completely written: a full disk or a
+ * crash part-way leaves the previous version as it was.
+ */
+fun writeAtomicallyBytes(file: File, bytes: ByteArray, durable: Boolean = true): Boolean = synchronized(fileLocks.computeIfAbsent(file.absolutePath) { Any() }) {
+    val dir = file.absoluteFile.parentFile ?: return false
+    var tmp: File? = null
+    try {
+        dir.mkdirs()
+        tmp = File.createTempFile(file.name.take(40) + ".", ".tmp", dir)
+        java.io.FileOutputStream(tmp).use { out ->
+            out.write(bytes)
+            // Settings and playlists are on disk before they replace the old file (a cache needn't be).
+            if (durable) out.fd.sync()
+        }
+        try {
+            java.nio.file.Files.move(
+                tmp.toPath(), file.toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+            )
+        } catch (_: java.nio.file.AtomicMoveNotSupportedException) {
+            java.nio.file.Files.move(tmp.toPath(), file.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        }
         true
-    }.getOrDefault(false)
+    } catch (_: Exception) {
+        tmp?.delete()
+        false
+    }
 }
 
-/** The same as [writeAtomically], for bytes. */
-fun writeAtomicallyBytes(file: File, bytes: ByteArray): Boolean = runCatching {
-    file.parentFile?.mkdirs()
-    val tmp = File(file.parentFile, file.name + ".tmp")
-    tmp.writeBytes(bytes)
-    java.nio.file.Files.move(tmp.toPath(), file.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
-    true
-}.getOrDefault(false)
+/** Temporary files left by a save that never finished (the app was killed mid-write). */
+fun removeLeftoverTempFiles(dir: File) {
+    dir.listFiles()?.forEach { f -> if (f.isFile && f.name.endsWith(".tmp")) f.delete() }
+}

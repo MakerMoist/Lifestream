@@ -75,7 +75,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -208,7 +207,7 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
         modifier = Modifier.fillMaxSize(),
     ) {
         LazyVerticalGrid(
-            // As many cards across as fit the window (two on a narrow one, like the phone).
+            // As many cards across as fit the window (two in a narrow one).
             columns = GridCells.Adaptive(minSize = if (compact) 170.dp else 210.dp),
             state = gridState,
             modifier = Modifier.fillMaxSize().thinScrollbar(gridState),
@@ -219,7 +218,6 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Column(
                     Modifier
-                        .statusBarsPadding()
                         .padding(top = 8.dp, bottom = 4.dp),
                 ) {
                     // Tap the quote for another one. The area is always the same height (room for

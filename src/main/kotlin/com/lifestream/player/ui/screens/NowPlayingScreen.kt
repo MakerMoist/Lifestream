@@ -56,7 +56,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -111,15 +110,17 @@ fun NowPlayingScreen(onClose: () -> Unit, openQueue: Boolean = false) {
         val wash = remember(track?.thumbnail) { SafeInput.safeArtwork(track?.thumbnail) }
         if (wash != null) {
             val small = remember(wash) { SafeInput.safeArtwork(hiResArtwork(wash, 180, videoThumbs = false)) ?: wash }
-            val image by produceState(ImageLoader.cached(small, 96), small) {
-                if (value == null) value = ImageLoader.load(small, 96)
+            // Blurred once, at that small size, when the song changes: drawing it is then as cheap as
+            // any picture (a live full-window blur would be redone by the graphics card every frame).
+            val image by produceState<androidx.compose.ui.graphics.ImageBitmap?>(null, small) {
+                value = ImageLoader.load(small, 96)?.let { ImageLoader.blurred(it, 4f) }
             }
             image?.let {
                 Image(
                     it, null,
                     contentScale = ContentScale.Crop,
                     alpha = 0.45f,
-                    modifier = Modifier.fillMaxSize().blur(48.dp),
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }

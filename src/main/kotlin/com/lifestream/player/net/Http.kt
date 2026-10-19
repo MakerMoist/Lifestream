@@ -71,7 +71,7 @@ object Http {
 
     /**
      * Responses the server says can be reused (above all YouTube's player script, a few MB that
-     * every first song after starting the app needs) are kept on the phone and reused instead of
+     * every first song after starting the app needs) are kept on this PC and reused instead of
      * downloaded again. YouTube's searches and song lists are never cached this way: they're POST
      * requests, which HTTP caching leaves alone.
      */

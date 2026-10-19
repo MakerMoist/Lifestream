@@ -11,13 +11,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -144,9 +142,6 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
         label = "menu",
         finishedListener = { if (it == 0f) shown = null },
     )
-    // Back closes the menu first. Registered at the moment the menu opens, so it comes before
-    // every other back action (the screen underneath, the navigation stack).
-    val menuOpen = target != null
     // (Escape closes it: see the window's key handling.)
 
     shown?.let { t ->
@@ -255,7 +250,7 @@ fun AppMenuHost() {
     val open = request != null
     // (Escape closes it: see the window's key handling.)
     // A menu's actions belong to the screen that opened it (a file picker it launches, say): when
-    // that screen goes (the phone is turned and the app redraws), the menu goes too, rather than
+    // that screen goes, the menu goes too, rather than
     // reappearing with actions that point at the old screen and keeping it in memory.
     androidx.compose.runtime.DisposableEffect(Unit) { onDispose { AppMenu.dismiss() } }
     shown?.let { r -> ContextMenuLayer(r.at, progress, r.items, onDismiss = { AppMenu.dismiss() }, isOpen = { AppMenu.request.value != null }) }
@@ -347,7 +342,6 @@ private fun SongMenu(
 @Composable
 private fun ContextMenuLayer(at: Offset?, progress: Float, items: List<MenuItem>, onDismiss: () -> Unit, isOpen: () -> Boolean) {
     val density = LocalDensity.current
-    val bars = WindowInsets.systemBars
     val menuOrigin = remember { MenuOrigin() }
     var host by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
@@ -387,8 +381,8 @@ private fun ContextMenuLayer(at: Offset?, progress: Float, items: List<MenuItem>
             },
         ) { measurables, constraints ->
             val margin = with(density) { 12.dp.roundToPx() }
-            val top = bars.getTop(density) + margin
-            val bottom = bars.getBottom(density) + margin
+            val top = margin
+            val bottom = margin
             val width = constraints.maxWidth
             val height = constraints.maxHeight
             val menuWidth = minOf(with(density) { 272.dp.roundToPx() }, width - 2 * margin)
@@ -582,6 +576,7 @@ fun PlaylistNameDialog(
                 value = name,
                 onValueChange = { name = it.take(Library.MAX_NAME_LENGTH) },
                 singleLine = true,
+                modifier = com.lifestream.player.ui.Typing.field(),
                 placeholder = { Text("Playlist name") },
                 shape = RoundedCornerShape(12.dp),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -607,7 +602,7 @@ fun copyTrackLink(track: Track) {
 /** A short message at the bottom of the window. */
 fun toast(text: String) = Toasts.show(text)
 
-/** Messages shown briefly at the bottom of the window (the Android app's toasts). */
+/** Messages shown briefly at the bottom of the window. */
 object Toasts {
     val messages = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 8)
     fun show(text: String) {

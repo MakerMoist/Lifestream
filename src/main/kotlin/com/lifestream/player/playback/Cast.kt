@@ -6,6 +6,7 @@ import com.lifestream.player.data.hiResArtwork
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -252,7 +253,7 @@ class CastOutput(val device: CastDevice) : PlayerConnection.Output {
         scope.launch {
             runCatching { c?.send(CastChannel.RECEIVER, "receiver-0", JSONObject().put("type", "STOP")) }
             runCatching { c?.close() }
-        }
+        }.invokeOnCompletion { scope.cancel() } // nothing of this connection is left running
         CastRelay.stop()
     }
 
@@ -352,9 +353,12 @@ class CastChannel(private val device: CastDevice, private val onMessage: (String
         out = DataOutputStream(BufferedOutputStream(s.outputStream))
         Thread({ readLoop(DataInputStream(s.inputStream)) }, "cast-read").apply { isDaemon = true }.start()
         Thread({
-            while (!closed) {
-                runCatching { send(HEARTBEAT, "receiver-0", JSONObject().put("type", "PING")) }
-                Thread.sleep(5_000)
+            try {
+                while (!closed) {
+                    runCatching { send(HEARTBEAT, "receiver-0", JSONObject().put("type", "PING")) }
+                    Thread.sleep(5_000)
+                }
+            } catch (_: InterruptedException) {
             }
         }, "cast-heartbeat").apply { isDaemon = true }.start()
     }
@@ -466,8 +470,10 @@ class CastChannel(private val device: CastDevice, private val onMessage: (String
             when ((key and 7).toInt()) {
                 0 -> varint()
                 2 -> {
-                    val len = varint().toInt()
-                    if (len < 0 || i + len > bytes.size) return null
+                    // Checked as a 64-bit number: a huge length can't wrap round and pass.
+                    val raw = varint()
+                    if (raw < 0 || raw > bytes.size - i) return null
+                    val len = raw.toInt()
                     val s = String(bytes, i, len, Charsets.UTF_8)
                     i += len
                     when (field) {

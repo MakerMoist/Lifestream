@@ -11,6 +11,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.IOException
@@ -43,6 +44,8 @@ object Discord {
     val available: Boolean get() = APPLICATION_ID.isNotEmpty() && System.getProperty("os.name").lowercase().contains("win")
 
     fun start() {
+        // Without an application id there's nothing Discord would accept: nothing runs at all.
+        if (!available) return
         scope.launch {
             combine(PlayerConnection.state, AppSettings.discordIntegration) { s, on -> s to on }
                 .distinctUntilChanged()
@@ -58,6 +61,9 @@ object Discord {
             var lastPosition = -1L
             var lastAt = 0L
             while (true) {
+                // Asleep (no wake-ups) while the setting is off or nothing is playing.
+                AppSettings.discordIntegration.first { it }
+                PlayerConnection.state.first { it.isPlaying }
                 delay(5_000)
                 val s = PlayerConnection.state.value
                 if (!AppSettings.discordIntegration.value || !s.isPlaying || s.current == null) {

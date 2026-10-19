@@ -42,15 +42,17 @@ object SelfTest {
         step("Download + decode") {
             val source = SongStore.open("Mn37d5ne2Zw")
             try {
-                val grabber = org.bytedeco.javacv.FFmpegFrameGrabber(source.open(), com.lifestream.player.playback.AudioEngine.SEEKABLE)
-                grabber.sampleRate = 48000
-                grabber.audioChannels = 2
-                grabber.start()
-                var samples = 0
-                repeat(50) { grabber.grabSamples()?.let { samples++ } }
-                grabber.stop()
-                grabber.release()
-                "decoded $samples audio frames"
+                source.open().use { input ->
+                    val grabber = org.bytedeco.javacv.FFmpegFrameGrabber(input, com.lifestream.player.playback.AudioEngine.SEEKABLE)
+                    grabber.sampleRate = 48000
+                    grabber.audioChannels = 2
+                    grabber.start()
+                    var samples = 0
+                    repeat(50) { grabber.grabSamples()?.let { samples++ } }
+                    grabber.stop()
+                    grabber.release()
+                    "decoded $samples audio frames"
+                }
             } finally {
                 source.close()
             }

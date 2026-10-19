@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -45,7 +44,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -88,22 +86,16 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
     val continueMode by AppSettings.continueMode.collectAsStateWithLifecycle()
     val recentSearches by SearchHistory.recent.collectAsStateWithLifecycle()
     var confirmClear by remember { mutableStateOf(false) }
-    // On Windows the cursor always goes straight to the search box (there's no on-screen keyboard to pop up).
-    val searchKeyboard = true
     val focusRequester = remember { FocusRequester() }
-    val keyboard = LocalSoftwareKeyboardController.current
 
     // Opening Search puts the cursor in the search box, ready to type.
     LaunchedEffect(SearchFocus.requested) {
         if (!SearchFocus.requested) return@LaunchedEffect
         SearchFocus.requested = false
-        if (searchKeyboard) {
-            try {
-                focusRequester.requestFocus()
-                keyboard?.show()
-            } catch (_: IllegalStateException) {
-                // The search box isn't on screen yet; nothing to focus.
-            }
+        try {
+            focusRequester.requestFocus()
+        } catch (_: IllegalStateException) {
+            // The search box isn't on screen yet; nothing to focus.
         }
     }
 
@@ -133,7 +125,6 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
     Column(
         Modifier
             .fillMaxSize()
-            .statusBarsPadding(),
     ) {
         SlimSearchField(
             value = vm.input,

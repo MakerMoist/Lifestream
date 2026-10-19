@@ -1,12 +1,7 @@
 package com.lifestream.player.ui.components
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asSkiaBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.lifestream.player.data.AppDirs
 import com.lifestream.player.net.Http
@@ -67,6 +62,8 @@ object ImageLoader {
             val bytes = readDisk(safe) ?: downloads.withPermit { download(safe) } ?: return@withContext null
             val image = decode(bytes, maxPx) ?: return@withContext null
             synchronized(memory) {
+                // Two loads of the same picture at once: keep one, and count it once.
+                memory["$maxPx|$safe"]?.let { return@withContext it }
                 memory["$maxPx|$safe"] = image
                 memory.bytes += image.width.toLong() * image.height * 4
             }
@@ -94,7 +91,7 @@ object ImageLoader {
             val bytes = body.byteStream().use { it.readNBytes((MAX_IMAGE_BYTES + 1).toInt()) }
             if (bytes.size > MAX_IMAGE_BYTES) return null
             runCatching {
-                com.lifestream.player.data.writeAtomicallyBytes(keyFile(url), bytes)
+                com.lifestream.player.data.writeAtomicallyBytes(keyFile(url), bytes, durable = false)
                 trimDisk()
             }
             bytes
@@ -114,22 +111,64 @@ object ImageLoader {
         }
     }
 
-    /** Decodes and, if it's bigger than needed, scales down (less memory, smoother drawing). */
+    /** The most pixels a picture may have: real artwork is far smaller, a "decompression bomb" isn't. */
+    private const val MAX_PIXELS = 25_000_000L
+    private const val MAX_SIDE = 10_000
+
+    /**
+     * Decodes and, if it's bigger than needed, scales down (less memory, smoother drawing). The
+     * picture's size is read from its header first, so an image that claims to be enormous is
+     * refused before it's decoded.
+     */
     fun decode(bytes: ByteArray, maxPx: Int): ImageBitmap? = runCatching {
+        org.jetbrains.skia.Data.makeFromBytes(bytes).use { data ->
+            org.jetbrains.skia.Codec.makeFromData(data).use { codec ->
+                val w = codec.width
+                val h = codec.height
+                if (w <= 0 || h <= 0 || w > MAX_SIDE || h > MAX_SIDE || w.toLong() * h > MAX_PIXELS) return null
+            }
+        }
         val image = org.jetbrains.skia.Image.makeFromEncoded(bytes)
-        if (image.width <= maxPx) return image.toComposeImageBitmap()
-        val h = (image.height.toLong() * maxPx / image.width).toInt().coerceAtLeast(1)
-        val surface = org.jetbrains.skia.Surface.makeRasterN32Premul(maxPx, h)
-        surface.canvas.drawImageRect(
-            image,
-            org.jetbrains.skia.Rect.makeWH(image.width.toFloat(), image.height.toFloat()),
-            org.jetbrains.skia.Rect.makeWH(maxPx.toFloat(), h.toFloat()),
-            org.jetbrains.skia.SamplingMode.LINEAR,
-            null,
-            true,
-        )
-        surface.makeImageSnapshot().toComposeImageBitmap()
+        if (image.width <= maxPx && image.height <= maxPx * 4) return image.toComposeImageBitmap()
+        val scale = minOf(maxPx.toFloat() / image.width, (maxPx * 4f) / image.height, 1f)
+        val outW = (image.width * scale).toInt().coerceAtLeast(1)
+        val outH = (image.height * scale).toInt().coerceAtLeast(1)
+        // The full-size picture and the drawing surface are native memory: let go of them now
+        // rather than whenever the garbage collector gets round to it.
+        image.use { full ->
+            org.jetbrains.skia.Surface.makeRasterN32Premul(outW, outH).use { surface ->
+                surface.canvas.drawImageRect(
+                    full,
+                    org.jetbrains.skia.Rect.makeWH(full.width.toFloat(), full.height.toFloat()),
+                    org.jetbrains.skia.Rect.makeWH(outW.toFloat(), outH.toFloat()),
+                    org.jetbrains.skia.SamplingMode.LINEAR,
+                    null,
+                    true,
+                )
+                surface.makeImageSnapshot().toComposeImageBitmap()
+            }
+        }
     }.getOrNull()
+
+    /** A softly blurred copy of a (small) picture, for backgrounds. Call off the UI thread. */
+    fun blurred(source: ImageBitmap, sigma: Float): ImageBitmap? = runCatching {
+        val bitmap = source.asSkiaBitmap()
+        org.jetbrains.skia.Image.makeFromBitmap(bitmap).use { image ->
+            org.jetbrains.skia.Surface.makeRasterN32Premul(image.width, image.height).use { surface ->
+                org.jetbrains.skia.Paint().use { paint ->
+                    paint.imageFilter = org.jetbrains.skia.ImageFilter.makeBlur(sigma, sigma, org.jetbrains.skia.FilterTileMode.CLAMP)
+                    surface.canvas.drawImage(image, 0f, 0f, paint)
+                }
+                surface.makeImageSnapshot().toComposeImageBitmap()
+            }
+        }
+    }.getOrNull()
+
+    /** Lets go of decoded pictures (they're decoded again from disk when next shown). */
+    fun clearMemory() = synchronized(memory) {
+        memory.clear()
+        memory.bytes = 0
+    }
 
     /** Empties the artwork stores (Settings → Clear Cache). */
     fun clear() {
@@ -139,20 +178,4 @@ object ImageLoader {
         }
         dir.listFiles()?.forEach { it.delete() }
     }
-
-    /** Lets go of decoded pictures (they're decoded again from disk when needed). */
-    fun trimMemory() = synchronized(memory) {
-        memory.clear()
-        memory.bytes = 0
-    }
-}
-
-/** The picture at [url] once loaded (immediately when already in memory). */
-@Composable
-fun rememberRemoteImage(url: String?, maxPx: Int): ImageBitmap? {
-    var image by remember(url, maxPx) { mutableStateOf(url?.let { ImageLoader.cached(it, maxPx) }) }
-    LaunchedEffect(url, maxPx) {
-        if (image == null && url != null) image = ImageLoader.load(url, maxPx)
-    }
-    return image
 }

@@ -36,7 +36,20 @@ class SongSource internal constructor(
     @Volatile var closed = false
         private set
     internal val lock = Object()
-    internal var onClose: (() -> Unit)? = null
+
+    /**
+     * Runs once, after the source is closed, the download has stopped and every stream reading
+     * the file is closed too. Windows can't move or delete a file something still has open, so
+     * tidying the file (deleting a temporary copy, or filing a finished one) waits until then.
+     */
+    internal var onRelease: (() -> Unit)? = null
+    private var openStreams = 0
+    internal var downloading = false
+        set(value) {
+            synchronized(lock) { field = value }
+            if (!value) maybeRelease()
+        }
+    private var released = false
 
     /** Waits until byte [position] has arrived (true), or the song ended before it, failed or was closed (false). */
     fun awaitByte(position: Long): Boolean {
@@ -71,7 +84,23 @@ class SongSource internal constructor(
         lock.notifyAll()
     }
 
-    fun open(): SongInputStream = SongInputStream(this)
+    fun open(): SongInputStream {
+        synchronized(lock) {
+            if (closed) throw IOException("Song closed")
+            openStreams++
+        }
+        return try {
+            SongInputStream(this)
+        } catch (e: IOException) {
+            streamClosed()
+            throw e
+        }
+    }
+
+    internal fun streamClosed() {
+        synchronized(lock) { openStreams-- }
+        maybeRelease()
+    }
 
     override fun close() {
         synchronized(lock) {
@@ -79,7 +108,16 @@ class SongSource internal constructor(
             closed = true
             lock.notifyAll()
         }
-        onClose?.invoke()
+        maybeRelease()
+    }
+
+    private fun maybeRelease() {
+        val run = synchronized(lock) {
+            if (released || !closed || openStreams > 0 || downloading) return
+            released = true
+            onRelease
+        }
+        run?.invoke()
     }
 }
 
@@ -87,6 +125,7 @@ class SongSource internal constructor(
 class SongInputStream internal constructor(private val source: SongSource) : java.io.InputStream() {
     private val raf = RandomAccessFile(source.file, "r")
     private var position = 0L
+    private var closed = false
 
     override fun read(): Int {
         val one = ByteArray(1)
@@ -118,7 +157,12 @@ class SongInputStream internal constructor(private val source: SongSource) : jav
         position = 0
     }
 
-    override fun close() = raf.close()
+    override fun close() {
+        if (closed) return
+        closed = true
+        runCatching { raf.close() }
+        source.streamClosed()
+    }
 }
 
 /**
@@ -132,6 +176,8 @@ object SongStore {
     private const val CHUNK = 2L * 1024 * 1024
     private const val MB = 1024L * 1024
     private const val MIN_FREE_BYTES = 500L * MB
+    /** No song comes near this (an hour of YouTube's best audio is under 120 MB). */
+    private const val MAX_SONG_BYTES = 600L * MB
     private const val PREFERRED_ITAG = 140 // AAC in MP4: starts quickly and seeks without the whole file
     private val POST_BODY = byteArrayOf(0x78, 0)
     private val fileName = Regex("^([A-Za-z0-9_-]{11})\\.(\\d{1,4})$")
@@ -206,18 +252,24 @@ object SongStore {
             }
             else -> File(tempDir, "$videoId.${stream.itag}.${System.nanoTime()}")
         }
-        val total = SafeInput.queryParameter(stream.url, "clen")?.toLongOrNull() ?: -1L
+        val total = SafeInput.queryParameter(stream.url, "clen")?.toLongOrNull()?.takeIf { it in 1..MAX_SONG_BYTES } ?: -1L
         val source = SongSource(videoId, stream.itag, target, total, if (target.exists()) target.length() else 0L, complete = false)
         active[videoId] = source
-        source.onClose = {
+        source.onRelease = {
             synchronized(this) { if (active[videoId] === source) active.remove(videoId) }
-            if (!keep) target.delete()
+            if (!keep) {
+                target.delete()
+            } else if (source.complete && source.error == null) {
+                // A finished song becomes a saved one (now that nothing has the file open).
+                if (target.renameTo(File(dir, target.name.removeSuffix(".part")))) refreshIds()
+            }
         }
-        Thread({ download(source, stream.url, keep) }, "song-download").apply { isDaemon = true }.start()
+        source.downloading = true
+        Thread({ download(source, stream.url) }, "song-download").apply { isDaemon = true }.start()
         return source
     }
 
-    private fun download(source: SongSource, firstUrl: String, keep: Boolean) {
+    private fun download(source: SongSource, firstUrl: String) {
         var url = firstUrl
         var expiredRetries = 0
         var networkRetries = 0
@@ -228,6 +280,8 @@ object SongStore {
                 while (!source.closed) {
                     val end = source.total
                     if (end in 0..position) break
+                    // A runaway (or endless) answer can't fill the drive.
+                    if (position >= MAX_SONG_BYTES) throw IOException("The song is unexpectedly large")
                     val last = if (end >= 0) minOf(position + CHUNK, end) - 1 else position + CHUNK - 1
                     try {
                         val got = fetchChunk(url, position, last) { bytes, n ->
@@ -236,7 +290,7 @@ object SongStore {
                             source.progress(position)
                             !source.closed
                         }
-                        if (got.total >= 0 && source.total < 0) source.progress(position, got.total)
+                        if (got.total in 1..MAX_SONG_BYTES && source.total < 0) source.progress(position, got.total)
                         if (got.endOfStream) {
                             if (source.total < 0) source.progress(position, position)
                             break
@@ -254,24 +308,15 @@ object SongStore {
                     }
                 }
             }
-            if (source.closed && source.written < source.total) return // stopped part-way: keep the part
+            if (source.closed && (source.total < 0 || source.written < source.total)) return // stopped part-way: keep the part
             source.finish()
-            if (keep && source.file.name.endsWith(".part")) {
-                val done = File(dir, source.file.name.removeSuffix(".part"))
-                if (source.file.renameTo(done)) {
-                    synchronized(this) { if (active[source.videoId] === source) active.remove(source.videoId) }
-                }
-                trim(0)
-                refreshIds()
-            }
+            if (source.file.name.endsWith(".part")) trim(0)
         } catch (e: IOException) {
             source.finish(e)
         } catch (e: InterruptedException) {
             source.finish(IOException("Stopped"))
         } finally {
-            // A temporary copy goes once it's done with (Windows can't delete a file still open,
-            // so this happens here too, after the download has let go of it).
-            if (!keep && source.closed) source.file.delete()
+            source.downloading = false
         }
     }
 

@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -126,7 +125,6 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
     Column(
         Modifier
             .fillMaxSize()
-            .statusBarsPadding(),
     ) {
         Text(
             "Library",
@@ -289,8 +287,12 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
 }
 
 /** "Road Trip.lsplaylist", without characters file names can't have. */
-private fun exportFileName(name: String): String =
-    name.replace(Regex("[\\\\/:*?\"<>|\\p{Cntrl}]"), " ").trim().ifBlank { "Playlist" } + Library.EXPORT_EXTENSION
+private fun exportFileName(name: String): String {
+    val base = name.replace(Regex("[\\\\/:*?\"<>|\\p{Cntrl}]"), " ").trim().trimEnd('.').ifBlank { "Playlist" }
+    // Names Windows keeps for devices ("CON", "NUL", "COM1"…) can't be used for a file.
+    val reserved = Regex("^(CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])$", RegexOption.IGNORE_CASE).matches(base)
+    return (if (reserved) "$base Playlist" else base) + Library.EXPORT_EXTENSION
+}
 
 private suspend fun exportPlaylist(p: Playlist, file: java.io.File) {
     val ok = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -483,7 +485,6 @@ fun PlaylistScreen(playlistId: String, onBack: () -> Unit) {
     LazyColumn(
         Modifier
             .fillMaxSize()
-            .statusBarsPadding()
             .thinScrollbar(listState),
         state = listState,
     ) {

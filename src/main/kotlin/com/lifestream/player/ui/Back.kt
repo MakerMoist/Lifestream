@@ -2,7 +2,10 @@ package com.lifestream.player.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 
 /**
  * "Back" on Windows: the Esc key and the mouse's back button. The newest screen or dialog that
@@ -35,3 +38,23 @@ object BackDispatcher {
 /** Runs [onBack] when Back (Esc, or the mouse's back button) is pressed while [enabled]. */
 @Composable
 fun BackHandler(enabled: Boolean = true, onBack: () -> Unit) = BackDispatcher.Register(enabled, onBack)
+
+/**
+ * Whether the cursor is in a text box. The window's shortcuts that are plain keys (Space for
+ * play/pause) stand aside while you type, so a space in a search or a playlist name stays a space.
+ */
+object Typing {
+    private val focused = java.util.concurrent.atomic.AtomicInteger(0)
+    val active: Boolean get() = focused.get() > 0
+
+    /** Put on a text box: it counts as typing while it has the cursor. */
+    @Composable
+    fun field(): Modifier {
+        val has = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
+        DisposableEffect(Unit) { onDispose { if (has.getAndSet(false)) focused.decrementAndGet() } }
+        return Modifier.onFocusChanged { state ->
+            if (state.isFocused && !has.getAndSet(true)) focused.incrementAndGet()
+            if (!state.isFocused && has.getAndSet(false)) focused.decrementAndGet()
+        }
+    }
+}

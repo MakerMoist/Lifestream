@@ -157,7 +157,6 @@ object SoundtrackIndex {
                 _progress.value = Progress(Catalog.games.size, Catalog.games.size, false)
                 _tracks.value = shareStrings(_tracks.value)
                 writeToDisk()
-                TitleTranslator.release()
             }
         }
     }
@@ -347,23 +346,6 @@ object SoundtrackIndex {
         return null
     }
 
-    /**
-     * For the on-device tests: saves the index, reads the file back and says whether it holds
-     * exactly the songs in memory (the app itself never needs this).
-     */
-    internal fun savedCopyDifference(): String? {
-        val snapshot = _tracks.value
-        writeToDisk(snapshot)
-        val saved = parseFile() ?: return "the saved file couldn't be read back"
-        if (saved.tracks.keys != snapshot.keys) return "titles ${snapshot.keys} vs ${saved.tracks.keys}"
-        for ((id, list) in snapshot) {
-            val back = saved.tracks.getValue(id)
-            if (back.size != list.size) return "$id: ${list.size} songs vs ${back.size}"
-            list.zip(back).firstOrNull { (a, b) -> a != b }?.let { (a, b) -> return "$id: $a vs $b" }
-        }
-        return null
-    }
-
     private fun readGame(r: com.google.gson.stream.JsonReader, id: String): Triple<Long, String, List<Track>> {
         var built = 0L
         var sources = ""
@@ -403,8 +385,8 @@ object SoundtrackIndex {
 
     /** Written piece by piece, straight to the file, for the same reason. */
     private fun writeToDisk(tracks: Map<String, List<Track>> = _tracks.value) {
+        val tmp = File(file.parentFile, "$FILE_NAME.tmp")
         runCatching {
-            val tmp = File(file.parentFile, "$FILE_NAME.tmp")
             com.google.gson.stream.JsonWriter(tmp.bufferedWriter()).use { w ->
                 w.beginObject()
                 w.name("version").value(VERSION.toLong())
@@ -439,6 +421,6 @@ object SoundtrackIndex {
                 tmp.toPath(), file.toPath(),
                 java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE,
             )
-        }
+        }.onFailure { tmp.delete() } // e.g. a full disk: the old index stays, without a half-written copy beside it
     }
 }

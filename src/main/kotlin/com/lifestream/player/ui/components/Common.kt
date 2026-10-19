@@ -261,7 +261,7 @@ fun SlimSearchField(
     androidx.compose.foundation.text.BasicTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier.height(44.dp),
+        modifier = modifier.height(44.dp).then(com.lifestream.player.ui.Typing.field()),
         singleLine = true,
         textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
         cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),

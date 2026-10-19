@@ -49,6 +49,10 @@ object MediaKeys {
                 keys.forEach { (id, _) -> runCatching { user32.UnregisterHotKey(null, id) } }
                 registered = false
             }
+            if (!registered) {
+                Thread.sleep(500) // nothing queued: just look now and then whether keys are wanted
+                continue
+            }
             while (user32.PeekMessage(msg, null, 0, 0, PM_REMOVE)) {
                 if (msg.message == WM_HOTKEY) {
                     when (msg.wParam.toInt()) {
@@ -59,7 +63,12 @@ object MediaKeys {
                     }
                 }
             }
-            Thread.sleep(60)
+            // Sleeps until a key is pressed (or half a second passes, to notice the queue emptying),
+            // rather than waking constantly to check.
+            runCatching { user32.MsgWaitForMultipleObjects(0, null, false, 500, QS_ALLINPUT) }
+                .onFailure { Thread.sleep(100) }
         }
     }
+
+    private const val QS_ALLINPUT = 0x04FF
 }

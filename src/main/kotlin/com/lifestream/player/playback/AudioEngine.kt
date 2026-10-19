@@ -35,9 +35,12 @@ class AudioEngine(private val listener: Listener) {
         }
     }
 
-    /** Kept across songs, so the next one starts from the level the last one ended on. */
+    /**
+     * Kept across songs, so the next one starts from the level the last one ended on. A song that's
+     * just been stopped may still be finishing its last few samples on its own thread while the
+     * next starts, so the leveler is only ever used while holding it.
+     */
     private val leveler = LevelerCore(RATE, CHANNELS)
-    private val frame = DoubleArray(CHANNELS)
 
     @Volatile private var session: Session? = null
 
@@ -46,7 +49,7 @@ class AudioEngine(private val listener: Listener) {
     /** Starts [source] at [startMs]; paused when [play] is false. Returns the session's handle. */
     fun start(source: SongSource, startMs: Long, play: Boolean): Any {
         stop()
-        leveler.newSong()
+        synchronized(leveler) { leveler.newSong() }
         return Session(source, startMs, !play).also {
             session = it
             it.start()
@@ -94,6 +97,7 @@ class AudioEngine(private val listener: Listener) {
         /** Position of the last decoded audio, and how many line frames had been written then. */
         @Volatile private var decodedUs = 0L
         @Volatile private var writtenFrames = 0L
+        private val frame = DoubleArray(CHANNELS)
 
         init {
             isDaemon = true
@@ -152,7 +156,7 @@ class AudioEngine(private val listener: Listener) {
                         writtenFrames = l.longFramePosition
                         decodedUs = target * 1000
                         seekMs = -1
-                        leveler.newSong()
+                        synchronized(leveler) { leveler.newSong() }
                         if (paused) continue
                     }
                     if (!l.isRunning && !paused) l.start()
@@ -194,27 +198,30 @@ class AudioEngine(private val listener: Listener) {
             if (frames <= 0) return null
             val needed = frames * CHANNELS * 2
             val out = if (scratch.size >= needed) scratch else ByteArray(needed)
-            leveler.enabled = AppSettings.levelVolume.value
             val v = AppSettings.volume.value.toDouble()
             val volume = v * v // the slider feels even to the ear
-            val idle = leveler.idle
             var o = 0
             val start0 = first.position()
-            for (i in 0 until frames) {
-                for (c in 0 until CHANNELS) {
-                    val s = if (planar) {
-                        val b = (buffers.getOrNull(c) ?: first) as ShortBuffer
-                        b.get(b.position() + i)
-                    } else {
-                        first.get(start0 + i * CHANNELS + c)
+            synchronized(leveler) {
+                if (halted) return null
+                leveler.enabled = AppSettings.levelVolume.value
+                val idle = leveler.idle
+                for (i in 0 until frames) {
+                    for (c in 0 until CHANNELS) {
+                        val s = if (planar) {
+                            val b = (buffers.getOrNull(c) ?: first) as ShortBuffer
+                            b.get(b.position() + i)
+                        } else {
+                            first.get(start0 + i * CHANNELS + c)
+                        }
+                        frame[c] = s / 32768.0
                     }
-                    frame[c] = s / 32768.0
-                }
-                if (!idle) leveler.process(frame)
-                for (c in 0 until CHANNELS) {
-                    val value = Math.rint(frame[c] * volume * 32768.0).coerceIn(-32768.0, 32767.0).toInt()
-                    out[o++] = (value and 0xFF).toByte()
-                    out[o++] = ((value shr 8) and 0xFF).toByte()
+                    if (!idle) leveler.process(frame)
+                    for (c in 0 until CHANNELS) {
+                        val value = Math.rint(frame[c] * volume * 32768.0).coerceIn(-32768.0, 32767.0).toInt()
+                        out[o++] = (value and 0xFF).toByte()
+                        out[o++] = ((value shr 8) and 0xFF).toByte()
+                    }
                 }
             }
             return out to needed

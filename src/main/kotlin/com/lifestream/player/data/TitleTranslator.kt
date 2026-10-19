@@ -4,8 +4,7 @@ import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Turns Japanese song and artist names into English where it can, on Windows. (The Android app
- * uses Google's on-device translator, which isn't available here.) Nearly every song already has
+ * Turns Japanese song and artist names into English where it can. Nearly every song already has
  * an official English name (OfficialTitles); for the rest, well-known Final Fantasy names and
  * terms are swapped in from the glossary below. A name that would still be partly Japanese is
  * left as it is.
@@ -23,9 +22,6 @@ object TitleTranslator {
 
     /** Frees remembered translations. */
     fun trimCaches() = cache.clear()
-
-    /** Nothing to let go of on Windows (kept so shared code reads the same). */
-    fun release() = Unit
 
     /**
      * Official English names for Final Fantasy terms the general-purpose translator tends to

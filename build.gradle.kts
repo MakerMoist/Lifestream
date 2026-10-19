@@ -7,7 +7,7 @@ plugins {
 }
 
 /** LifeStream for Windows. Its own version, separate from the Android app's. */
-val appVersion = "0.1.0a"
+val appVersion = "0.1.0b"
 
 /**
  * Windows installers only take plain numbers (major.minor.build), so a letter is folded into the
@@ -96,7 +96,14 @@ sourceSets["main"].kotlin.srcDir(generateVersion)
 compose.desktop {
     application {
         mainClass = "com.lifestream.player.MainKt"
-        jvmArgs += listOf("-Xss2m", "-XX:+UseSerialGC", "-Xmx768m", "-Dfile.encoding=UTF-8")
+        // A small, single-threaded garbage collector that starts small and hands unused memory back
+        // to Windows promptly (a music player shouldn't sit on hundreds of MB it isn't using).
+        jvmArgs += listOf(
+            "-Xss2m", "-XX:+UseSerialGC", "-Xms48m", "-Xmx768m",
+            "-XX:MinHeapFreeRatio=10", "-XX:MaxHeapFreeRatio=30",
+            "-XX:CICompilerCount=2",
+            "-Dfile.encoding=UTF-8",
+        )
         nativeDistributions {
             targetFormats(TargetFormat.Msi)
             packageName = "LifeStream"
@@ -106,7 +113,7 @@ compose.desktop {
             // The whole Java runtime: the extractor and FFmpeg's loader use parts a trimmed one leaves out.
             includeAllModules = true
             windows {
-                iconFile.set(project.file("src/main/resources/icon.ico"))
+                iconFile.set(project.file("packaging/icon.ico"))
                 menu = true
                 menuGroup = "LifeStream"
                 shortcut = true

@@ -117,9 +117,40 @@ import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.localization.ContentCountry
 import org.schabi.newpipe.extractor.localization.Localization
 
+/**
+ * Only one LifeStream at a time: two would play over each other and both write the same
+ * playlists and settings. Held (by Windows) for as long as this copy runs, and let go
+ * automatically when it closes, even if it crashes.
+ */
+private object SingleInstance {
+    private var channel: java.nio.channels.FileChannel? = null
+    private var lock: java.nio.channels.FileLock? = null
+
+    fun acquire(): Boolean = runCatching {
+        val c = java.io.RandomAccessFile(java.io.File(AppDirs.data, "running.lock"), "rw").channel
+        val l = c.tryLock()
+        if (l == null) {
+            c.close()
+            false
+        } else {
+            channel = c
+            lock = l
+            true
+        }
+    }.getOrDefault(true) // if the check itself can't be made, start anyway
+}
+
 /** Everything LifeStream sets up before its window opens. */
 fun startUp() {
     AppDirs.init()
+    if (!SingleInstance.acquire()) {
+        runCatching {
+            javax.swing.JOptionPane.showMessageDialog(
+                null, "LifeStream is already open.", "LifeStream", javax.swing.JOptionPane.INFORMATION_MESSAGE,
+            )
+        }
+        kotlin.system.exitProcess(0)
+    }
     Http.init(AppDirs.cache)
     StreamResolver.init(AppDirs.cache)
     // The extractor talks to YouTube's servers through our own client (HTTPS to YouTube only).
@@ -138,6 +169,20 @@ fun shutDown() {
     runCatching { VillainQuotes.save() }
     runCatching { Library.flush() }
     runCatching { Prefs.flushAll() }
+}
+
+/**
+ * Lets go of memory that's quick to rebuild (decoded pictures, search lookups) while the window
+ * is minimized: LifeStream can keep playing in the background without holding on to it.
+ */
+private fun trimMemory() {
+    com.lifestream.player.ui.components.ImageLoader.clearMemory()
+    com.lifestream.player.ui.components.ArtCache.clear()
+    SoundtrackIndex.trimCaches()
+    com.lifestream.player.data.Matching.trimCaches()
+    com.lifestream.player.data.Romaji.trimCaches()
+    com.lifestream.player.data.TitleTranslator.trimCaches()
+    System.gc() // gives the freed memory back to Windows
 }
 
 /** Closes the app from anywhere (e.g. before an update installs). */
@@ -262,6 +307,12 @@ private fun startApp() {
         val playerState by PlayerConnection.state.collectAsState()
         MediaKeys.wanted = playerState.queue.isNotEmpty()
         val navigator = remember { Navigator() }
+        // Minimized for a minute: free what's quick to rebuild.
+        LaunchedEffect(windowState.isMinimized) {
+            if (!windowState.isMinimized) return@LaunchedEffect
+            kotlinx.coroutines.delay(60_000)
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { trimMemory() }
+        }
         Window(
             onCloseRequest = {
                 shutDown()
@@ -296,6 +347,9 @@ private fun startApp() {
             )
         }
     }
+    // Everything is saved by now. Ends the process at once, so no background thread (a network
+    // pool, a Cast search) can keep LifeStream running unseen after its window has closed.
+    kotlin.system.exitProcess(0)
 }
 
 /** 1240 x 820, or a little smaller than the screen on small displays. */
@@ -325,7 +379,8 @@ private fun handleKey(e: androidx.compose.ui.input.key.KeyEvent, navigator: Navi
             }
             true
         }
-        e.key == Key.Spacebar -> {
+        // In a text box, Space types a space (and nothing else).
+        e.key == Key.Spacebar && !com.lifestream.player.ui.Typing.active -> {
             PlayerConnection.togglePlay()
             true
         }

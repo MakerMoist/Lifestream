@@ -38,9 +38,7 @@ object Library {
     private const val MAX_RECENTS = 50
     private const val MAX_FILE_BYTES = 32L * 1024 * 1024
 
-    private const val KEY_PLAYLISTS = "playlists"
     private const val KEY_RECENTS = "recents"
-    private const val KEY_OLD_FAVORITES = "favorites"
     private const val KEY_LAST_PLAYLIST = "last_playlist"
     private const val KEY_PLAY_COUNTS = "play_counts"
     private const val KEY_SORTS = "playlist_sorts"
@@ -55,10 +53,9 @@ object Library {
     private lateinit var prefs: Prefs
 
     /**
-     * Playlists live in their own file, not in SharedPreferences: they can hold thousands of songs,
-     * and SharedPreferences reads everything on the main thread at start-up and rewrites all of it
-     * on every change. The file is written in the background, shortly after changes (several
-     * quick changes become one write), and atomically (a temporary file renamed over it).
+     * Playlists live in their own file, apart from the small settings: they can hold thousands of
+     * songs. The file is written in the background, shortly after changes (several quick changes
+     * become one write), and atomically (a temporary file moved over it).
      */
     private lateinit var playlistsFile: File
     private val saveScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -109,20 +106,7 @@ object Library {
         playlistsFile = File(AppDirs.data, "playlists.json")
         _recents.value = readTracks(prefs.getString(KEY_RECENTS, "[]"))
         _playlists.value = readPlaylists()
-        moveOutOfPreferences()
-        migrateFavorites()
         _lastPlaylistId.value = prefs.getString(KEY_LAST_PLAYLIST, null)?.takeIf { id -> playlist(id) != null }
-    }
-
-    /** Favorites from before playlists existed become a playlist called "Favorites". */
-    private fun migrateFavorites() {
-        if (!prefs.contains(KEY_OLD_FAVORITES)) return
-        val old = readTracks(prefs.getString(KEY_OLD_FAVORITES, "[]"))
-        if (old.isNotEmpty() && _playlists.value.size < MAX_PLAYLISTS) {
-            _playlists.value = _playlists.value + Playlist(UUID.randomUUID().toString(), "Favorites", old)
-            savePlaylists()
-        }
-        prefs.edit().remove(KEY_OLD_FAVORITES).apply()
     }
 
     fun canCreatePlaylist() = _playlists.value.size < MAX_PLAYLISTS
@@ -263,16 +247,11 @@ object Library {
     }
 
     /**
-     * Adds a playlist from an exported file's contents. Only LifeStream's own exports are accepted:
-     * the right format and version, and a fingerprint that matches (a changed or foreign file is
-     * refused). Every song is checked like any saved song.
+     * A LifeStream export file's playlist name and songs, or null if it isn't one. Only LifeStream's
+     * own exports (from Windows or Android) are accepted: the right format and version, and a
+     * fingerprint that matches (a changed or foreign file is refused). Every song is checked like
+     * any saved song. Any thread.
      */
-    fun importText(text: String): ImportResult {
-        val (name, tracks) = readImport(text) ?: return ImportResult.NotAPlaylist
-        return addImported(name, tracks)
-    }
-
-    /** A LifeStream export file's playlist name and songs, or null if it isn't one. Any thread. */
     fun readImport(text: String): Pair<String, List<Track>>? {
         if (text.length > MAX_EXPORT_BYTES) return null
         val o = runCatching { JSONObject(text) }.getOrNull() ?: return null
@@ -351,15 +330,10 @@ object Library {
     private fun cleanName(raw: String, fallback: String): String =
         plainText(raw).replace(whitespace, " ").trim().take(MAX_NAME_LENGTH).ifBlank { fallback }
 
-    /** From the playlists file, or (before 1.5.1) from SharedPreferences. */
+    /** From the playlists file (a damaged or runaway file is ignored rather than read into memory). */
     private fun readPlaylists(): List<Playlist> = runCatching {
-        val text = when {
-            // A damaged or runaway file is ignored rather than read into memory.
-            playlistsFile.exists() && playlistsFile.length() <= MAX_FILE_BYTES -> playlistsFile.readText()
-            playlistsFile.exists() -> "[]"
-            else -> prefs.getString(KEY_PLAYLISTS, "[]")
-        }
-        val arr = JSONArray(text)
+        if (!playlistsFile.exists() || playlistsFile.length() > MAX_FILE_BYTES) return@runCatching emptyList()
+        val arr = JSONArray(playlistsFile.readText())
         (0 until arr.length()).mapNotNull { i ->
             val o = arr.optJSONObject(i) ?: return@mapNotNull null
             val id = o.optString("id").takeIf { playlistId.matches(it) } ?: return@mapNotNull null
@@ -370,13 +344,6 @@ object Library {
             )
         }.distinctBy { it.id }.take(MAX_PLAYLISTS)
     }.getOrDefault(emptyList())
-
-    /** One-time move of playlists from SharedPreferences into their own file. */
-    private fun moveOutOfPreferences() {
-        if (!prefs.contains(KEY_PLAYLISTS)) return
-        if (!playlistsFile.exists()) writePlaylistsFile(_playlists.value)
-        if (playlistsFile.exists()) prefs.edit().remove(KEY_PLAYLISTS).commit()
-    }
 
     /** Writes the playlists now (when the app closes, so a change just made isn't lost). */
     fun flush() {
@@ -411,7 +378,6 @@ object Library {
                 p.tracks.forEach { tracks.put(it.toJson()) }
                 arr.put(JSONObject().put("id", p.id).put("name", p.name).put("tracks", tracks))
             }
-            // (Windows can't rename over an existing file, so this replaces it in one step.)
             writeAtomically(playlistsFile, arr.toString())
         }
     }

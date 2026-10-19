@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -186,12 +185,17 @@ class SettingsViewModel : ViewModel() {
     }
 
     /** Runs the verified installer and closes LifeStream so it can be updated. */
-    fun install(installer: File) {
-        try {
-            Updater.install(installer)
-            com.lifestream.player.AppExit.request()
-        } catch (e: Exception) {
-            state = UpdateState.Failed(e.message ?: "Couldn't start the installer.")
+    fun install(release: Updater.Release, installer: File) {
+        viewModelScope.launch {
+            try {
+                // Re-checking a large installer takes a moment: done off the window's thread.
+                withContext(Dispatchers.IO) { Updater.install(installer, release.sha256) }
+                com.lifestream.player.AppExit.request()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                state = UpdateState.Failed(e.message ?: "Couldn't start the installer.")
+            }
         }
     }
 
@@ -278,7 +282,7 @@ fun UpdatePrompt() {
             when (val s = vm.state) {
                 is UpdateState.Available -> TextButton(onClick = { vm.download(s.release) }) { Text(if (Updater.isPortable) "Download" else "Update") }
                 is UpdateState.ReadyToInstall ->
-                    TextButton(onClick = { vm.install(s.installer) }) { Text("Install") }
+                    TextButton(onClick = { vm.install(s.release, s.installer) }) { Text("Install") }
                 is UpdateState.Downloading -> Unit
                 else -> TextButton(onClick = { vm.dismissPrompt() }) { Text("OK") }
             }
@@ -343,7 +347,6 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
     Column(
         Modifier
             .fillMaxSize()
-            .statusBarsPadding()
             .scrollWithBar(scroll)
             .padding(bottom = 24.dp),
     ) {
@@ -369,7 +372,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
             }
             // What it continues with (only while it's on).
             Spacer(Modifier.height(8.dp))
-            // Both on one line, sharing it evenly (the text shrinks a little on narrow phones).
+            // Both on one line, sharing it evenly (the text shrinks a little in a narrow window).
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
                     selected = continueMode == AppSettings.ContinueMode.SAME_TITLE,
@@ -689,7 +692,7 @@ private fun UpdateSection(vm: SettingsViewModel, showActions: Boolean = true) {
                 "Version ${s.release.versionName} is downloaded and verified. LifeStream closes while it installs; confirm when Windows asks.",
                 style = MaterialTheme.typography.bodyMedium,
             )
-            if (showActions) Button(onClick = { vm.install(s.installer) }) { Text("Install") }
+            if (showActions) Button(onClick = { vm.install(s.release, s.installer) }) { Text("Install") }
         }
 
         is UpdateState.Failed -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -733,7 +736,7 @@ private fun CustomCacheSizeDialog(currentMb: Int, usedBytes: Long, onDismiss: ()
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                         keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
                     ),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().then(com.lifestream.player.ui.Typing.field()),
                 )
                 Spacer(Modifier.height(12.dp))
                 // Moves in whole GB, with a dot only at 1 GB and every 5 GB (not one per GB).
@@ -871,7 +874,7 @@ private fun SettingsCard(content: @Composable () -> Unit) {
 
 /**
  * One of the saved-songs sizes: a small box styled like the other choices, narrow enough for six
- * on one line (its text shrinks a little on narrow phones rather than being cut off).
+ * on one line (its text shrinks a little in a narrow window rather than being cut off).
  */
 @Composable
 private fun SizeChoice(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {

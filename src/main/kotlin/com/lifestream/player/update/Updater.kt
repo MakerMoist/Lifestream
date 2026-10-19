@@ -142,11 +142,28 @@ object Updater {
      * Runs the verified installer (Windows asks to confirm) and closes LifeStream so it can be
      * replaced. Only a file this app downloaded and verified, in its own update folder, is run.
      */
-    fun install(installer: File) {
+    fun install(installer: File, sha256: String) {
         val dir = File(System.getProperty("java.io.tmpdir"), "LifeStream-Update").canonicalFile
         val file = installer.canonicalFile
         if (file.parentFile != dir || !file.name.endsWith(".msi") || !file.isFile) throw IOException("Unexpected installer.")
-        val msiexec = File(System.getenv("SystemRoot") ?: "C:\\Windows", "System32\\msiexec.exe")
+        // Checked again just before it runs: the file can't have been swapped since it was downloaded.
+        val actual = file.inputStream().use { input ->
+            val digest = MessageDigest.getInstance("SHA-256")
+            val buf = ByteArray(64 * 1024)
+            while (true) {
+                val n = input.read(buf)
+                if (n < 0) break
+                digest.update(buf, 0, n)
+            }
+            digest.digest().joinToString("") { "%02x".format(it) }
+        }
+        if (!sha256Hex.matches(sha256) || actual != sha256) {
+            file.delete()
+            throw IOException("The update didn't match its checksum, so it was discarded.")
+        }
+        // msiexec from Windows' own folder, never one found on the PATH.
+        val systemRoot = System.getenv("SystemRoot")?.takeIf { File(it, "System32\\msiexec.exe").isFile } ?: "C:\\Windows"
+        val msiexec = File(systemRoot, "System32\\msiexec.exe")
         ProcessBuilder(msiexec.path, "/i", file.path).start()
     }
 

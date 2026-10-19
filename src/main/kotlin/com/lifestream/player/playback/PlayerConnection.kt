@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 
-/** Repeat settings (the same numbers the Android app's player uses). */
+/** Repeat settings. */
 object RepeatMode {
     const val OFF = 0
     const val ONE = 1
@@ -269,8 +269,6 @@ object PlayerConnection {
         previousTrack()
     }
 
-    fun nextTrack() = next()
-
     fun previousTrack() {
         if (queue.isEmpty()) return
         pos = when {
@@ -421,8 +419,6 @@ object PlayerConnection {
         playWhenReady = play
         if (queue.isNotEmpty() && play) loadCurrent(force = true) else publish()
     }
-
-    val isCasting: Boolean get() = output !== LocalOutput
 
     // ---- Internals ----
 
