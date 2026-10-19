@@ -65,7 +65,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -81,7 +80,7 @@ import com.lifestream.player.ui.theme.LsColors
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit, onSwipePastEdge: (Int) -> Unit = {}) {
+fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
     val playlists by Library.playlists.collectAsStateWithLifecycle()
     val recents by Library.recents.collectAsStateWithLifecycle()
     // Swipe left and right between Playlists and History (or tap their tabs).
@@ -148,35 +147,11 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit, onSwipePastEdge: (Int) -> 
             Tab(selected = pager.currentPage == 1, onClick = { scope.launch { pager.animateScrollToPage(1) } }, text = { Text("History") })
         }
 
-        // Swiping on past the end of Playlists or History moves to the tab that way (a swipe right
-        // on Playlists goes to Settings, a swipe left on History to Search), like a swipe anywhere
-        // else in the app.
-        val pastEdge = remember {
-            object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
-                var leftover = 0f
-                override fun onPostScroll(
-                    consumed: androidx.compose.ui.geometry.Offset,
-                    available: androidx.compose.ui.geometry.Offset,
-                    source: androidx.compose.ui.input.nestedscroll.NestedScrollSource,
-                ): androidx.compose.ui.geometry.Offset {
-                    if (source == androidx.compose.ui.input.nestedscroll.NestedScrollSource.UserInput) leftover += available.x
-                    return androidx.compose.ui.geometry.Offset.Zero
-                }
-
-                override suspend fun onPreFling(available: androidx.compose.ui.unit.Velocity): androidx.compose.ui.unit.Velocity {
-                    val pulled = leftover
-                    leftover = 0f
-                    if (kotlin.math.abs(pulled) > 160f) onSwipePastEdge(if (pulled > 0) 1 else -1)
-                    return androidx.compose.ui.unit.Velocity.Zero
-                }
-            }
-        }
         HorizontalPager(
             state = pager,
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth()
-                .nestedScroll(pastEdge),
+                .fillMaxWidth(),
         ) { page ->
             if (page == 0) {
                 Column(Modifier.fillMaxSize()) {

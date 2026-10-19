@@ -185,7 +185,7 @@ object SoundtrackIndex {
     /** A fingerprint of where [game]'s songs come from, to notice when an update changes it. */
     private fun sourcesKey(game: Game): String = listOf(
         SONG_RULES, game.query, game.albumQueries, game.match, game.maxAlbums, game.releaseOrder,
-        game.extras.map { "${it.title}|${it.artist}|${it.videoId}" }, game.skipIds.sorted(),
+        game.extras.map { "${it.title}|${it.artist}|${it.videoId}" + if (it.albumArt) "|cover" else "" }, game.skipIds.sorted(),
     ).toString().hashCode().toString(16)
 
     /** Bump when the rules for which names are the same song change, so titles are re-listed. */
@@ -197,14 +197,18 @@ object SoundtrackIndex {
      * renamed in an update shows straight away.
      */
     private fun withPinnedExtras(game: Game, tracks: List<Track>): List<Track> {
-        val pinned = game.extras.mapNotNull { it.pinnedTrack() }
+        // Extras shown with the soundtrack's cover take it from the title's first song.
+        val cover = tracks.firstOrNull()?.thumbnail
+        val pinned = game.extras.mapNotNull { e ->
+            e.pinnedTrack()?.let { if (e.albumArt && cover != null) it.copy(thumbnail = cover) else it }
+        }
         if (pinned.isEmpty()) return tracks
         val byId = pinned.associateBy { it.id }
         val have = HashSet<String>()
         val out = tracks.map { t ->
             val p = byId[t.id] ?: return@map t
             have += t.id
-            if (t.title == p.title) t else t.copy(title = p.title)
+            if (t.title == p.title && t.thumbnail == p.thumbnail) t else t.copy(title = p.title, thumbnail = p.thumbnail)
         }
         val missing = pinned.filter { it.id !in have }.map { ArtistCredits.fix(it.copy(gameId = game.id)) }
         return if (missing.isEmpty()) out else out + missing

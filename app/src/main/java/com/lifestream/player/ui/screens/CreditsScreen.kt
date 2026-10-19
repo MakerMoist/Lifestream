@@ -45,6 +45,7 @@ object Credits {
             ),
             Credit("Jetpack Compose (UI, Foundation, Material 3)", "Google LLC and the Android Open Source Project", APACHE),
             Credit("Material Icons", "Google LLC", APACHE),
+            Credit("Noto Serif (the \u201CLS\u201D letters in the notification icon)", "Google LLC and Adobe", "SIL Open Font License 1.1"),
         ),
         "Playback & Casting" to listOf(
             Credit("AndroidX Media3 (ExoPlayer, Session, DataSource, Database, Cast)", "Google LLC and the Android Open Source Project", APACHE),
@@ -91,6 +92,7 @@ object Credits {
             Credit("Python", "Python Software Foundation", "PSF License"),
             Credit("Pillow", "Jeffrey A. Clark and contributors", "MIT-CMU License"),
             Credit("NumPy", "NumPy Developers", "BSD 3-Clause License"),
+            Credit("fontTools", "Just van Rossum and fontTools contributors", "MIT License"),
             Credit("JUnit 4", "JUnit Team", "Eclipse Public License 1.0"),
             Credit("AndroidX Test", "Google LLC and the Android Open Source Project", APACHE),
         ),

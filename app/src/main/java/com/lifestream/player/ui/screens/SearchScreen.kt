@@ -212,7 +212,7 @@ fun SearchScreen(onOpenGame: (Game) -> Unit) {
             if (confirmClear) {
                 AlertDialog(
                     onDismissRequest = { confirmClear = false },
-                    title = { Text("Clear Recent Searches?") },
+                    title = { com.lifestream.player.ui.components.OneLineDialogTitle("Clear Recent Searches?") },
                     text = { Text("This removes all ${recentSearches.size} recent searches.") },
                     confirmButton = {
                         TextButton(onClick = {

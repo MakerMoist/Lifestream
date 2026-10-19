@@ -160,11 +160,11 @@ object Catalog {
                 "Kingsglaive Final Fantasy XV original soundtrack",
             ),
             // Florence + The Machine's official "Songs From Final Fantasy XV": the theme song
-            // and the other two songs written for the game.
+            // and the other two songs written for the game, shown with the soundtrack's cover.
             extras = listOf(
-                ExtraSong("Stand by Me", "Florence + The Machine", "Mn37d5ne2Zw", 246),
-                ExtraSong("Too Much Is Never Enough", "Florence + The Machine", "lxTKlBFIPfM", 349),
-                ExtraSong("I Will Be", "Florence + The Machine", "UEQN-AlqD_w", 325),
+                ExtraSong("Stand by Me", "Florence + The Machine", "Mn37d5ne2Zw", 246, albumArt = true),
+                ExtraSong("Too Much Is Never Enough", "Florence + The Machine", "lxTKlBFIPfM", 349, albumArt = true),
+                ExtraSong("I Will Be", "Florence + The Machine", "UEQN-AlqD_w", 325, albumArt = true),
             )),
         Game("ff16", "XVI", "Final Fantasy XVI", 2023, "Masayoshi Soken",
             "Final Fantasy XVI original soundtrack", c(0xFF450A0A), c(0xFFFB923C), match = num("XVI"), art = R.drawable.art_ff16),

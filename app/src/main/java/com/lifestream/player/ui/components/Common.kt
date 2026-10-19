@@ -51,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -300,6 +301,20 @@ fun SlimSearchField(
             },
         )
     }
+}
+
+/** A dialog title kept on one line: it shrinks a little to fit instead of wrapping. */
+@Composable
+fun OneLineDialogTitle(text: String) {
+    val style = MaterialTheme.typography.headlineSmall
+    androidx.compose.foundation.text.BasicText(
+        text,
+        maxLines = 1,
+        style = style.copy(color = androidx.compose.material3.LocalContentColor.current),
+        autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(
+            minFontSize = 14.sp, maxFontSize = style.fontSize, stepSize = 0.5.sp,
+        ),
+    )
 }
 
 /** A big button's icon and label, centered together on the button. */

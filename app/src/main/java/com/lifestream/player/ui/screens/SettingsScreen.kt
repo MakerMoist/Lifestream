@@ -58,6 +58,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalContext
@@ -834,6 +835,7 @@ private fun AndroidAutoSetupHint(context: Context) {
  * "Custom" saved-songs size: a slider, or type the number of GB in the box above it. Up to 50 GB,
  * or less if the phone doesn't have that much room (counting what saved songs already use).
  */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun CustomCacheSizeDialog(currentMb: Int, usedBytes: Long, onDismiss: () -> Unit, onChoose: (Int) -> Unit) {
     val context = LocalContext.current
@@ -864,6 +866,8 @@ private fun CustomCacheSizeDialog(currentMb: Int, usedBytes: Long, onDismiss: ()
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(12.dp))
+                // Moves in whole GB, with a dot only at 1 GB and every 5 GB (not one per GB).
+                val sliderColors = androidx.compose.material3.SliderDefaults.colors()
                 androidx.compose.material3.Slider(
                     value = gb.toFloat(),
                     onValueChange = {
@@ -871,7 +875,30 @@ private fun CustomCacheSizeDialog(currentMb: Int, usedBytes: Long, onDismiss: ()
                         typed = gb.toString()
                     },
                     valueRange = 1f..maxGb.toFloat(),
-                    steps = (maxGb - 2).coerceAtLeast(0),
+                    colors = sliderColors,
+                    track = { state ->
+                        androidx.compose.material3.SliderDefaults.Track(
+                            sliderState = state,
+                            colors = sliderColors,
+                            drawStopIndicator = null,
+                            modifier = Modifier.drawWithContent {
+                                drawContent()
+                                if (maxGb <= 1) return@drawWithContent
+                                val radius = 2.dp.toPx()
+                                val edge = size.height / 2
+                                val marks = listOf(1) + (5..maxGb step 5)
+                                for (mark in marks) {
+                                    val fraction = (mark - 1f) / (maxGb - 1f)
+                                    val x = (fraction * size.width).coerceIn(edge, size.width - edge)
+                                    drawCircle(
+                                        color = if (mark <= gb) sliderColors.activeTickColor else sliderColors.inactiveTickColor,
+                                        radius = radius,
+                                        center = androidx.compose.ui.geometry.Offset(x, size.height / 2),
+                                    )
+                                }
+                            },
+                        )
+                    },
                 )
                 Text(
                     "1 GB to $maxGb GB" + if (maxGb < AppSettings.MAX_CACHE_LIMIT_MB / 1024) " (the room this phone has)." else ".",
