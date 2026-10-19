@@ -60,8 +60,32 @@ object Updater {
     val currentVersionCode: Int get() = BuildConfig.VERSION_CODE
     val currentVersionName: String get() = BuildConfig.VERSION_NAME
 
-    /** Latest published release, or throws with a readable message. */
+    /**
+     * Latest published release, or throws with a readable message.
+     *
+     * Read straight from the release's own files on github.com first: GitHub's API allows only 60
+     * unsigned requests an hour per internet address, and on mobile data many phones share one
+     * address, so checks through it often failed as "rate-limited". The API is the fallback.
+     */
     suspend fun fetchLatest(): Release = withContext(Dispatchers.IO) {
+        try {
+            fromReleaseFiles()
+        } catch (direct: IOException) {
+            try {
+                fromApi()
+            } catch (api: Exception) {
+                if (api is kotlinx.coroutines.CancellationException) throw api
+                throw direct // the first problem is the one worth showing
+            }
+        }
+    }
+
+    private fun fromReleaseFiles(): Release {
+        val base = "https://github.com/${BuildConfig.UPDATE_REPO}/releases/download/latest/"
+        return release(base + "version.json", base + "Lifestream.apk", apkSize = -1)
+    }
+
+    private fun fromApi(): Release {
         val api = "https://api.github.com/repos/${BuildConfig.UPDATE_REPO}/releases/tags/latest"
         val release = JSONObject(getText(api, accept = "application/vnd.github+json"))
         val assets = release.getJSONArray("assets")
@@ -83,16 +107,25 @@ object Updater {
         if (!isOwnReleaseAsset(versionUrl!!) || !isOwnReleaseAsset(apkUrl!!)) {
             throw IOException("The latest release points somewhere unexpected, so it was ignored.")
         }
-        val info = JSONObject(getText(versionUrl!!))
+        return release(versionUrl!!, apkUrl!!, apkSize)
+    }
+
+    /** Reads the release's version.json and pairs it with its APK's address. */
+    private fun release(versionUrl: String, apkUrl: String, apkSize: Long): Release {
+        val info = try {
+            JSONObject(getText(versionUrl))
+        } catch (e: org.json.JSONException) {
+            throw IOException("The release's version file couldn't be read.")
+        }
         val sha = info.optString("sha256").lowercase()
         if (!sha.matches(sha256Hex)) throw IOException("The release's checksum is missing or invalid.")
         val code = info.optInt("versionCode", -1)
         if (code <= 0) throw IOException("The release's version is missing or invalid.")
-        Release(
+        return Release(
             versionCode = code,
             versionName = cleanVersionName(info.optString("versionName", "?")),
             sha256 = sha,
-            apkUrl = apkUrl!!,
+            apkUrl = apkUrl,
             apkSize = apkSize,
         )
     }
@@ -201,7 +234,10 @@ object Updater {
         val request = Request.Builder().url(url).header("User-Agent", "LifeStream")
             .apply { if (accept != null) header("Accept", accept) }
             .build()
-        client.newCall(request).execute().use { response ->
+        val call = client.newCall(request)
+        // A check never hangs on a stalled connection: it gives up after 30 seconds in all.
+        call.timeout().timeout(30, java.util.concurrent.TimeUnit.SECONDS)
+        call.execute().use { response ->
             requireGitHub(response.request.url.toString())
             when {
                 response.code == 404 -> throw IOException("No published release found. Is the repository public?")
