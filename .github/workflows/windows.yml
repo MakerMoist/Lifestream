@@ -80,8 +80,14 @@ jobs:
           $env:LIFESTREAM_SELFTEST = "1"
           $p = Start-Process -FilePath $exe -PassThru
           Start-Sleep -Seconds 40
-          if ($p.HasExited) { Write-Output "::error::LifeStream closed by itself (exit code $($p.ExitCode))"; exit 1 }
-          Write-Output "::notice::LifeStream started on Windows and kept running"
+          $data = Join-Path $env:APPDATA "LifeStream"
+          $crash = Join-Path $data "crash.log"
+          if (Test-Path $crash) { Get-Content $crash | Select-Object -First 60 | ForEach-Object { Write-Output "::error::$_" } }
+          $log = Join-Path $data "selftest.log"
+          if (Test-Path $log) { Get-Content $log | ForEach-Object { Write-Output "::notice::$_" } }
+          # The window itself must be open (a launcher error box also keeps the process alive).
+          $titles = Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object { $_.MainWindowTitle }
+          $opened = $titles -contains "LifeStream"
           # A picture of the window, to check the layout.
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
           $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
@@ -89,15 +95,16 @@ jobs:
           [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
           New-Item -ItemType Directory -Force shots | Out-Null
           $bmp.Save("shots/window.png")
-          $log = Join-Path $env:APPDATA "LifeStream/selftest.log"
-          if (Test-Path $log) { Get-Content $log | ForEach-Object { Write-Output "::notice::$_" } }
-          Stop-Process -Id $p.Id -Force
+          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          if ((-not $opened) -or $p.HasExited) { Write-Output "::error::LifeStream's window didn't open (windows: $($titles -join ', '))"; exit 1 }
+          Write-Output "::notice::LifeStream opened its window on Windows and kept running"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: LifeStream-Windows
           path: out/
           if-no-files-found: error
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
         with:
           name: screenshot
           path: shots/

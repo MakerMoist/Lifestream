@@ -212,7 +212,30 @@ private class Navigator {
     }
 }
 
+/** Writes what went wrong to crash.log in LifeStream's data folder (nothing is sent anywhere). */
+fun logCrash(where: String, t: Throwable) {
+    runCatching {
+        val dir = runCatching { AppDirs.data }.getOrNull()
+            ?: java.io.File(System.getenv("APPDATA") ?: System.getProperty("user.home"), "LifeStream").apply { mkdirs() }
+        val text = "${java.time.LocalDateTime.now()} $where\n${t.stackTraceToString()}\n"
+        java.io.File(dir, "crash.log").let { f ->
+            if (f.length() > 256 * 1024) f.writeText("")
+            f.appendText(text)
+        }
+    }
+}
+
 fun main() {
+    Thread.setDefaultUncaughtExceptionHandler { thread, t -> logCrash("thread ${thread.name}", t) }
+    try {
+        startApp()
+    } catch (t: Throwable) {
+        logCrash("start-up", t)
+        throw t
+    }
+}
+
+private fun startApp() {
     startUp()
     PlayerConnection.connect()
     Discord.start()
