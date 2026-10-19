@@ -191,6 +191,9 @@ class SearchAndNamesTest {
     fun uploadTagsAreRemoved() {
         assertEquals("Prelude", tidySongTitle("Prelude (Official Audio)"))
         assertEquals("Prelude", tidySongTitle("[Official] Prelude"))
+        assertEquals("Prelude", tidySongTitle("Prelude -"))
+        assertEquals("Last Battle -2-", tidySongTitle("Last Battle -2-"))
+        assertEquals("Eternal Wind -.333 mix-", tidySongTitle("Eternal Wind -.333 mix-"))
         assertEquals("Nobuo Uematsu", ArtistCredits.canonical("【公式】植松伸夫TV"))
         assertEquals("Masashi Hamauzu & Mitsuto Suzuki", ArtistCredits.forSong("ff7r", "SQUARE ENIX MUSIC"))
         // Credits naming several people keep all of them, and fixing a credit twice changes nothing.
