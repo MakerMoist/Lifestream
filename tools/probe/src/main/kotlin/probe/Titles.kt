@@ -83,10 +83,10 @@ fun runTitles(only: Set<String>) {
             Thread.sleep(120)
         }
         report.append("| ${game.id} | $total | ${total - wanted.size} | ${wanted.size} |\n")
-        wanted.values.take(40).forEach { misses.append("- ${game.id}: ${it.title}\n") }
+        wanted.values.forEach { misses.append("- ${game.id}: `${it.id}` ${it.title}\n") }
     }
     val dir = File(System.getenv("PROBE_OUT") ?: "report.md").absoluteFile.parentFile
     File(dir, "official_titles.json").writeText(JSONObject(map as Map<*, *>).toString(1))
-    File(dir, "report.md").writeText("$report\n## Still Japanese (first 40 per game)\n\n$misses")
+    File(dir, "report.md").writeText("$report\n## Still Japanese\n\n$misses")
     println("named ${map.size}")
 }
