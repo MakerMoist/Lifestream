@@ -156,3 +156,43 @@ fun runLostOdyssey() {
     }
     report.writeText(out.toString())
 }
+
+
+/**
+ * `--tagging`: the names each title with a DS / PSP soundtrack will show, worked out exactly like
+ * the app (official English names from the app's official_titles.json, then the same tagging).
+ */
+fun runTagging() {
+    val names = runCatching {
+        val json = org.json.JSONObject(File("../../app/src/main/assets/official_titles.json").readText())
+        json.keySet().associateWith { json.getString(it) }
+    }.getOrDefault(emptyMap())
+    val out = StringBuilder("# DS / PSP names (${names.size} official names known)\n\n")
+    for (game in Catalog.games.filter { it.versions.isNotEmpty() }) {
+        println("tagging ${game.id}")
+        out.append("## ${game.title}\n\n")
+        fun name(s: Song) = names[s.id] ?: s.title
+        val original = originalSongs(game)
+        val keys = HashSet<String>()
+        original.forEach { keys += com.lifestream.player.data.Matching.songKey(name(it), game.fullSongTitles) }
+        game.extras.forEach { keys += com.lifestream.player.data.Matching.songKey(it.title, game.fullSongTitles) }
+        out.append("Original: ${original.size} songs\n\n")
+        original.forEach { out.append("- `${it.id}` ${name(it)} — key `${com.lifestream.player.data.Matching.songKey(name(it), game.fullSongTitles)}`\n") }
+        out.append("\n")
+        for (v in game.versions) {
+            val seen = HashSet<String>()
+            out.append("### ${v.tag}\n\n")
+            for (s in versionSongs(v)) {
+                if (s.id in v.skipIds) { out.append("- `${s.id}` SKIPPED ${name(s)}\n"); continue }
+                val n = name(s)
+                val key = com.lifestream.player.data.Matching.songKey(n, game.fullSongTitles)
+                val tagged = v.tagAll || s.id in v.tagIds || key in keys
+                val title = if (tagged) "$n (${v.tag})" else n
+                val dup = !seen.add(com.lifestream.player.data.Matching.songKey(title, game.fullSongTitles))
+                out.append("- `${s.id}` ${if (dup) "DUPLICATE " else ""}**$title**${if (tagged) "" else " — untagged, key `$key`"}\n")
+            }
+            out.append("\n")
+        }
+    }
+    File(System.getenv("PROBE_OUT") ?: "report.md").writeText(out.toString())
+}

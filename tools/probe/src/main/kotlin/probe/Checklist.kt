@@ -128,9 +128,24 @@ internal fun gameSongs(game: Game, log: StringBuilder): List<Song> {
             songs.putIfAbsent(item.id, item.copy(title = title))
         }
     }
+    // The DS / PSP release's songs too (their official English names are collected the same way).
+    for (v in game.versions) {
+        val items = runCatching { allItems(v.url) }.getOrDefault(emptyList())
+        log.append("- version (${v.tag}): ${items.size}\n")
+        for (item in items) songs.putIfAbsent(item.id, item)
+    }
     log.append("\n")
     return songs.values.toList()
 }
+
+/** The songs of the title's original release only (what the page lists before its DS / PSP songs). */
+internal fun originalSongs(game: Game): List<Song> {
+    val versionIds = game.versions.flatMap { v -> runCatching { allItems(v.url) }.getOrDefault(emptyList()).map { it.id } }.toSet()
+    return gameSongs(game, StringBuilder()).filterNot { it.id in versionIds }
+}
+
+internal fun versionSongs(v: com.lifestream.player.data.VersionAlbum): List<Song> =
+    runCatching { allItems(v.url) }.getOrDefault(emptyList())
 
 private fun allItems(url: String): List<Song> {
     val yt = ServiceList.YouTube
