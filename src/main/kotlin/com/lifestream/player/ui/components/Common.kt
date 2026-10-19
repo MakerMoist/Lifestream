@@ -294,7 +294,7 @@ fun SlimSearchField(
             colors = colors,
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 0.dp),
             container = {
-                androidx.compose.material3.OutlinedTextFieldDefaults.ContainerBox(
+                androidx.compose.material3.OutlinedTextFieldDefaults.Container(
                     enabled = true,
                     isError = false,
                     interactionSource = interaction,
