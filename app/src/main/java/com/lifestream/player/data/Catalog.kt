@@ -18,10 +18,6 @@ object Catalog {
     private const val FF4_DS = "https://music.youtube.com/playlist?list=OLAK5uy_koqCLTLrJo25JQWEJ_8krfeb-vK5_mFgA"
     private const val CRISIS_CORE_PSP = "https://music.youtube.com/playlist?list=OLAK5uy_nBodb5UFKDlDxOZoQBbQQ0_CDoGI0MnZQ"
 
-    /** DS songs named a little differently from the original's (e.g. "Battle 1" for "Battle 1 ~Fanfare"). */
-    private val FF3_DS_TAGGED = setOf("VvFT8IMsOWY")
-    private val FF4_DS_TAGGED = setOf<String>()
-
     /** Other entries in the franchise that must not leak into the original VII. */
     private val notOriginalVII = listOf(
         "REMAKE", "REBIRTH", "INTERGRADE", "INTERMISSION", "CRISIS CORE", "ADVENT CHILDREN",
@@ -46,13 +42,13 @@ object Catalog {
             "Final Fantasy III original soundtrack", c(0xFF14532D), c(0xFF4ADE80),
             match = num("III", exclude = listOf("DS VERSION")), art = R.drawable.art_ff3,
             // The DS remake's soundtrack, after the original's.
-            versions = listOf(VersionAlbum(FF3_DS, "DS", tagIds = FF3_DS_TAGGED)),
+            versions = listOf(VersionAlbum(FF3_DS, "DS", originalNames = VersionNames.FF3_DS_REMAKES, tagIds = VersionNames.FF3_DS_PARTS)),
         ),
         Game("ff4", "IV", "Final Fantasy IV", 1991, "Nobuo Uematsu",
             "Final Fantasy IV original soundtrack", c(0xFF312E81), c(0xFFA5B4FC),
             match = num("IV", exclude = listOf("DS VERSION")), art = R.drawable.art_ff4,
             // The DS remake's soundtrack, after the original's.
-            versions = listOf(VersionAlbum(FF4_DS, "DS", tagIds = FF4_DS_TAGGED)),
+            versions = listOf(VersionAlbum(FF4_DS, "DS", originalNames = VersionNames.FF4_DS_REMAKES, tagIds = VersionNames.FF4_DS_PARTS)),
         ),
         Game("ff5", "V", "Final Fantasy V", 1992, "Nobuo Uematsu",
             "Final Fantasy V original soundtrack", c(0xFF134E4A), c(0xFF5EEAD4), match = num("V"), art = R.drawable.art_ff5,

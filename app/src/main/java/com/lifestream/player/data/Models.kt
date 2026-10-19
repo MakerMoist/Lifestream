@@ -189,9 +189,11 @@ data class VersionAlbum(
     /** Recordings left out by their YouTube id (e.g. one the original's album already has). */
     val skipIds: Set<String> = emptySet(),
     /**
-     * Songs that get [tag] although their name differs a little from the original's (e.g. "Red
-     * Wing" for "Red Wings"); by their YouTube id.
+     * Remakes of the original's songs, by YouTube id → the original's name: listed under it (with
+     * [tag]) where the release names them a little differently ("Red Wings" for "The Red Wings").
      */
+    val originalNames: Map<String, String> = emptyMap(),
+    /** Other songs that get [tag] (e.g. a remake split into parts), by YouTube id. */
     val tagIds: Set<String> = emptySet(),
     /** Every song gets [tag]: the release has the same songs as the original, in other recordings. */
     val tagAll: Boolean = false,
