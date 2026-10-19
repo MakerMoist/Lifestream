@@ -186,10 +186,11 @@ object SoundtrackIndex {
     private fun sourcesKey(game: Game): String = listOf(
         SONG_RULES, game.query, game.albumQueries, game.match, game.maxAlbums, game.releaseOrder,
         game.extras.map { "${it.title}|${it.artist}|${it.videoId}" + if (it.albumArt) "|cover" else "" }, game.skipIds.sorted(),
+        game.versions,
     ).toString().hashCode().toString(16)
 
     /** Bump when the rules for which names are the same song change, so titles are re-listed. */
-    private const val SONG_RULES = 2
+    private const val SONG_RULES = 3
 
     /**
      * A title's extra songs that are pinned to a known recording (e.g. Final Fantasy XV's "Stand
