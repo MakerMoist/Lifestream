@@ -13,7 +13,7 @@ import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQu
  * lists, (2) lists the albums the affected titles use now, and (3) gathers official English names
  * for every Japanese-only song (all of them listed, not just the first 40).
  */
-fun runVersions() {
+fun runVersions(withTitles: Boolean = true) {
     val dir = File(System.getenv("PROBE_OUT") ?: "report.md").absoluteFile.parentFile
     val queries = listOf(
         "Final Fantasy III DS original soundtrack",
@@ -74,7 +74,7 @@ fun runVersions() {
     File(dir, "albums.md").writeText(albums.toString())
 
     // Official English names (writes official_titles.json and report.md).
-    runTitles(emptySet())
+    if (withTitles) runTitles(emptySet()) else File(dir, "report.md").writeText("see versions.md and albums.md\n")
 }
 
 private data class Item(val id: String, val title: String, val artist: String, val secs: Long)

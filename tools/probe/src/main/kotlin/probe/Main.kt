@@ -35,7 +35,7 @@ fun main(args: Array<String>) {
         return
     }
     if ("--versions" in args) {
-        runVersions()
+        runVersions(withTitles = "--no-titles" !in args)
         return
     }
     if ("--editions" in args) {
