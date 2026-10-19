@@ -194,9 +194,10 @@ object MusicRepository {
                 }
                 for (t in result.items) {
                     if (t.id in version.skipIds || t.id in game.skipIds) continue
-                    val tagged = version.tagAll || t.id in version.tagIds ||
-                        Matching.songKey(t.title, game.fullSongTitles) in originalKeys
-                    val title = if (tagged) "${t.title} (${version.tag})" else t.title
+                    val name = version.originalNames[t.id] ?: t.title
+                    val tagged = version.tagAll || t.id in version.originalNames || t.id in version.tagIds ||
+                        Matching.songKey(name, game.fullSongTitles) in originalKeys
+                    val title = if (tagged) "$name (${version.tag})" else name
                     if (!versionKeys.add(Matching.songKey(title, game.fullSongTitles))) continue
                     out += t.copy(title = title, thumbnail = albumCover ?: game.coverArt ?: t.thumbnail)
                 }

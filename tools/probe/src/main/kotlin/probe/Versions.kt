@@ -184,9 +184,9 @@ fun runTagging() {
             out.append("### ${v.tag}\n\n")
             for (s in versionSongs(v)) {
                 if (s.id in v.skipIds) { out.append("- `${s.id}` SKIPPED ${name(s)}\n"); continue }
-                val n = name(s)
+                val n = v.originalNames[s.id] ?: name(s)
                 val key = com.lifestream.player.data.Matching.songKey(n, game.fullSongTitles)
-                val tagged = v.tagAll || s.id in v.tagIds || key in keys
+                val tagged = v.tagAll || s.id in v.originalNames || s.id in v.tagIds || key in keys
                 val title = if (tagged) "$n (${v.tag})" else n
                 val dup = !seen.add(com.lifestream.player.data.Matching.songKey(title, game.fullSongTitles))
                 out.append("- `${s.id}` ${if (dup) "DUPLICATE " else ""}**$title**${if (tagged) "" else " — untagged, key `$key`"}\n")
