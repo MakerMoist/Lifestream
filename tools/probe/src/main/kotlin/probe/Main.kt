@@ -30,6 +30,10 @@ fun main(args: Array<String>) {
         runSearch(args.drop(1))
         return
     }
+    if ("--lo" in args) {
+        runLostOdyssey()
+        return
+    }
     if ("--versions" in args) {
         runVersions()
         return

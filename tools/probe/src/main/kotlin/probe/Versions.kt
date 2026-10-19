@@ -100,3 +100,44 @@ private fun tracks(url: String): List<Item> {
         )
     }
 }
+
+/**
+ * `--lo`: where a sharp Lost Odyssey cover could come from: album results (with their cover at
+ * full size, saved next to the report), and how big each song's own video artwork really is.
+ */
+fun runLostOdyssey() {
+    val report = File(System.getenv("PROBE_OUT") ?: "report.md").absoluteFile
+    val img = File(report.parentFile, "img").apply { mkdirs() }
+    val out = StringBuilder("# Lost Odyssey artwork\n\n")
+    fun save(name: String, url: String): String = runCatching {
+        val bytes = java.net.URI(url).toURL().openStream().use { it.readBytes() }
+        File(img, name).writeBytes(bytes)
+        val i = javax.imageio.ImageIO.read(bytes.inputStream())
+        "${i?.width}x${i?.height}"
+    }.getOrElse { "failed (${it.javaClass.simpleName})" }
+    var n = 0
+    for (q in listOf("Lost Odyssey original soundtrack", "Lost Odyssey", "ロストオデッセイ オリジナル・サウンドトラック", "Lost Odyssey Nobuo Uematsu")) {
+        out.append("## Albums: $q\n\n")
+        runCatching { search(q, F.MUSIC_ALBUMS, pages = 1) }.getOrDefault(emptyList()).filterIsInstance<PlaylistInfoItem>().take(10).forEach { a ->
+            val cover = a.thumbnails.maxByOrNull { it.height }?.url
+            val big = cover?.replace(Regex("=(w\\d+-h\\d+|s\\d+)([-a-z0-9]*)$"), "=w1200-h1200-l90-rj")
+            val size = if (big != null && (a.name ?: "").uppercase().contains("LOST ODYSSEY")) save("album${n++}.jpg", big) else ""
+            out.append("- ${a.name} — ${a.uploaderName} — ${a.streamCount} — ${a.url} — cover $cover $size\n")
+        }
+        out.append("\n")
+    }
+    val game = Catalog.game("lo")!!
+    val src = sourcesFor(game, StringBuilder())
+    out.append("## Source now\n\n")
+    src.forEach { out.append("- ${it.title} — ${it.artist} — ${it.trackCount} — ${it.url}\n") }
+    src.firstOrNull()?.let { a ->
+        val ids = tracks(a.url).take(12).map { it.id }
+        for (id in ids) {
+            val sizes = listOf("maxresdefault", "sddefault", "hqdefault").joinToString(", ") { k ->
+                "$k ${save("$id-$k.jpg", "https://i.ytimg.com/vi/$id/$k.jpg")}"
+            }
+            out.append("- `$id`: $sizes\n")
+        }
+    }
+    report.writeText(out.toString())
+}
