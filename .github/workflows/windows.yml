@@ -89,6 +89,11 @@ jobs:
           $titles = Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object { $_.MainWindowTitle }
           $opened = $titles -contains "LifeStream"
           $exited = $p.HasExited
+          # Opening it again hands over to the running copy (which shows itself) and quits.
+          $second = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 8
+          if ($second.HasExited) { Write-Output "::notice::Opening it again brought the running copy forward and quit" }
+          else { Write-Output "::error::A second copy kept running"; Stop-Process -Id $second.Id -Force -ErrorAction SilentlyContinue; exit 1 }
           # A picture of the window, to check the layout.
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
           $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
