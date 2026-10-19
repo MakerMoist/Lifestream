@@ -27,6 +27,8 @@ dependencies {
     implementation(compose.material3)
     implementation(compose.materialIconsExtended)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.2")
+    implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1")
+    implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.9.1")
 
     // YouTube Music metadata and audio links (the same extractor the Android app uses).
     implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.5")

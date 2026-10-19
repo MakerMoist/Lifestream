@@ -128,3 +128,12 @@ fun writeAtomically(file: File, text: String): Boolean = runCatching {
         true
     }.getOrDefault(false)
 }
+
+/** The same as [writeAtomically], for bytes. */
+fun writeAtomicallyBytes(file: File, bytes: ByteArray): Boolean = runCatching {
+    file.parentFile?.mkdirs()
+    val tmp = File(file.parentFile, file.name + ".tmp")
+    tmp.writeBytes(bytes)
+    java.nio.file.Files.move(tmp.toPath(), file.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+    true
+}.getOrDefault(false)
