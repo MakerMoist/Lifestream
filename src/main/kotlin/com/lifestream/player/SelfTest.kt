@@ -33,7 +33,9 @@ object SelfTest {
             ).let { if (it) "48 kHz stereo supported" else "no sound device (normal on a build server)" }
         }
         step("Decoder") {
-            org.bytedeco.ffmpeg.global.avformat.avformat_version().let { "FFmpeg native code loaded ($it)" }
+            val version = org.bytedeco.ffmpeg.global.avformat.avformat_version()
+            val unpacked = java.io.File(AppDirs.cache, "natives").walkTopDown().count { it.isFile }
+            "FFmpeg native code loaded ($version), $unpacked files unpacked in LifeStream's own folder"
         }
         step("Stream") {
             val r = StreamResolver.resolveStream("Mn37d5ne2Zw", 140)

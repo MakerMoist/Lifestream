@@ -140,6 +140,27 @@ private object SingleInstance {
     }.getOrDefault(true) // if the check itself can't be made, start anyway
 }
 
+/**
+ * The audio decoder's native files are unpacked from the app on first use. They go in
+ * LifeStream's own folder (not a ".javacpp" folder in your user folder, where they'd stay after
+ * LifeStream is uninstalled). Copies earlier versions left in the old place are removed.
+ */
+private fun useOwnNativesFolder() {
+    val dir = java.io.File(AppDirs.cache, "natives")
+    System.setProperty("org.bytedeco.javacpp.cachedir", dir.absolutePath)
+    runCatching {
+        val old = java.io.File(System.getProperty("user.home"), ".javacpp/cache")
+        listOf("ffmpeg-7.1-1.5.11-windows-x86_64.jar", "javacpp-1.5.11-windows-x86_64.jar").forEach { name ->
+            java.io.File(old, name).takeIf { it.isDirectory }?.deleteRecursively()
+        }
+        // The folder itself, if that leaves it empty.
+        if (old.list()?.isEmpty() == true) {
+            old.delete()
+            old.parentFile?.takeIf { it.list()?.isEmpty() == true }?.delete()
+        }
+    }
+}
+
 /** Everything LifeStream sets up before its window opens. */
 fun startUp() {
     AppDirs.init()
@@ -151,6 +172,7 @@ fun startUp() {
         }
         kotlin.system.exitProcess(0)
     }
+    useOwnNativesFolder()
     Http.init(AppDirs.cache)
     StreamResolver.init(AppDirs.cache)
     // The extractor talks to YouTube's servers through our own client (HTTPS to YouTube only).
