@@ -65,10 +65,22 @@ object MediaKeys {
             }
             // Sleeps until a key is pressed (or half a second passes, to notice the queue emptying),
             // rather than waking constantly to check.
-            runCatching { user32.MsgWaitForMultipleObjects(0, null, false, 500, QS_ALLINPUT) }
-                .onFailure { Thread.sleep(100) }
+            val waiter = Waiter.instance
+            if (waiter != null) waiter.MsgWaitForMultipleObjects(0, null, false, 500, QS_ALLINPUT) else Thread.sleep(100)
         }
     }
 
     private const val QS_ALLINPUT = 0x04FF
+
+    /** Windows' "wait until a message arrives" (not among JNA's ready-made calls). */
+    @Suppress("FunctionName")
+    private interface Waiter : com.sun.jna.win32.StdCallLibrary {
+        fun MsgWaitForMultipleObjects(count: Int, handles: com.sun.jna.Pointer?, waitAll: Boolean, milliseconds: Int, wakeMask: Int): Int
+
+        companion object {
+            val instance: Waiter? by lazy {
+                runCatching { com.sun.jna.Native.load("user32", Waiter::class.java) }.getOrNull()
+            }
+        }
+    }
 }
