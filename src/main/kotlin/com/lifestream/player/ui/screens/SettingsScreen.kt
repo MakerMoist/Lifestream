@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Column
@@ -354,7 +355,10 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
 
         SectionLabel("Playback")
         SettingsCard {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.settingToggle(continueFromSearch, { AppSettings.setContinueFromSearch(it) }),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(Modifier.weight(1f)) {
                     Text("Keep Playing After Searching", style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -386,7 +390,10 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 )
             }
             Spacer(Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.settingToggle(autoPlayAtEnd, { AppSettings.setAutoPlayAtEnd(it) }),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(Modifier.weight(1f)) {
                     Text("Auto-Play When Playlist Ends", style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -399,7 +406,13 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 Switch(checked = autoPlayAtEnd, onCheckedChange = { AppSettings.setAutoPlayAtEnd(it) })
             }
             Spacer(Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.settingToggle(keepQueue, {
+                    AppSettings.setKeepQueue(it)
+                    if (it) com.lifestream.player.playback.PlayerConnection.saveQueue() else com.lifestream.player.playback.PlayerConnection.forgetSavedQueue()
+                }),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(Modifier.weight(1f)) {
                     Text("Playlist Stays Open", style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -415,7 +428,10 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 })
             }
             Spacer(Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.settingToggle(levelVolume, { AppSettings.setLevelVolume(it) }),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(Modifier.weight(1f)) {
                     Text("Volume Equalizer", style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -460,7 +476,10 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 )
             }
             Spacer(Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.settingToggle(!showQuotes, { AppSettings.setShowQuotes(!it) }),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(Modifier.weight(1f)) {
                     Text("Hide Quotes", style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -474,7 +493,10 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 Switch(checked = !showQuotes, onCheckedChange = { AppSettings.setShowQuotes(!it) })
             }
             Spacer(Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.settingToggle(compactView, { AppSettings.setCompactView(it) }),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(Modifier.weight(1f)) {
                     Text("Compact View", style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -494,7 +516,10 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
         // System sits at the bottom: Cast, Discord, saved songs, then app updates last.
         SectionLabel("System", Modifier.padding(top = 8.dp))
         SettingsCard {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.settingToggle(castSupport, { AppSettings.setCastSupport(it) }),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(Modifier.weight(1f)) {
                     Text("Cast Support", style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -507,7 +532,10 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 Switch(checked = castSupport, onCheckedChange = { AppSettings.setCastSupport(it) })
             }
             Spacer(Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.settingToggle(discordIntegration, { AppSettings.setDiscordIntegration(it) }),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(Modifier.weight(1f)) {
                     Text("Discord Integration (Doesn't Work)", style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -520,7 +548,10 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 Switch(checked = discordIntegration, onCheckedChange = { AppSettings.setDiscordIntegration(it) })
             }
             Spacer(Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.settingToggle(minimizeOnClose, { AppSettings.setMinimizeOnClose(it) }),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(Modifier.weight(1f)) {
                     Text("Minimize on Close", style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -617,7 +648,13 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
             // App updates always stays last, with its check button always visible.
             Text("LifeStream for Windows ${Updater.currentVersionName}", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.settingToggle(autoUpdate, {
+                    AppSettings.setAutoUpdate(it)
+                    if (it) vm.check() // check right away when it's switched on
+                }),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(Modifier.weight(1f)) {
                     Text("Check Automatically", style = MaterialTheme.typography.bodyLarge)
                 }
@@ -925,3 +962,11 @@ private fun FitText(text: String) {
     )
 }
 
+/**
+ * A setting's whole row toggles it, not just its switch: click anywhere on the name or the
+ * description too.
+ */
+private fun Modifier.settingToggle(checked: Boolean, onChange: (Boolean) -> Unit): Modifier = this
+    .clip(RoundedCornerShape(10.dp))
+    .toggleable(value = checked, role = androidx.compose.ui.semantics.Role.Switch, onValueChange = onChange)
+    .padding(vertical = 4.dp)

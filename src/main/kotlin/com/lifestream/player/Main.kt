@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuOpen
@@ -51,8 +52,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -62,11 +61,13 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Tray
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.unit.isSpecified
+import com.lifestream.player.ui.AppIcon
+import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
-import androidx.compose.ui.window.rememberWindowState
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -424,12 +425,13 @@ private fun startApp() {
         }
     }
     if (System.getenv("LIFESTREAM_SELFTEST") == "1") SelfTest.start()
-    val icon = appIcon(256)
-    val trayIcon = appIcon(32) ?: icon
 
     application {
         AppExit.exit = ::exitApplication
-        val windowState = rememberWindowState(size = startingSize(), position = WindowPosition(Alignment.Center))
+        // Where the window was and how big, last time (or a comfortable size, centred, the first time).
+        val windowState = remember { WindowPlacement.restore() }
+        LaunchedEffect(windowState) { WindowPlacement.keepSaving(windowState) }
+        val icon = rememberVectorPainter(AppIcon.vector)
         val playerState by PlayerConnection.state.collectAsState()
         MediaKeys.wanted = playerState.queue.isNotEmpty()
         val navigator = remember { Navigator() }
@@ -468,12 +470,10 @@ private fun startApp() {
         ) {
             window.minimumSize = java.awt.Dimension(720, 560)
             awtWindow[0] = window
-            // Every size Windows asks for (title bar, taskbar, Alt+Tab) drawn smoothly at that size.
+            // Every size Windows asks for (title bar, taskbar, Alt+Tab), each drawn from the icon's
+            // shapes at exactly that size.
             LaunchedEffect(Unit) {
-                val images = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                    listOf(16, 20, 24, 32, 40, 48, 64, 128, 256).mapNotNull { appIconImage(it) }
-                }
-                if (images.isNotEmpty()) window.iconImages = images
+                runCatching { window.iconImages = AppIcon.windowsSizes.map { AppIcon.image(it, icon) } }
             }
             // The title bar in the theme's colours (and again whenever the theme changes).
             val palette = com.lifestream.player.ui.theme.ThemeState.current
@@ -498,54 +498,125 @@ private fun startApp() {
                 LifestreamTheme { AppRoot(navigator) }
             }
         }
-        if (trayIcon != null) {
-            Tray(
-                icon = trayIcon,
-                tooltip = playerState.current?.let { "LifeStream: ${it.title}" } ?: "LifeStream",
-                onAction = { showWindow() },
-                menu = {
-                    Item(if (playerState.isPlaying) "Pause" else "Play", onClick = { PlayerConnection.togglePlay() })
-                    Item("Next", onClick = { PlayerConnection.next() })
-                    Item("Previous", onClick = { PlayerConnection.previous() })
-                    Separator()
-                    Item("Show LifeStream", onClick = { showWindow() })
-                    Item("Quit", onClick = {
-                        shutDown()
-                        exitApplication()
-                    })
+        // The icon in the icon menu by the clock: play/pause, next, previous, show and quit.
+        val tray = remember {
+            AppTray(
+                image = runCatching { AppIcon.multiSize(icon) }.getOrNull(),
+                onShow = { showWindow() },
+                onQuit = {
+                    shutDown()
+                    exitApplication()
                 },
             )
         }
+        LaunchedEffect(playerState.isPlaying, playerState.current?.title) {
+            tray.update(playing = playerState.isPlaying, title = playerState.current?.title)
+        }
+        androidx.compose.runtime.DisposableEffect(tray) { onDispose { tray.remove() } }
     }
     // Everything is saved by now. Ends the process at once, so no background thread (a network
     // pool, a Cast search) can keep LifeStream running unseen after its window has closed.
     kotlin.system.exitProcess(0)
 }
 
-/** 1240 x 820, or a little smaller than the screen on small displays. */
-private fun startingSize(): DpSize {
-    val screen = runCatching { java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds }.getOrNull()
-        ?: return DpSize(1240.dp, 820.dp)
-    // AWT reports the work area in the same scaled units Compose uses for the window.
-    return DpSize(minOf(1240, (screen.width * 0.92).toInt()).dp, minOf(820, (screen.height * 0.92).toInt()).dp)
+/**
+ * The window's size, place and whether it's maximized, saved as you change them and put back the
+ * next time LifeStream opens. A place that's no longer on any screen (a monitor unplugged since)
+ * is ignored, and the window opens centred instead.
+ */
+private object WindowPlacement {
+    private val prefs by lazy { Prefs.named("window") }
+
+    fun restore(): androidx.compose.ui.window.WindowState {
+        val p = prefs
+        val w = p.getFloat("width", 0f)
+        val h = p.getFloat("height", 0f)
+        val x = p.getFloat("x", Float.NaN)
+        val y = p.getFloat("y", Float.NaN)
+        val maximized = p.getBoolean("maximized", false)
+        val size = if (w >= 720f && h >= 560f && w < 20_000f && h < 20_000f) DpSize(w.dp, h.dp) else startingSize()
+        val position = if (!x.isNaN() && !y.isNaN() && onSomeScreen(x, y, size.width.value)) {
+            WindowPosition(x.dp, y.dp)
+        } else {
+            WindowPosition(Alignment.Center)
+        }
+        return androidx.compose.ui.window.WindowState(
+            placement = if (maximized) androidx.compose.ui.window.WindowPlacement.Maximized else androidx.compose.ui.window.WindowPlacement.Floating,
+            position = position,
+            size = size,
+        )
+    }
+
+    /** Saves changes a moment after they stop (a drag or resize is many small changes). */
+    suspend fun keepSaving(state: androidx.compose.ui.window.WindowState) {
+        androidx.compose.runtime.snapshotFlow { Triple(state.size, state.position, state.placement) }
+            .collectLatest { (size, position, placement) ->
+                kotlinx.coroutines.delay(500)
+                val e = prefs.edit()
+                val maximized = placement == androidx.compose.ui.window.WindowPlacement.Maximized
+                e.putBoolean("maximized", maximized)
+                // While maximized (or minimized), the normal size and place underneath are what's kept.
+                if (placement == androidx.compose.ui.window.WindowPlacement.Floating && !state.isMinimized) {
+                    if (size.isSpecified) {
+                        e.putFloat("width", size.width.value)
+                        e.putFloat("height", size.height.value)
+                    }
+                    if (position.isSpecified) {
+                        e.putFloat("x", position.x.value)
+                        e.putFloat("y", position.y.value)
+                    }
+                }
+                e.apply()
+            }
+    }
+
+    private fun onSomeScreen(x: Float, y: Float, w: Float): Boolean = runCatching {
+        // A good part of the title bar must be on a screen, so the window can be grabbed.
+        val titleBar = java.awt.Rectangle(x.toInt() + 40, y.toInt(), (w - 80).toInt().coerceAtLeast(40), 30)
+        java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices.any { it.defaultConfiguration.bounds.intersects(titleBar) }
+    }.getOrDefault(false)
+
+    /** 1240 x 820, or a little smaller than the screen on small displays. */
+    private fun startingSize(): DpSize {
+        val screen = runCatching { java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds }.getOrNull()
+            ?: return DpSize(1240.dp, 820.dp)
+        // AWT reports the work area in the same scaled units Compose uses for the window.
+        return DpSize(minOf(1240, (screen.width * 0.92).toInt()).dp, minOf(820, (screen.height * 0.92).toInt()).dp)
+    }
 }
 
-private val iconBytes: ByteArray? by lazy {
-    runCatching { SelfTest::class.java.classLoader.getResourceAsStream("icon.png")!!.use { it.readBytes() } }.getOrNull()
+/**
+ * LifeStream's icon in the icon menu by the clock (Windows' own tray icon, given the icon at every
+ * size so it's sharp at any display scale). Double-click it to show the window.
+ */
+private class AppTray(image: java.awt.Image?, onShow: () -> Unit, onQuit: () -> Unit) {
+    private val playPause = java.awt.MenuItem("Play")
+    private val icon: java.awt.TrayIcon? = runCatching {
+        if (image == null || !java.awt.SystemTray.isSupported()) return@runCatching null
+        val menu = java.awt.PopupMenu().apply {
+            add(playPause.apply { addActionListener { PlayerConnection.togglePlay() } })
+            add(java.awt.MenuItem("Next").apply { addActionListener { PlayerConnection.next() } })
+            add(java.awt.MenuItem("Previous").apply { addActionListener { PlayerConnection.previous() } })
+            addSeparator()
+            add(java.awt.MenuItem("Show LifeStream").apply { addActionListener { onShow() } })
+            add(java.awt.MenuItem("Quit").apply { addActionListener { onQuit() } })
+        }
+        java.awt.TrayIcon(image, "LifeStream", menu).apply {
+            isImageAutoSize = false
+            addActionListener { onShow() }
+            java.awt.SystemTray.getSystemTray().add(this)
+        }
+    }.getOrNull()
+
+    fun update(playing: Boolean, title: String?) {
+        playPause.label = if (playing) "Pause" else "Play"
+        icon?.toolTip = title?.let { "LifeStream: ${it.take(100)}" } ?: "LifeStream"
+    }
+
+    fun remove() {
+        icon?.let { runCatching { java.awt.SystemTray.getSystemTray().remove(it) } }
+    }
 }
-
-/** LifeStream's crystal icon at exactly [px] pixels, smoothly scaled (for the tray and the sidebar). */
-private fun appIcon(px: Int): BitmapPainter? = runCatching {
-    BitmapPainter(
-        com.lifestream.player.ui.components.ImageLoader.decode(iconBytes!!, px)!!,
-        filterQuality = androidx.compose.ui.graphics.FilterQuality.High,
-    )
-}.getOrNull()
-
-/** The same, as a picture Windows can use for the window's icons. */
-private fun appIconImage(px: Int): java.awt.image.BufferedImage? = runCatching {
-    com.lifestream.player.ui.components.ImageLoader.decode(iconBytes!!, px)!!.toAwtImage()
-}.getOrNull()
 
 private fun androidx.compose.ui.graphics.Color.toRgb(): Int =
     ((red * 255).toInt() shl 16) or ((green * 255).toInt() shl 8) or (blue * 255).toInt()
@@ -631,7 +702,9 @@ private fun AppRoot(navigator: Navigator) {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        Sidebar(navigator, compact, onSelect = {
+        // The player bar's height (none while nothing is queued), for lining Settings up with it.
+        val barHeight = if (playerState.current == null) 0.dp else if (compact) 72.dp else 88.dp
+        Sidebar(navigator, compact, barHeight, onSelect = {
             showPlayer = false
             navigator.select(it)
         })
@@ -748,17 +821,23 @@ private fun Pages(navigator: Navigator) {
  * Settings always sits at the bottom. Compact View narrows it to icons with small labels.
  */
 @Composable
-private fun Sidebar(navigator: Navigator, compact: Boolean, onSelect: (Page) -> Unit) {
-    Surface(color = LsColors.Panel, modifier = Modifier.fillMaxHeight().width(if (compact) 84.dp else 240.dp)) {
+private fun Sidebar(navigator: Navigator, compact: Boolean, playerBarHeight: androidx.compose.ui.unit.Dp, onSelect: (Page) -> Unit) {
+    // Full: only as wide as its names need. Compact: a narrow strip.
+    val width = if (compact) Modifier.width(84.dp) else Modifier.width(androidx.compose.foundation.layout.IntrinsicSize.Max).widthIn(min = 132.dp)
+    Surface(color = LsColors.Panel, modifier = Modifier.fillMaxHeight().then(width)) {
         Column(
-            Modifier.fillMaxHeight().padding(horizontal = if (compact) 8.dp else 14.dp, vertical = 14.dp),
+            Modifier.fillMaxHeight().padding(
+                start = if (compact) 8.dp else 10.dp,
+                end = if (compact) 8.dp else 10.dp,
+                top = 14.dp,
+                bottom = if (playerBarHeight > 0.dp) 0.dp else 14.dp,
+            ),
             verticalArrangement = Arrangement.spacedBy(6.dp),
             horizontalAlignment = if (compact) Alignment.CenterHorizontally else Alignment.Start,
         ) {
             val onHome = navigator.section == Page.Home
-            // The icon is drawn at exactly the size it's shown, so its edges stay smooth.
-            val iconPx = with(androidx.compose.ui.platform.LocalDensity.current) { 40.dp.roundToPx() }
-            val logo = remember(iconPx) { appIcon(iconPx) }
+            // Drawn from the icon's shapes, so it's sharp at any size and display scale.
+            val logo = rememberVectorPainter(AppIcon.vector)
             val home: @Composable () -> Unit = {
                 Column(
                     Modifier
@@ -768,7 +847,7 @@ private fun Sidebar(navigator: Navigator, compact: Boolean, onSelect: (Page) -> 
                         .padding(horizontal = 8.dp, vertical = 6.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    logo?.let { Image(it, "Home", Modifier.size(40.dp)) }
+                    Image(logo, "Home", Modifier.size(40.dp))
                     Spacer(Modifier.height(3.dp))
                     Text(
                         "Home",
@@ -806,8 +885,16 @@ private fun Sidebar(navigator: Navigator, compact: Boolean, onSelect: (Page) -> 
                 SidebarItem(s, navigator.section == s.root, compact) { onSelect(s.root) }
             }
             Spacer(Modifier.weight(1f))
-            sections.first { it.root == Page.Settings }.let { s ->
-                SidebarItem(s, navigator.section == s.root, compact) { onSelect(s.root) }
+            // Settings, level with the song in the player bar when one is playing.
+            val settings: @Composable () -> Unit = {
+                sections.first { it.root == Page.Settings }.let { s ->
+                    SidebarItem(s, navigator.section == s.root, compact) { onSelect(s.root) }
+                }
+            }
+            if (playerBarHeight > 0.dp) {
+                Box(Modifier.height(playerBarHeight), contentAlignment = Alignment.Center) { settings() }
+            } else {
+                settings()
             }
         }
     }

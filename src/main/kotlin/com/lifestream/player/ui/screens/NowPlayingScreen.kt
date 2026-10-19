@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -360,7 +361,9 @@ fun Controls(state: PlayerUiState, small: Boolean = false) {
         IconButton(onClick = { PlayerConnection.previous() }, modifier = Modifier.size(skip + 16.dp)) {
             Icon(Icons.Rounded.SkipPrevious, "Previous", Modifier.size(skip))
         }
-        Box(contentAlignment = Alignment.Center) {
+        // The loading ring is drawn around the button without taking up room of its own, so it
+        // appearing while a song loads never pushes the other controls (or the player bar) about.
+        Box(Modifier.size(big), contentAlignment = Alignment.Center) {
             Box(
                 Modifier
                     .size(big)
@@ -377,7 +380,7 @@ fun Controls(state: PlayerUiState, small: Boolean = false) {
                 )
             }
             if (state.isBuffering) {
-                CircularProgressIndicator(Modifier.size(big + 10.dp), color = LsColors.Mako, strokeWidth = 3.dp)
+                CircularProgressIndicator(Modifier.requiredSize(big + 10.dp), color = LsColors.Mako, strokeWidth = 3.dp)
             }
         }
         IconButton(onClick = { PlayerConnection.next() }, modifier = Modifier.size(skip + 16.dp)) {
