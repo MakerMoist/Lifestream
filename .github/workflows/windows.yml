@@ -82,6 +82,13 @@ jobs:
           Start-Sleep -Seconds 40
           if ($p.HasExited) { Write-Output "::error::LifeStream closed by itself (exit code $($p.ExitCode))"; exit 1 }
           Write-Output "::notice::LifeStream started on Windows and kept running"
+          # A picture of the window, to check the layout.
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          New-Item -ItemType Directory -Force shots | Out-Null
+          $bmp.Save("shots/window.png")
           $log = Join-Path $env:APPDATA "LifeStream/selftest.log"
           if (Test-Path $log) { Get-Content $log | ForEach-Object { Write-Output "::notice::$_" } }
           Stop-Process -Id $p.Id -Force
@@ -90,6 +97,11 @@ jobs:
           name: LifeStream-Windows
           path: out/
           if-no-files-found: error
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: screenshot
+          path: shots/
+          if-no-files-found: ignore
 
   # Only this job can write to the repo, and only when a release was asked for.
   publish:
