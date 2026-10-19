@@ -50,6 +50,13 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
+      - name: Run the tests on Windows too
+        shell: pwsh
+        run: |
+          ./gradlew.bat --no-daemon test *> test.log
+          $ok = $LASTEXITCODE -eq 0
+          Get-Content test.log | Select-String "LSTEST" | ForEach-Object { "::notice::Windows " + ($_.Line -replace '^.*LSTEST ', '') } | Sort-Object -Unique
+          if (-not $ok) { Get-Content test.log | Select-String -Pattern '^e: |FAILED|Exception|expected' | Select-Object -First 40 | ForEach-Object { "::error::" + $_.Line }; exit 1 }
       - name: Build the installer and the portable app
         shell: pwsh
         run: |
@@ -102,7 +109,7 @@ jobs:
         run: |
           VERSION=$(python3 -c "import json; print(json.load(open('version-windows.json'))['versionName'])")
           if ! gh release view windows-latest -R "$REPO" >/dev/null 2>&1; then
-            gh release create windows-latest -R "$REPO" --target "$GITHUB_SHA" --prerelease \
+            gh release create windows-latest -R "$REPO" --target "$GITHUB_SHA" --prerelease --latest=false \
               --title "LifeStream for Windows $VERSION" \
               --notes "LifeStream for Windows. Install with LifeStream-Windows-Setup.msi, or unzip LifeStream-Windows-Portable.zip and run LifeStream.exe. The .sha256 files are checksums."
           fi

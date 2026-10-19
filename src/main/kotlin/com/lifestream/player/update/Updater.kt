@@ -150,6 +150,18 @@ object Updater {
         ProcessBuilder(msiexec.path, "/i", file.path).start()
     }
 
+    /**
+     * True for the portable (unzipped) app: it isn't where the installer puts LifeStream, so an
+     * update is a new zip from the releases page rather than the installer.
+     */
+    val isPortable: Boolean by lazy {
+        val app = System.getProperty("jpackage.app-path")?.let { runCatching { File(it).canonicalPath.lowercase() }.getOrNull() }
+            ?: return@lazy false // run from the build, not a packaged app
+        val installed = listOfNotNull(System.getenv("LOCALAPPDATA"), System.getenv("ProgramFiles"), System.getenv("ProgramFiles(x86)"))
+            .mapNotNull { runCatching { File(it).canonicalPath.lowercase() + File.separator }.getOrNull() }
+        installed.none { app.startsWith(it) }
+    }
+
     /** Opens the releases page in the browser (for the portable app). */
     fun openReleasesPage() {
         runCatching { java.awt.Desktop.getDesktop().browse(URI("https://github.com/${BuildInfo.UPDATE_REPO}/releases/tag/windows-latest")) }

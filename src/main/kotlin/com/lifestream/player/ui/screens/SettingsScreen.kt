@@ -166,6 +166,12 @@ class SettingsViewModel : ViewModel() {
 
     fun download(release: Updater.Release) {
         if (state is UpdateState.Downloading) return
+        if (Updater.isPortable) {
+            // The portable app is updated by unzipping the new one.
+            Updater.openReleasesPage()
+            prompt = null
+            return
+        }
         state = UpdateState.Downloading(release, 0f)
         viewModelScope.launch {
             state = try {
@@ -270,7 +276,7 @@ fun UpdatePrompt() {
         },
         confirmButton = {
             when (val s = vm.state) {
-                is UpdateState.Available -> TextButton(onClick = { vm.download(s.release) }) { Text("Update") }
+                is UpdateState.Available -> TextButton(onClick = { vm.download(s.release) }) { Text(if (Updater.isPortable) "Download" else "Update") }
                 is UpdateState.ReadyToInstall ->
                     TextButton(onClick = { vm.install(s.installer) }) { Text("Install") }
                 is UpdateState.Downloading -> Unit
@@ -661,7 +667,7 @@ private fun UpdateSection(vm: SettingsViewModel, showActions: Boolean = true) {
                 Button(onClick = { vm.download(s.release) }) {
                     Icon(Icons.Rounded.Download, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Download and Install")
+                    Text(if (Updater.isPortable) "Open Download Page" else "Download and Install")
                 }
             }
         }
