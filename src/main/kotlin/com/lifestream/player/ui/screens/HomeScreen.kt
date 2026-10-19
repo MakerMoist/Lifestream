@@ -1,7 +1,6 @@
 package com.lifestream.player.ui.screens
 
 import com.lifestream.player.ui.components.thinScrollbar
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.em
 import androidx.compose.foundation.text.TextAutoSize

@@ -461,7 +461,6 @@ object PlayerConnection {
     private fun onReady(s: Any, duration: Long) {
         if (s !== session) return
         buffering = false
-        retries = 0
         if (duration > 0) durationMs = duration
         if (playWhenReady) recordPlayed()
         publish()
@@ -469,6 +468,7 @@ object PlayerConnection {
 
     private fun onEnded(s: Any) {
         if (s !== session) return
+        retries = 0 // it played through: a later problem gets its own tries
         when {
             repeat == RepeatMode.ONE -> {
                 loadCurrent(force = true)

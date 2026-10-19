@@ -218,6 +218,11 @@ fun startUp() {
         }
         kotlin.system.exitProcess(0)
     }
+    AppDirs.removeLeftovers()
+    AppDirs.moveOldCache()
+    // Saved however LifeStream ends, even if Windows shuts down or signs out while it's playing
+    // from the icon menu.
+    Runtime.getRuntime().addShutdownHook(Thread({ shutDown() }, "save-on-exit"))
     useOwnNativesFolder()
     Http.init(AppDirs.cache)
     StreamResolver.init(AppDirs.cache)
@@ -231,8 +236,11 @@ fun startUp() {
     SoundtrackIndex.init()
 }
 
-/** Saves everything, so closing the window never loses a change. */
+private val shutDownOnce = java.util.concurrent.atomic.AtomicBoolean(false)
+
+/** Saves everything, so closing the window never loses a change. Runs once. */
 fun shutDown() {
+    if (!shutDownOnce.compareAndSet(false, true)) return
     runCatching { PlayerConnection.release() }
     runCatching { VillainQuotes.save() }
     runCatching { Library.flush() }
@@ -425,7 +433,6 @@ private fun startApp() {
         val playerState by PlayerConnection.state.collectAsState()
         MediaKeys.wanted = playerState.queue.isNotEmpty()
         val navigator = remember { Navigator() }
-        // Minimized for a minute: free what's quick to rebuild.
         // Hidden to the icon menu by the close button ("Minimize on Close"), or shown.
         var windowVisible by remember { mutableStateOf(true) }
         val awtWindow = remember { arrayOfNulls<java.awt.Window>(1) }
@@ -436,6 +443,7 @@ private fun startApp() {
             javax.swing.SwingUtilities.invokeLater { awtWindow[0]?.let { it.toFront(); it.requestFocus() } }
         }
         LaunchedEffect(Unit) { SingleInstance.listen { showWindow() } }
+        // Minimized or hidden for a minute: free what's quick to rebuild.
         LaunchedEffect(windowState.isMinimized, windowVisible) {
             if (!windowState.isMinimized && windowVisible) return@LaunchedEffect
             kotlinx.coroutines.delay(60_000)

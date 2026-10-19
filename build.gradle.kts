@@ -7,7 +7,7 @@ plugins {
 }
 
 /** LifeStream for Windows. Its own version, separate from the Android app's. */
-val appVersion = "0.1.1b"
+val appVersion = "0.1.1c"
 
 /**
  * Windows installers only take plain numbers (major.minor.build), so a letter is folded into the

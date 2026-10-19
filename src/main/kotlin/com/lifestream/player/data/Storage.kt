@@ -9,7 +9,11 @@ import java.util.concurrent.TimeUnit
 /**
  * Where LifeStream keeps its things on Windows:
  * - [data]: settings, playlists, history and the song index (%APPDATA%\LifeStream)
- * - [cache]: saved songs, artwork and other caches that may be cleared (%LOCALAPPDATA%\LifeStream)
+ * - [cache]: saved songs, artwork and other caches that may be cleared
+ *   (%LOCALAPPDATA%\LifeStream Cache)
+ *
+ * The cache has its own folder: %LOCALAPPDATA%\LifeStream is where the installer puts the app
+ * itself, and an update replaces that folder, which used to take the saved songs with it.
  */
 object AppDirs {
     lateinit var data: File
@@ -17,12 +21,49 @@ object AppDirs {
     lateinit var cache: File
         private set
 
+    /** Where the cache was kept up to 0.1.1b (the app's own install folder). */
+    private var oldCache: File? = null
+
     fun init(dataDir: File? = null, cacheDir: File? = null) {
         val home = File(System.getProperty("user.home"))
+        val local = System.getenv("LOCALAPPDATA")
         data = dataDir ?: System.getenv("APPDATA")?.let { File(it, "LifeStream") } ?: File(home, ".lifestream")
-        cache = cacheDir ?: System.getenv("LOCALAPPDATA")?.let { File(it, "LifeStream") } ?: File(home, ".lifestream/cache")
+        cache = cacheDir ?: local?.let { File(it, "LifeStream Cache") } ?: File(home, ".lifestream/cache")
+        oldCache = if (cacheDir == null) local?.let { File(it, "LifeStream") } else null
         data.mkdirs()
         cache.mkdirs()
+    }
+
+    /**
+     * Brings over saved songs and artwork from the old cache folder (when an update hasn't already
+     * removed them), and clears the old folder's caches out of the app's install folder. Only
+     * LifeStream's own cache folders are touched there.
+     */
+    fun moveOldCache() {
+        val old = oldCache ?: return
+        if (!old.isDirectory || old.canonicalPath == cache.canonicalPath) return
+        runCatching {
+            for (name in listOf("songs", "artwork")) {
+                val from = File(old, name)
+                if (!from.isDirectory) continue
+                val to = File(cache, name).apply { mkdirs() }
+                from.listFiles()?.forEach { f ->
+                    val target = File(to, f.name)
+                    if (f.isFile && !target.exists()) runCatching { java.nio.file.Files.move(f.toPath(), target.toPath()) }
+                }
+            }
+            for (name in listOf("songs", "artwork", "http", "streaming", "natives")) {
+                File(old, name).takeIf { it.isDirectory }?.deleteRecursively()
+            }
+            File(old, "stream_links.json").delete()
+        }
+    }
+
+    /**
+     * Temporary files a save left behind when the app was killed mid-write. Only once this copy
+     * knows it's the only one running: another copy's save could be half-way through.
+     */
+    fun removeLeftovers() {
         removeLeftoverTempFiles(data)
         removeLeftoverTempFiles(cache)
     }
