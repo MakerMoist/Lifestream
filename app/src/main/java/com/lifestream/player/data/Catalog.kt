@@ -110,13 +110,17 @@ object Catalog {
             extras = listOf(ExtraSong("My Hands", "Leona Lewis", albumArt = true))),
         Game("ff13-2", "XIII-2", "Final Fantasy XIII-2", 2011, "Hamauzu · Mizuta · Suzuki",
             "Final Fantasy XIII-2 original soundtrack", c(0xFF1E0B3A), c(0xFFB9A2FF),
-            match = num("XIII2", notWith = setOf("XIII")), art = R.drawable.art_ff13_2),
+            match = num("XIII2", notWith = setOf("XIII")), art = R.drawable.art_ff13_2,
+            // Every song shows the soundtrack's own cover (the PLUS album's songs included).
+            coverArt = "https://yt3.googleusercontent.com/ANeue4kg4eZs4pSCeAtuyZLBA1qP3Lb7zo_S5p3RvdLFpKhNNd08HuN4DjldSRzB2abzbPEbNU6i5yU1KQ=w544-h544-s-l90-rj"),
         // The third XIII game; its Original Soundtrack PLUS (extra tracks) is included.
         Game("lr", "LR", "Final Fantasy XIII: Lightning Returns", 2013, "Hamauzu · Mizuta · Suzuki",
             "Lightning Returns Final Fantasy XIII original soundtrack", c(0xFF2A0E2E), c(0xFFF5A3D0),
             match = MatchSpec(numerals = setOf("XIII"), allOf = listOf("LIGHTNING RETURNS")), art = R.drawable.art_lr,
             aliases = listOf("LR", "LRFF13", "LRFFXIII"),
-            albumQueries = listOf("Lightning Returns Final Fantasy XIII original soundtrack plus")),
+            albumQueries = listOf("Lightning Returns Final Fantasy XIII original soundtrack plus"),
+            // Every song shows the soundtrack's own cover (the PLUS album's songs included).
+            coverArt = "https://yt3.googleusercontent.com/1sgEQx_DcyXjwRqrj2BIH6qCfRdxWw4vW3yrSjtbkrY3mxrnTLIMCHBX8QD6f4AKMw1pisJZFCNzVEs=w544-h544-s-l90-rj"),
         Game("ff14", "XIV", "Final Fantasy XIV", 2013, "Masayoshi Soken",
             "Final Fantasy XIV original soundtrack", c(0xFF2E1065), c(0xFFC4B5FD), match = num("XIV"), art = R.drawable.art_ff14,
             // Each expansion and each run of patches has its own official album.

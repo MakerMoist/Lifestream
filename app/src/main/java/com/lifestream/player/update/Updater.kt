@@ -45,6 +45,7 @@ object Updater {
      */
     private val client by lazy {
         Http.client.newBuilder()
+            .cache(null) // always ask GitHub afresh, and never keep a copy of the APK download
             .addNetworkInterceptor { chain ->
                 requireGitHub(chain.request().url.toString())
                 chain.proceed(chain.request())

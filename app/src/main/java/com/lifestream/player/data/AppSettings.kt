@@ -29,7 +29,10 @@ object AppSettings {
     private const val KEY_KEEP_QUEUE = "keep_queue"
 
     /** Size choices for saved songs, in MB (0 = don't save songs). */
-    val CACHE_LIMIT_CHOICES = listOf(0, 2048, 4096, 6144, 8192)
+    val CACHE_LIMIT_CHOICES = listOf(0, 2048, 4096, 6144, 8192, 10240)
+
+    /** The largest size "Custom" allows (less if the phone hasn't the room). */
+    const val MAX_CACHE_LIMIT_MB = 50 * 1024
     const val DEFAULT_CACHE_LIMIT_MB = 2048
 
     private lateinit var prefs: SharedPreferences
@@ -192,10 +195,9 @@ object AppSettings {
         _continueMode.value = ContinueMode.entries.firstOrNull { it.name == prefs.getString(KEY_CONTINUE_MODE, null) }
             ?: ContinueMode.SAME_TITLE
         _keepQueue.value = prefs.getBoolean(KEY_KEEP_QUEUE, false)
-        // A size from an older version (e.g. 5 or 10 GB) becomes the largest choice that fits in it.
+        // Any size from the choices or "Custom" (anything else stored is ignored).
         val stored = prefs.getInt(KEY_CACHE_LIMIT_MB, DEFAULT_CACHE_LIMIT_MB)
-        _cacheLimitMb.value = if (stored in CACHE_LIMIT_CHOICES) stored
-        else CACHE_LIMIT_CHOICES.lastOrNull { it in 1..stored } ?: DEFAULT_CACHE_LIMIT_MB
+        _cacheLimitMb.value = if (stored in 0..MAX_CACHE_LIMIT_MB) stored else DEFAULT_CACHE_LIMIT_MB
         // byId falls back to the default for unknown or tampered values.
         val palette = Palettes.byId(prefs.getString(KEY_THEME, null))
         _themeId.value = palette.id
@@ -256,7 +258,7 @@ object AppSettings {
 
     /** Stores the new limit; the caller applies it to the cache off the main thread. */
     fun setCacheLimitMb(mb: Int) {
-        if (mb !in CACHE_LIMIT_CHOICES) return
+        if (mb !in 0..MAX_CACHE_LIMIT_MB) return
         _cacheLimitMb.value = mb
         prefs.edit().putInt(KEY_CACHE_LIMIT_MB, mb).apply()
     }

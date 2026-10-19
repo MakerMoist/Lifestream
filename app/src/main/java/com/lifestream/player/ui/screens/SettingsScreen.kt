@@ -12,11 +12,13 @@ import androidx.activity.ComponentActivity
 import android.content.ContextWrapper
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -210,7 +212,11 @@ class SettingsViewModel : ViewModel() {
         }
     }
 
-    /** Clears the saved songs, then restarts the app so playback starts fresh without them. */
+    /**
+     * Clears every cache: saved songs, artwork, saved web responses and song links. Then restarts
+     * the app so it starts fresh without them. (Playlists, history and settings aren't caches and
+     * stay.)
+     */
     fun clearCache(context: Context) {
         if (clearingCache) return
         clearingCache = true
@@ -218,6 +224,14 @@ class SettingsViewModel : ViewModel() {
         viewModelScope.launch {
             cacheUsedBytes = withContext(Dispatchers.IO) {
                 SongCache.clear()
+                com.lifestream.player.net.Http.clearCache()
+                com.lifestream.player.playback.StreamResolver.clearAll()
+                runCatching {
+                    val images = coil.Coil.imageLoader(app)
+                    images.memoryCache?.clear()
+                    images.diskCache?.clear()
+                }
+                com.lifestream.player.ui.components.ArtCache.clear()
                 SongCache.usedBytes()
             }
             // Keep where things are (playlists, the queue when Playlist Stays Open is on), then restart.
@@ -482,12 +496,14 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 FilterChip(
                     selected = !randomSongOrder,
                     onClick = { AppSettings.setRandomSongOrder(false) },
-                    label = { Text("Soundtrack") },
+                    label = { FitText("Soundtrack") },
+                    modifier = Modifier.weight(1f),
                 )
                 FilterChip(
                     selected = randomSongOrder,
                     onClick = { AppSettings.setRandomSongOrder(true) },
-                    label = { Text("Shuffled") },
+                    label = { FitText("Shuffled") },
+                    modifier = Modifier.weight(1f),
                 )
             }
             Spacer(Modifier.height(12.dp))
@@ -572,14 +588,37 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(12.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Every size on one line, sharing it evenly.
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 AppSettings.CACHE_LIMIT_CHOICES.forEach { mb ->
-                    FilterChip(
+                    SizeChoice(
+                        label = cacheLimitLabel(mb),
                         selected = cacheLimitMb == mb,
                         onClick = { vm.setCacheLimit(mb) },
-                        label = { Text(cacheLimitLabel(mb)) },
+                        modifier = Modifier.weight(1f),
                     )
                 }
+            }
+            Spacer(Modifier.height(8.dp))
+            // Any other size, chosen in its own box.
+            var choosingSize by remember { mutableStateOf(false) }
+            val custom = cacheLimitMb !in AppSettings.CACHE_LIMIT_CHOICES
+            FilterChip(
+                selected = custom,
+                onClick = { choosingSize = true },
+                label = { FitText(if (custom) "Custom · ${cacheLimitLabel(cacheLimitMb)}" else "Custom") },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            if (choosingSize) {
+                CustomCacheSizeDialog(
+                    currentMb = cacheLimitMb,
+                    usedBytes = vm.cacheUsedBytes.coerceAtLeast(0),
+                    onDismiss = { choosingSize = false },
+                    onChoose = { mb ->
+                        vm.setCacheLimit(mb)
+                        choosingSize = false
+                    },
+                )
             }
             Spacer(Modifier.height(8.dp))
             Text(
@@ -599,9 +638,10 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                     title = { Text("Clear Cache?") },
                     text = {
                         Text(
-                            "This deletes ${formatBytes(vm.cacheUsedBytes)} of saved songs from your phone. " +
-                                "They'll stream again the next time you play them. LifeStream will restart " +
-                                "to finish.",
+                            "This deletes ${formatBytes(vm.cacheUsedBytes)} of saved songs and LifeStream's " +
+                                "other cached data (artwork and saved web data) from your phone. They'll " +
+                                "download again when needed. Your playlists, history and settings stay. " +
+                                "LifeStream will restart to finish.",
                         )
                     },
                     confirmButton = {
@@ -615,7 +655,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
             }
             OutlinedButton(
                 onClick = { confirmClear = true },
-                enabled = !vm.clearingCache && vm.cacheUsedBytes != 0L,
+                enabled = !vm.clearingCache, // artwork and other cached data can be there even with no saved songs
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Icon(Icons.Rounded.DeleteSweep, null, Modifier.size(18.dp))
@@ -790,6 +830,61 @@ private fun AndroidAutoSetupHint(context: Context) {
     }
 }
 
+/**
+ * "Custom" saved-songs size: a slider, or type the number of GB in the box above it. Up to 50 GB,
+ * or less if the phone doesn't have that much room (counting what saved songs already use).
+ */
+@Composable
+private fun CustomCacheSizeDialog(currentMb: Int, usedBytes: Long, onDismiss: () -> Unit, onChoose: (Int) -> Unit) {
+    val context = LocalContext.current
+    val maxGb = remember(usedBytes) {
+        val free = runCatching { android.os.StatFs(context.cacheDir.path).availableBytes }.getOrDefault(0L)
+        val room = ((free + usedBytes) / (1024L * 1024L * 1024L)).toInt()
+        room.coerceIn(1, AppSettings.MAX_CACHE_LIMIT_MB / 1024)
+    }
+    var gb by remember { mutableStateOf((currentMb / 1024).coerceIn(1, maxGb)) }
+    var typed by remember { mutableStateOf(gb.toString()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Custom Size") },
+        text = {
+            Column {
+                androidx.compose.material3.OutlinedTextField(
+                    value = typed,
+                    onValueChange = { text ->
+                        val digits = text.filter { it.isDigit() }.take(2)
+                        typed = digits
+                        digits.toIntOrNull()?.let { gb = it.coerceIn(1, maxGb) }
+                    },
+                    suffix = { Text("GB") },
+                    singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(12.dp))
+                androidx.compose.material3.Slider(
+                    value = gb.toFloat(),
+                    onValueChange = {
+                        gb = it.roundToInt().coerceIn(1, maxGb)
+                        typed = gb.toString()
+                    },
+                    valueRange = 1f..maxGb.toFloat(),
+                    steps = (maxGb - 2).coerceAtLeast(0),
+                )
+                Text(
+                    "1 GB to $maxGb GB" + if (maxGb < AppSettings.MAX_CACHE_LIMIT_MB / 1024) " (the room this phone has)." else ".",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = { TextButton(onClick = { onChoose(gb * 1024) }) { Text("Save") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
 private fun cacheLimitLabel(mb: Int): String = when {
     mb == 0 -> "Off"
     mb >= 1024 -> "${mb / 1024} GB"
@@ -877,6 +972,35 @@ private fun SettingsCard(content: @Composable () -> Unit) {
     }
 }
 
+/**
+ * One of the saved-songs sizes: a small box styled like the other choices, narrow enough for six
+ * on one line (its text shrinks a little on narrow phones rather than being cut off).
+ */
+@Composable
+private fun SizeChoice(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(8.dp)
+    Box(
+        modifier
+            .height(32.dp)
+            .clip(shape)
+            .background(if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent)
+            .border(1.dp, if (selected) Color.Transparent else MaterialTheme.colorScheme.outline, shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 3.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        androidx.compose.foundation.text.BasicText(
+            label,
+            maxLines = 1,
+            style = MaterialTheme.typography.labelLarge.copy(
+                color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            ),
+            autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = 14.sp, stepSize = 0.5.sp),
+        )
+    }
+}
+
 /** One line of chip text that shrinks to fit its space instead of wrapping. */
 @Composable
 private fun FitText(text: String) {
@@ -887,7 +1011,7 @@ private fun FitText(text: String) {
             color = androidx.compose.material3.LocalContentColor.current,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         ),
-        autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 14.sp, stepSize = 0.5.sp),
+        autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = 14.sp, stepSize = 0.5.sp),
         modifier = Modifier.fillMaxWidth(),
     )
 }

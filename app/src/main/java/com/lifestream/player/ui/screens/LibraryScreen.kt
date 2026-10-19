@@ -4,7 +4,6 @@ import com.lifestream.player.ui.components.thinScrollbar
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.foundation.layout.PaddingValues
 import com.lifestream.player.ui.components.CenteredButtonLabel
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +35,18 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.automirrored.rounded.Sort
+import androidx.compose.material.icons.automirrored.rounded.TrendingUp
+import androidx.compose.material.icons.rounded.AvTimer
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.FileDownload
+import androidx.compose.material.icons.rounded.FileUpload
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.SortByAlpha
+import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.foundation.combinedClickable
+import com.lifestream.player.ui.components.menuAnchor
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
@@ -54,6 +65,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -69,7 +81,7 @@ import com.lifestream.player.ui.theme.LsColors
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
+fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit, onSwipePastEdge: (Int) -> Unit = {}) {
     val playlists by Library.playlists.collectAsStateWithLifecycle()
     val recents by Library.recents.collectAsStateWithLifecycle()
     // Swipe left and right between Playlists and History (or tap their tabs).
@@ -77,6 +89,23 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
     val scope = rememberCoroutineScope()
     var creating by remember { mutableStateOf(false) }
     var confirmClear by remember { mutableStateOf(false) }
+    // Hold a playlist for its menu: Export Playlist, Rename, Delete.
+    var renamingList by remember { mutableStateOf<Playlist?>(null) }
+    var deletingList by remember { mutableStateOf<Playlist?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var exporting by remember { mutableStateOf<Playlist?>(null) }
+    // Saving and opening files go through Android's own file picker: the file stays on the phone
+    // (or wherever you choose to keep it); nothing is uploaded or downloaded.
+    val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/octet-stream"),
+    ) { uri ->
+        val p = exporting
+        exporting = null
+        if (uri != null && p != null) scope.launch { exportPlaylist(context, p, uri) }
+    }
+    val importLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.OpenDocument(),
+    ) { uri -> if (uri != null) scope.launch { importPlaylist(context, uri) } }
     val playlistList = rememberLazyListState()
     val historyList = rememberLazyListState()
 
@@ -119,7 +148,35 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
             Tab(selected = pager.currentPage == 1, onClick = { scope.launch { pager.animateScrollToPage(1) } }, text = { Text("History") })
         }
 
-        HorizontalPager(state = pager, modifier = Modifier.weight(1f).fillMaxWidth()) { page ->
+        // Swiping on past Playlists (to the right) or History (to the left) moves to the next tab,
+        // like a swipe anywhere else in the app.
+        val pastEdge = remember {
+            object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+                var leftover = 0f
+                override fun onPostScroll(
+                    consumed: androidx.compose.ui.geometry.Offset,
+                    available: androidx.compose.ui.geometry.Offset,
+                    source: androidx.compose.ui.input.nestedscroll.NestedScrollSource,
+                ): androidx.compose.ui.geometry.Offset {
+                    if (source == androidx.compose.ui.input.nestedscroll.NestedScrollSource.UserInput) leftover += available.x
+                    return androidx.compose.ui.geometry.Offset.Zero
+                }
+
+                override suspend fun onPreFling(available: androidx.compose.ui.unit.Velocity): androidx.compose.ui.unit.Velocity {
+                    val pulled = leftover
+                    leftover = 0f
+                    if (kotlin.math.abs(pulled) > 160f) onSwipePastEdge(if (pulled < 0) 1 else -1)
+                    return androidx.compose.ui.unit.Velocity.Zero
+                }
+            }
+        }
+        HorizontalPager(
+            state = pager,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .nestedScroll(pastEdge),
+        ) { page ->
             if (page == 0) {
                 Column(Modifier.fillMaxSize()) {
                     PullToRefreshBox(
@@ -134,17 +191,49 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
                                 }
                             }
                             items(playlists, key = { it.id }) { p ->
-                                PlaylistRow(p, onClick = { onOpenPlaylist(p) })
+                                PlaylistRow(
+                                    p,
+                                    onClick = { onOpenPlaylist(p) },
+                                    onLongClick = { at ->
+                                        com.lifestream.player.ui.components.AppMenu.show(at, listOf(
+                                            com.lifestream.player.ui.components.MenuItem(Icons.Rounded.FileUpload, "Export Playlist") {
+                                                com.lifestream.player.ui.components.AppMenu.dismiss()
+                                                exporting = p
+                                                exportLauncher.launch(exportFileName(p.name))
+                                            },
+                                            com.lifestream.player.ui.components.MenuItem(Icons.Rounded.Edit, "Rename") {
+                                                com.lifestream.player.ui.components.AppMenu.dismiss()
+                                                renamingList = p
+                                            },
+                                            com.lifestream.player.ui.components.MenuItem(Icons.Rounded.Delete, "Delete", danger = true) {
+                                                com.lifestream.player.ui.components.AppMenu.dismiss()
+                                                deletingList = p
+                                            },
+                                        ))
+                                    },
+                                )
                             }
                         }
                     }
-                    // Across the bottom of the screen, just above the player bar and tabs.
+                    // Across the bottom of the screen, just above the player bar and tabs: Import
+                    // Playlist (a file exported from LifeStream), then New Playlist.
+                    OutlinedButton(
+                        onClick = { importLauncher.launch(arrayOf("*/*")) },
+                        enabled = Library.canCreatePlaylist(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, end = 16.dp, top = 10.dp),
+                    ) {
+                        Icon(Icons.Rounded.FileDownload, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Import Playlist")
+                    }
                     FilledTonalButton(
                         onClick = { creating = true },
                         enabled = Library.canCreatePlaylist(),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                            .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 10.dp),
                     ) {
                         Icon(Icons.Rounded.Add, null, Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
@@ -196,6 +285,25 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
         )
     }
 
+    renamingList?.let { p ->
+        PlaylistNameDialog(
+            title = "Rename Playlist",
+            initial = p.name,
+            confirmLabel = "Save",
+            onDismiss = { renamingList = null },
+        ) { name ->
+            Library.renamePlaylist(p.id, name)
+            renamingList = null
+        }
+    }
+
+    deletingList?.let { p ->
+        DeletePlaylistDialog(p, onDismiss = { deletingList = null }) {
+            deletingList = null
+            Library.deletePlaylist(p.id)
+        }
+    }
+
     if (creating) {
         PlaylistNameDialog(
             title = "New Playlist",
@@ -209,12 +317,83 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
     }
 }
 
+/** "Road Trip.lsplaylist", without characters file names can't have. */
+private fun exportFileName(name: String): String =
+    name.replace(Regex("[\\\\/:*?\"<>|\\p{Cntrl}]"), " ").trim().ifBlank { "Playlist" } + Library.EXPORT_EXTENSION
+
+private suspend fun exportPlaylist(context: android.content.Context, p: Playlist, uri: android.net.Uri) {
+    val ok = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val text = Library.exportText(p.id) ?: return@withContext false
+        runCatching {
+            context.contentResolver.openOutputStream(uri, "wt")?.use { it.write(text.toByteArray(Charsets.UTF_8)) } != null
+        }.getOrDefault(false)
+    }
+    android.widget.Toast.makeText(
+        context,
+        if (ok) "Exported \u201C${p.name}\u201D" else "Couldn't save the playlist file",
+        android.widget.Toast.LENGTH_SHORT,
+    ).show()
+}
+
+/** Reads a chosen file and adds it as a playlist, if (and only if) it's a LifeStream export. */
+private suspend fun importPlaylist(context: android.content.Context, uri: android.net.Uri) {
+    val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        runCatching {
+            val resolver = context.contentResolver
+            // Its name must end in .lsplaylist, and it must be small enough to be one.
+            val (name, size) = resolver.query(
+                uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME, android.provider.OpenableColumns.SIZE), null, null, null,
+            )?.use { c ->
+                if (!c.moveToFirst()) null else c.getString(0).orEmpty() to (if (c.isNull(1)) -1L else c.getLong(1))
+            } ?: ("" to -1L)
+            if (!name.endsWith(Library.EXPORT_EXTENSION, ignoreCase = true) || size > Library.MAX_EXPORT_BYTES) {
+                return@runCatching Library.ImportResult.NotAPlaylist
+            }
+            val bytes = resolver.openInputStream(uri)?.use { input ->
+                val out = java.io.ByteArrayOutputStream()
+                val buf = ByteArray(16 * 1024)
+                while (true) {
+                    val n = input.read(buf)
+                    if (n < 0) break
+                    out.write(buf, 0, n)
+                    if (out.size() > Library.MAX_EXPORT_BYTES) return@runCatching Library.ImportResult.NotAPlaylist
+                }
+                out.toByteArray()
+            } ?: return@runCatching Library.ImportResult.NotAPlaylist
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { Library.importText(String(bytes, Charsets.UTF_8)) }
+        }.getOrDefault(Library.ImportResult.NotAPlaylist)
+    }
+    val message = when (result) {
+        is Library.ImportResult.Imported -> "Imported \u201C${result.playlist.name}\u201D"
+        Library.ImportResult.TooMany -> "You have ${Library.MAX_PLAYLISTS} playlists, the most allowed."
+        Library.ImportResult.NotAPlaylist -> "That isn't a playlist exported from LifeStream."
+    }
+    android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+}
+
+/** Asked before a playlist is deleted. */
 @Composable
-private fun PlaylistRow(p: Playlist, onClick: () -> Unit) {
+private fun DeletePlaylistDialog(p: Playlist, onDismiss: () -> Unit, onDelete: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Delete \"${p.name}\"?") },
+        text = { Text("This removes the playlist. Its songs stay in their soundtracks.") },
+        confirmButton = {
+            TextButton(onClick = onDelete) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun PlaylistRow(p: Playlist, onClick: () -> Unit, onLongClick: (androidx.compose.ui.geometry.Offset?) -> Unit) {
+    val anchor = com.lifestream.player.ui.components.rememberMenuAnchor()
     Row(
         Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .menuAnchor(anchor)
+            .combinedClickable(onClick = onClick, onLongClick = { onLongClick(anchor.at()) })
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -241,7 +420,7 @@ private fun PlaylistRow(p: Playlist, onClick: () -> Unit) {
 }
 
 @Composable
-private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null, onClear: (() -> Unit)? = null) {
+private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null, onClear: (() -> Unit)? = null, sortable: Boolean = false) {
     // Play and Shuffle share the width evenly; History's Clear is a small plain button after them.
     val padding = PaddingValues(horizontal = 10.dp)
     Row(
@@ -267,6 +446,20 @@ private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null, onCl
         ) {
             CenteredButtonLabel("Shuffle") { Icon(Icons.Rounded.Shuffle, null, Modifier.size(20.dp)) }
         }
+        if (sortable && playlistId != null) {
+            // Styled like History's Clear; opens the same kind of menu as a song's ⋮.
+            val anchor = com.lifestream.player.ui.components.rememberMenuAnchor()
+            TextButton(
+                onClick = { showSortMenu(playlistId, anchor.at(center = true)) },
+                enabled = tracks.size > 1,
+                modifier = Modifier.height(44.dp).menuAnchor(anchor),
+                contentPadding = PaddingValues(horizontal = 8.dp),
+            ) {
+                Icon(Icons.AutoMirrored.Rounded.Sort, null, Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Sort", style = MaterialTheme.typography.labelLarge)
+            }
+        }
         if (onClear != null) {
             TextButton(
                 onClick = onClear,
@@ -280,6 +473,31 @@ private fun PlayShuffleRow(tracks: List<Track>, playlistId: String? = null, onCl
             }
         }
     }
+}
+
+/** Sort's menu: each order, with a check beside the current one. */
+private fun showSortMenu(playlistId: String, at: androidx.compose.ui.geometry.Offset?) {
+    val current = Library.sortOf(playlistId)
+    val icons = mapOf(
+        com.lifestream.player.data.PlaylistSort.ALPHABETICAL to Icons.Rounded.SortByAlpha,
+        com.lifestream.player.data.PlaylistSort.MOST_PLAYED to Icons.AutoMirrored.Rounded.TrendingUp,
+        com.lifestream.player.data.PlaylistSort.RECENTLY_ADDED to Icons.Rounded.Schedule,
+        com.lifestream.player.data.PlaylistSort.OLDEST_ADDED to Icons.Rounded.History,
+        com.lifestream.player.data.PlaylistSort.LONGEST to Icons.Rounded.Timer,
+        com.lifestream.player.data.PlaylistSort.SHORTEST to Icons.Rounded.AvTimer,
+    )
+    com.lifestream.player.ui.components.AppMenu.show(
+        at,
+        com.lifestream.player.data.PlaylistSort.entries.map { mode ->
+            com.lifestream.player.ui.components.MenuItem(
+                if (mode == current) Icons.Rounded.Check else icons.getValue(mode),
+                mode.label,
+            ) {
+                com.lifestream.player.ui.components.AppMenu.dismiss()
+                Library.setSort(playlistId, mode)
+            }
+        },
+    )
 }
 
 /** One playlist: play / shuffle, rename, delete, and its songs (hold a song to remove it). */
@@ -297,6 +515,10 @@ fun PlaylistScreen(playlistId: String, onBack: () -> Unit) {
     }
     // Opening a playlist counts as using it, for Home's "Last Playlist".
     androidx.compose.runtime.LaunchedEffect(playlist.id) { Library.setLastPlaylist(playlist.id) }
+    // Listed (and played) in the order chosen with Sort.
+    val sorts by Library.sorts.collectAsStateWithLifecycle()
+    val sort = sorts[playlist.id] ?: com.lifestream.player.data.PlaylistSort.OLDEST_ADDED
+    val shown = remember(playlist, sort) { Library.sorted(playlist, sort) }
 
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     LazyColumn(
@@ -327,7 +549,7 @@ fun PlaylistScreen(playlistId: String, onBack: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 20.dp),
                 )
-                PlayShuffleRow(playlist.tracks, playlistId = playlist.id)
+                PlayShuffleRow(shown, playlistId = playlist.id, sortable = true)
             }
         }
         if (playlist.tracks.isEmpty()) {
@@ -335,11 +557,11 @@ fun PlaylistScreen(playlistId: String, onBack: () -> Unit) {
                 EmptyState("This playlist is empty", "Press and hold any song and choose \"Add to playlist\".")
             }
         }
-        itemsIndexed(playlist.tracks, key = { _, t -> t.id }) { index, track ->
+        itemsIndexed(shown, key = { _, t -> t.id }) { index, track ->
             TrackRow(
                 track,
                 playlistId = playlist.id,
-                onClick = { PlayerConnection.playTracks(playlist.tracks, index, fromPlaylist = playlist.id) },
+                onClick = { PlayerConnection.playTracks(shown, index, fromPlaylist = playlist.id) },
             )
         }
     }
@@ -357,17 +579,9 @@ fun PlaylistScreen(playlistId: String, onBack: () -> Unit) {
     }
 
     if (deleting) {
-        AlertDialog(
-            onDismissRequest = { deleting = false },
-            title = { Text("Delete \"${playlist.name}\"?") },
-            text = { Text("This removes the playlist. Its songs stay in their soundtracks.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    deleting = false
-                    Library.deletePlaylist(playlist.id)
-                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = { TextButton(onClick = { deleting = false }) { Text("Cancel") } },
-        )
+        DeletePlaylistDialog(playlist, onDismiss = { deleting = false }) {
+            deleting = false
+            Library.deletePlaylist(playlist.id)
+        }
     }
 }

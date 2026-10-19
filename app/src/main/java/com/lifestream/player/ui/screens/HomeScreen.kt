@@ -536,15 +536,7 @@ fun GameCard(
                 .align(Alignment.BottomStart)
                 .padding(horizontal = 12.dp, vertical = 10.dp),
         ) {
-            // Always one line: a long name (like Lightning Returns) shrinks to fit instead of wrapping.
-            BasicText(
-                game.title,
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = Color.White),
-                maxLines = 1,
-                // On a narrow screen the longest names still end in "…" rather than being cut off.
-                overflow = TextOverflow.Ellipsis,
-                autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = MaterialTheme.typography.titleSmall.fontSize, stepSize = 0.5.sp),
-            )
+            CardTitle(game.title)
             Text(
                 "${game.year} · ${game.composer}",
                 style = MaterialTheme.typography.bodySmall,
@@ -554,6 +546,43 @@ fun GameCard(
             )
         }
     }
+}
+
+/**
+ * A card's title on one line. A name too long for that, with a subtitle after a colon, goes on two
+ * lines instead ("Final Fantasy XIII:" over "Lightning Returns"), each as large as fits; the year
+ * and composer line stays where it is, under it. This applies to any title, new ones included.
+ */
+@Composable
+private fun CardTitle(title: String) {
+    val style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = Color.White)
+    val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+    androidx.compose.foundation.layout.BoxWithConstraints {
+        val split = title.indexOf(": ")
+        val fitsOnOneLine = remember(title, constraints.maxWidth, style) {
+            measurer.measure(title, style, maxLines = 1, softWrap = false).size.width <= constraints.maxWidth
+        }
+        if (fitsOnOneLine || split < 0) {
+            OneLine(title, style)
+        } else {
+            Column {
+                OneLine(title.substring(0, split + 1), style)
+                OneLine(title.substring(split + 2), style)
+            }
+        }
+    }
+}
+
+/** One line of card title text that shrinks to fit, ending in "…" only if it still can't. */
+@Composable
+private fun OneLine(text: String, style: TextStyle) {
+    BasicText(
+        text,
+        style = style,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = style.fontSize, stepSize = 0.5.sp),
+    )
 }
 
 /** A faint faceted crystal drawn in the corner of each card. */

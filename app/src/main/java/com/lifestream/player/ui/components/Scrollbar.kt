@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
@@ -56,28 +57,80 @@ private fun ContentDrawScope.drawThumb(start: Float, visible: Float, color: Colo
     )
 }
 
+/**
+ * Tracks where a lazy list's rows sit, in pixels, as they scroll past. Rows can be very different
+ * heights (Home's quote, its Recommended row, section labels and cards), so counting rows makes
+ * the thumb jump; remembering each row's position once it's been seen keeps it moving smoothly,
+ * and rows not seen yet are estimated from the average.
+ */
+private class RowTracker {
+    private val tops = HashMap<Int, Int>()
+    private val bottoms = HashMap<Int, Int>()
+    private var total = -1
+
+    /** Returns (how far through, how much shows), or null when everything fits. */
+    fun measure(
+        indexes: IntArray, offsets: IntArray, sizes: IntArray,
+        total: Int, viewportStart: Int, viewportEnd: Int,
+    ): Pair<Float, Float>? {
+        val n = indexes.size
+        if (n == 0 || total == 0) return null
+        if (total != this.total) {
+            tops.clear(); bottoms.clear(); this.total = total
+        }
+        val viewport = (viewportEnd - viewportStart).toFloat()
+        val lastFits = indexes[n - 1] == total - 1 && offsets[n - 1] + sizes[n - 1] <= viewportEnd
+        val firstAtTop = indexes[0] == 0 && offsets[0] >= viewportStart
+        if (firstAtTop && lastFits) return null
+
+        // How far the list has scrolled: from a row whose position is already known, else
+        // from the top row, else estimated.
+        var scroll: Float? = null
+        for (k in 0 until n) {
+            val known = tops[indexes[k]] ?: continue
+            scroll = (known - offsets[k]).toFloat()
+            break
+        }
+        if (scroll == null) {
+            scroll = if (indexes[0] == 0) -offsets[0].toFloat() else {
+                val perRow = sizes.average().toFloat().coerceAtLeast(1f)
+                tops.clear(); bottoms.clear()
+                indexes[0] * perRow - offsets[0]
+            }
+        }
+        for (k in 0 until n) {
+            val top = (scroll + offsets[k]).toInt()
+            tops[indexes[k]] = top
+            bottoms[indexes[k]] = top + sizes[k]
+        }
+        // The whole list's height: exact once the last row has been seen, otherwise what's known
+        // plus the average for the rest.
+        val maxIndex = tops.keys.maxOrNull() ?: 0
+        val knownBottom = bottoms.values.maxOrNull() ?: 0
+        val content = if (maxIndex >= total - 1) knownBottom.toFloat()
+        else knownBottom + (total - 1 - maxIndex) * (knownBottom.toFloat() / (maxIndex + 1))
+        if (content <= viewport) return null
+        val start = if (lastFits) 1f else (scroll / (content - viewport)).coerceIn(0f, 1f)
+        return start to (viewport / content)
+    }
+}
+
 @Composable
 fun Modifier.thinScrollbar(state: LazyListState): Modifier {
     val color = MaterialTheme.colorScheme.primary
     val alpha = scrollbarAlpha(state.isScrollInProgress)
+    val tracker = remember(state) { RowTracker() }
     return drawWithContent {
         drawContent()
         val info = state.layoutInfo
         val items = info.visibleItemsInfo
-        val total = info.totalItemsCount
-        if (items.isEmpty() || total == 0) return@drawWithContent
-        // Rows can differ in height, so the list is measured in rows: how many fit, and how far
-        // down the first one is (counting the part of it already scrolled past).
-        val end = info.viewportEndOffset
-        val first = items.first()
-        val last = items.last()
-        if (first.index == 0 && first.offset >= 0 && last.index == total - 1 && last.offset + last.size <= end) {
-            return@drawWithContent // everything fits: no bar
-        }
-        val firstPart = if (first.size > 0) (-first.offset).coerceAtLeast(0).toFloat() / first.size else 0f
-        val shown = items.count { it.offset >= 0 && it.offset + it.size <= end }.coerceAtLeast(1).toFloat()
-        val position = first.index + firstPart
-        drawThumb(position / (total - shown).coerceAtLeast(1f), shown / total, color, alpha)
+        val result = tracker.measure(
+            IntArray(items.size) { items[it].index },
+            IntArray(items.size) { items[it].offset },
+            IntArray(items.size) { items[it].size },
+            info.totalItemsCount, info.viewportStartOffset, info.viewportEndOffset,
+        ) ?: return@drawWithContent
+        drawThumb(result.first, result.second, color, alpha)
     }
 }
 
@@ -85,21 +138,18 @@ fun Modifier.thinScrollbar(state: LazyListState): Modifier {
 fun Modifier.thinScrollbar(state: LazyGridState): Modifier {
     val color = MaterialTheme.colorScheme.primary
     val alpha = scrollbarAlpha(state.isScrollInProgress)
+    val tracker = remember(state) { RowTracker() }
     return drawWithContent {
         drawContent()
         val info = state.layoutInfo
         val items = info.visibleItemsInfo
-        val total = info.totalItemsCount
-        if (items.isEmpty() || total == 0) return@drawWithContent
-        val end = info.viewportEndOffset
-        val shown = items.count { it.offset.y >= 0 && it.offset.y + it.size.height <= end }.coerceAtLeast(1).toFloat()
-        if (items.first().index == 0 && items.first().offset.y >= 0 && items.last().index == total - 1 &&
-            items.last().offset.y + items.last().size.height <= end
-        ) return@drawWithContent
-        val first = items.first()
-        val firstPart = if (first.size.height > 0) (-first.offset.y).coerceAtLeast(0).toFloat() / first.size.height else 0f
-        val position = first.index + firstPart
-        drawThumb(position / (total - shown).coerceAtLeast(1f), shown / total, color, alpha)
+        val result = tracker.measure(
+            IntArray(items.size) { items[it].index },
+            IntArray(items.size) { items[it].offset.y },
+            IntArray(items.size) { items[it].size.height },
+            info.totalItemsCount, info.viewportStartOffset, info.viewportEndOffset,
+        ) ?: return@drawWithContent
+        drawThumb(result.first, result.second, color, alpha)
     }
 }
 

@@ -44,6 +44,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -61,6 +66,7 @@ import com.lifestream.player.ui.screens.HomeScreen
 import com.lifestream.player.ui.screens.LibraryScreen
 import com.lifestream.player.ui.screens.PlaylistScreen
 import com.lifestream.player.ui.components.TrackActionsHost
+import com.lifestream.player.ui.components.AppMenuHost
 import com.lifestream.player.ui.screens.NowPlayingScreen
 import com.lifestream.player.ui.screens.SearchScreen
 import com.lifestream.player.ui.screens.SearchFocus
@@ -115,6 +121,8 @@ private val topLevel = listOf(
 @Composable
 private fun LifestreamRoot() {
     val nav = rememberNavController()
+    // Which section of the bottom bar you're in (a game page opened from Home still belongs to Home).
+    var section by rememberSaveable { mutableStateOf("home") }
     val playerState by PlayerConnection.state.collectAsStateWithLifecycle()
     var showPlayer by rememberSaveable { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
@@ -128,6 +136,14 @@ private fun LifestreamRoot() {
     }
 
 
+    // A sideways swipe moves one tab along (+1 right, -1 left), if there is one that way.
+    fun swipeTab(step: Int) {
+        val i = topLevel.indexOfFirst { it.route == section }
+        val next = topLevel.getOrNull(i + step) ?: return
+        section = next.route
+        switchSection(nav, next.route)
+    }
+
     Box(Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -136,14 +152,18 @@ private fun LifestreamRoot() {
             bottomBar = {
                 Column {
                     MiniPlayer(playerState, onOpen = { showPlayer = true })
-                    BottomBar(nav)
+                    BottomBar(nav, section, onSection = { section = it })
                 }
             },
         ) { padding ->
             NavHost(
                 navController = nav,
                 startDestination = "home",
-                modifier = Modifier.padding(padding),
+                modifier = Modifier
+                    .padding(padding)
+                    // Swipe left or right anywhere to move to the next or previous tab (lists and
+                    // pages that swipe sideways themselves, like Library's, get the swipe first).
+                    .swipeBetweenTabs(::swipeTab),
                 // Quick cross-fades between screens instead of the long default.
                 enterTransition = { fadeIn(tween(220, delayMillis = 60)) },
                 exitTransition = { fadeOut(tween(140)) },
@@ -160,7 +180,7 @@ private fun LifestreamRoot() {
                     SearchScreen(onOpenGame = { nav.navigate("game/${it.id}") })
                 }
                 composable("library") {
-                    LibraryScreen(onOpenPlaylist = { nav.navigate("playlist/${it.id}") })
+                    LibraryScreen(onOpenPlaylist = { nav.navigate("playlist/${it.id}") }, onSwipePastEdge = ::swipeTab)
                 }
                 composable("playlist/{id}") { entry ->
                     val id = entry.arguments?.getString("id") ?: return@composable
@@ -209,6 +229,8 @@ private fun LifestreamRoot() {
             showPlayer = false
             nav.navigate("game/${game.id}")
         })
+        // The same menu for playlists and Sort.
+        AppMenuHost()
     }
 }
 
@@ -218,14 +240,13 @@ private fun LifestreamRoot() {
  * you're already in returns to its first screen — e.g. Home from inside a game's song list.
  */
 @Composable
-private fun BottomBar(nav: NavHostController) {
+private fun BottomBar(nav: NavHostController, section: String, onSection: (String) -> Unit) {
     val entry by nav.currentBackStackEntryAsState()
-    var section by rememberSaveable { mutableStateOf("home") }
     val topRoutes = remember { topLevel.map { it.route }.toSet() }
 
     // Keep the highlight right when back navigation lands on another section's first screen.
     LaunchedEffect(entry) {
-        entry?.destination?.route?.takeIf { it in topRoutes }?.let { section = it }
+        entry?.destination?.route?.takeIf { it in topRoutes }?.let { onSection(it) }
     }
 
     NavigationBar(containerColor = LsColors.Night) {
@@ -251,12 +272,8 @@ private fun BottomBar(nav: NavHostController) {
                             nav.navigate(item.route) { launchSingleTop = true }
                         }
                     } else {
-                        section = item.route
-                        nav.navigate(item.route) {
-                            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+                        onSection(item.route)
+                        switchSection(nav, item.route)
                     }
                 },
                 icon = { Icon(item.icon, null) },
@@ -267,6 +284,46 @@ private fun BottomBar(nav: NavHostController) {
                     selectedTextColor = LsColors.Crystal,
                 ),
             )
+        }
+    }
+}
+
+/** Moves to another section of the bottom bar, keeping where you were in each. */
+private fun switchSection(nav: NavHostController, route: String) {
+    if (route == "search") {
+        SearchFocus.requested = true
+        SearchFocus.clearRequested = true
+    }
+    nav.navigate(route) {
+        popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
+/**
+ * A sideways swipe across the screen: calls [onSwipe] with +1 (swiped left: the next tab) or -1
+ * (swiped right: the previous one). It only counts if it's clearly sideways and long enough, and
+ * nothing on the page used it first (a row or pager that scrolls sideways, a slider).
+ */
+private fun Modifier.swipeBetweenTabs(onSwipe: (Int) -> Unit): Modifier = pointerInput(Unit) {
+    val distance = 72.dp.toPx()
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false)
+        var dx = 0f
+        var dy = 0f
+        var usedByPage = false
+        while (true) {
+            // Seen after the page has had its turn, so its own scrolling wins.
+            val event = awaitPointerEvent(PointerEventPass.Final)
+            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+            if (change.isConsumed) usedByPage = true
+            if (!change.pressed) break
+            dx += change.position.x - change.previousPosition.x
+            dy += change.position.y - change.previousPosition.y
+        }
+        if (!usedByPage && kotlin.math.abs(dx) > distance && kotlin.math.abs(dx) > kotlin.math.abs(dy) * 2) {
+            onSwipe(if (dx < 0) 1 else -1)
         }
     }
 }

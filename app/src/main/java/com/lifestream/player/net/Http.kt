@@ -62,8 +62,29 @@ object Http {
             .build()
     }
 
+    @Volatile private var cacheDir: java.io.File? = null
+
+    /** Where cached web responses are kept; call before the first request. */
+    fun init(context: android.content.Context) {
+        cacheDir = java.io.File(context.applicationContext.cacheDir, "http")
+    }
+
+    /**
+     * Responses the server says can be reused (above all YouTube's player script, a few MB that
+     * every first song after starting the app needs) are kept on the phone and reused instead of
+     * downloaded again. YouTube's searches and song lists are never cached this way: they're POST
+     * requests, which HTTP caching leaves alone.
+     */
+    private val cache: okhttp3.Cache? by lazy { cacheDir?.let { okhttp3.Cache(it, 48L * 1024 * 1024) } }
+
+    /** Empties the response cache (Settings → Clear Cache). Call off the main thread. */
+    fun clearCache() {
+        runCatching { cache?.evictAll() }
+    }
+
     val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
+            .cache(cache)
             .connectTimeout(20, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)

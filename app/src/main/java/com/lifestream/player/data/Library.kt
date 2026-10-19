@@ -22,6 +22,16 @@ import java.util.UUID
 /** A user playlist: any songs from any soundtrack, in the order they were added. */
 data class Playlist(val id: String, val name: String, val tracks: List<Track>)
 
+/** How a playlist's songs are listed (and played). The songs themselves stay in the order added. */
+enum class PlaylistSort(val label: String) {
+    ALPHABETICAL("Alphabetical Order"),
+    MOST_PLAYED("Most Played"),
+    RECENTLY_ADDED("Recently Added"),
+    OLDEST_ADDED("Oldest Added"),
+    LONGEST("Longest Duration"),
+    SHORTEST("Shortest Duration"),
+}
+
 /** Playlists and listening history, stored on the device. */
 object Library {
     const val MAX_PLAYLISTS = 20
@@ -34,6 +44,15 @@ object Library {
     private const val KEY_RECENTS = "recents"
     private const val KEY_OLD_FAVORITES = "favorites"
     private const val KEY_LAST_PLAYLIST = "last_playlist"
+    private const val KEY_PLAY_COUNTS = "play_counts"
+    private const val KEY_SORTS = "playlist_sorts"
+    private const val MAX_PLAY_COUNTS = 3000
+
+    /** Exported playlist files: what they're called, and the most an import will read. */
+    const val EXPORT_EXTENSION = ".lsplaylist"
+    const val MAX_EXPORT_BYTES = 2L * 1024 * 1024
+    private const val EXPORT_FORMAT = "lifestream-playlist"
+    private const val EXPORT_VERSION = 1
 
     private lateinit var prefs: SharedPreferences
 
@@ -48,6 +67,7 @@ object Library {
     private var saveJob: Job? = null
     @Volatile private var saveWanted = false
     private val playlistId = Regex("^[A-Za-z0-9-]{1,64}$")
+    private val videoIdPattern = Regex("^[A-Za-z0-9_-]{11}$")
     private val whitespace = Regex("\\s+")
 
     private val _playlists = MutableStateFlow<List<Playlist>>(emptyList())
@@ -65,8 +85,29 @@ object Library {
     /** The playlist most recently played from (Home's "Last Playlist"). */
     val lastPlaylistId: StateFlow<String?> = _lastPlaylistId.asStateFlow()
 
+    /** How many times each song has been played (for "Most Played"), kept on the phone. */
+    private val playCounts = HashMap<String, Int>()
+
+    private val _sorts = MutableStateFlow<Map<String, PlaylistSort>>(emptyMap())
+    /** Each playlist's chosen order (Oldest Added when never changed). */
+    val sorts: StateFlow<Map<String, PlaylistSort>> = _sorts.asStateFlow()
+
     fun init(context: Context) {
         prefs = context.getSharedPreferences("library", Context.MODE_PRIVATE)
+        runCatching {
+            val o = JSONObject(prefs.getString(KEY_PLAY_COUNTS, "{}") ?: "{}")
+            for (id in o.keys()) {
+                val n = o.optInt(id)
+                if (n > 0 && videoIdPattern.matches(id)) playCounts[id] = n
+            }
+        }
+        runCatching {
+            val o = JSONObject(prefs.getString(KEY_SORTS, "{}") ?: "{}")
+            _sorts.value = o.keys().asSequence().mapNotNull { id ->
+                val mode = PlaylistSort.entries.firstOrNull { it.name == o.optString(id) } ?: return@mapNotNull null
+                if (playlistId.matches(id)) id to mode else null
+            }.toMap()
+        }
         playlistsFile = File(context.filesDir, "playlists.json")
         _recents.value = readTracks(prefs.getString(KEY_RECENTS, "[]"))
         _playlists.value = readPlaylists()
@@ -127,6 +168,10 @@ object Library {
     fun deletePlaylist(id: String) {
         _playlists.value = _playlists.value.filterNot { it.id == id }
         savePlaylists()
+        if (id in _sorts.value) {
+            _sorts.value = _sorts.value - id
+            prefs.edit().putString(KEY_SORTS, JSONObject(_sorts.value.mapValues { it.value.name } as Map<*, *>).toString()).apply()
+        }
         if (_lastPlaylistId.value == id) {
             _lastPlaylistId.value = null
             prefs.edit().remove(KEY_LAST_PLAYLIST).apply()
@@ -149,7 +194,107 @@ object Library {
     fun addRecent(track: Track) {
         val updated = (listOf(track) + _recents.value.filterNot { it.id == track.id }).take(MAX_RECENTS)
         _recents.value = updated
-        prefs.edit().putString(KEY_RECENTS, writeTracks(updated)).apply()
+        countPlay(track.id)
+        prefs.edit()
+            .putString(KEY_RECENTS, writeTracks(updated))
+            .putString(KEY_PLAY_COUNTS, writePlayCounts())
+            .apply()
+    }
+
+    private fun countPlay(id: String) = synchronized(playCounts) {
+        playCounts[id] = (playCounts[id] ?: 0) + 1
+        // Keep the list bounded: the least played go first.
+        if (playCounts.size > MAX_PLAY_COUNTS) {
+            playCounts.entries.sortedBy { it.value }.take(playCounts.size - MAX_PLAY_COUNTS)
+                .map { it.key }.forEach(playCounts::remove)
+        }
+    }
+
+    private fun writePlayCounts(): String = synchronized(playCounts) { JSONObject(playCounts as Map<*, *>).toString() }
+
+    fun playCount(id: String): Int = synchronized(playCounts) { playCounts[id] ?: 0 }
+
+    // ---- Sorting ----
+
+    fun sortOf(playlistId: String): PlaylistSort = _sorts.value[playlistId] ?: PlaylistSort.OLDEST_ADDED
+
+    fun setSort(playlistId: String, sort: PlaylistSort) {
+        if (playlist(playlistId) == null) return
+        _sorts.value = _sorts.value + (playlistId to sort)
+        prefs.edit().putString(KEY_SORTS, JSONObject(_sorts.value.mapValues { it.value.name } as Map<*, *>).toString()).apply()
+    }
+
+    /** The playlist's songs in its chosen order. */
+    fun sorted(p: Playlist, sort: PlaylistSort = sortOf(p.id)): List<Track> = when (sort) {
+        PlaylistSort.OLDEST_ADDED -> p.tracks
+        PlaylistSort.RECENTLY_ADDED -> p.tracks.asReversed()
+        PlaylistSort.ALPHABETICAL -> p.tracks.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title })
+        // Ties keep the order they were added in (sortedBy is stable).
+        PlaylistSort.MOST_PLAYED -> p.tracks.sortedByDescending { playCount(it.id) }
+        // Songs whose length isn't known go last either way.
+        PlaylistSort.LONGEST -> p.tracks.sortedByDescending { it.durationSec.takeIf { d -> d > 0 } ?: -1 }
+        PlaylistSort.SHORTEST -> p.tracks.sortedBy { it.durationSec.takeIf { d -> d > 0 } ?: Long.MAX_VALUE }
+    }
+
+    // ---- Export and import (a file on the phone; nothing goes online) ----
+
+    /** A fingerprint that marks a file as LifeStream's own export (and unchanged since). */
+    private fun fingerprint(name: String, data: String): String {
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+            .digest("$EXPORT_FORMAT:$EXPORT_VERSION\n$name\n$data".toByteArray(Charsets.UTF_8))
+        return digest.joinToString("") { "%02x".format(it) }
+    }
+
+    /** The playlist as an export file's contents, or null if it no longer exists. */
+    fun exportText(id: String): String? {
+        val p = playlist(id) ?: return null
+        val data = writeTracks(p.tracks)
+        return JSONObject()
+            .put("format", EXPORT_FORMAT)
+            .put("version", EXPORT_VERSION)
+            .put("name", p.name)
+            .put("tracks", data)
+            .put("check", fingerprint(p.name, data))
+            .toString()
+    }
+
+    sealed class ImportResult {
+        class Imported(val playlist: Playlist) : ImportResult()
+        object NotAPlaylist : ImportResult()
+        object TooMany : ImportResult()
+    }
+
+    /**
+     * Adds a playlist from an exported file's contents. Only LifeStream's own exports are accepted:
+     * the right format and version, and a fingerprint that matches (a changed or foreign file is
+     * refused). Every song is checked like any saved song.
+     */
+    fun importText(text: String): ImportResult {
+        if (text.length > MAX_EXPORT_BYTES) return ImportResult.NotAPlaylist
+        val o = runCatching { JSONObject(text) }.getOrNull() ?: return ImportResult.NotAPlaylist
+        if (o.optString("format") != EXPORT_FORMAT || o.optInt("version", -1) != EXPORT_VERSION) return ImportResult.NotAPlaylist
+        val name = o.optString("name")
+        val data = o.optString("tracks")
+        if (name.isBlank() || data.isEmpty() || o.optString("check") != fingerprint(name, data)) return ImportResult.NotAPlaylist
+        val tracks = runCatching { readTracks(JSONArray(data)) }.getOrNull() ?: return ImportResult.NotAPlaylist
+        if (!canCreatePlaylist()) return ImportResult.TooMany
+        val p = Playlist(UUID.randomUUID().toString(), uniqueName(cleanName(name, "Imported Playlist")), tracks.take(MAX_TRACKS_PER_PLAYLIST))
+        _playlists.value = _playlists.value + p
+        savePlaylists()
+        return ImportResult.Imported(p)
+    }
+
+    /** "Road Trip" stays as it is unless a playlist has that name already: then "Road Trip (2)"… */
+    private fun uniqueName(name: String): String {
+        val taken = _playlists.value.map { it.name.lowercase() }.toSet()
+        if (name.lowercase() !in taken) return name
+        var n = 2
+        while (true) {
+            val suffix = " ($n)"
+            val candidate = name.take(MAX_NAME_LENGTH - suffix.length) + suffix
+            if (candidate.lowercase() !in taken) return candidate
+            n++
+        }
     }
 
     /**
@@ -183,7 +328,8 @@ object Library {
 
     fun clearRecents() {
         _recents.value = emptyList()
-        prefs.edit().putString(KEY_RECENTS, "[]").apply()
+        synchronized(playCounts) { playCounts.clear() }
+        prefs.edit().putString(KEY_RECENTS, "[]").putString(KEY_PLAY_COUNTS, "{}").apply()
     }
 
     // ---- storage ----

@@ -280,7 +280,12 @@ object SoundtrackIndex {
                                     continue
                                 }
                                 val (built, tracks) = readGame(r, id)
-                                map[id] = tracks
+                                // A soundtrack that has since been given one official cover shows it
+                                // on every song, without rebuilding the index.
+                                val cover = Catalog.game(id)?.coverArt
+                                map[id] = if (cover == null) tracks else tracks.map { t ->
+                                    if (t.thumbnail == cover) t else t.copy(thumbnail = cover)
+                                }
                                 stamps[id] = built
                             }
                             r.endObject()

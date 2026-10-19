@@ -216,6 +216,7 @@ object StreamDataSources {
      */
     private val mediaClient by lazy {
         Http.client.newBuilder()
+            .cache(null) // audio has its own store (SongCache)
             // A download that stalls (often a network that just went away) gives up quickly, so
             // it's retried, on whatever network is there now, instead of waiting 30 s.
             .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)

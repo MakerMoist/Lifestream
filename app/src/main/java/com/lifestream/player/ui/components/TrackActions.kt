@@ -232,7 +232,51 @@ fun TrackActionsHost(onOpenGame: (Game) -> Unit) {
     }
 }
 
-private class MenuItem(val icon: ImageVector, val label: String, val danger: Boolean = false, val onClick: () -> Unit)
+class MenuItem(val icon: ImageVector, val label: String, val danger: Boolean = false, val onClick: () -> Unit)
+
+/**
+ * The same pop-up menu as a song's, for anything else (a playlist, Sort): [show] it with its
+ * options and where it opens from; tapping an option, outside it or Back closes it.
+ */
+object AppMenu {
+    class Request(val at: Offset?, val items: List<MenuItem>)
+
+    private val _request = MutableStateFlow<Request?>(null)
+    val request: StateFlow<Request?> = _request.asStateFlow()
+
+    fun show(at: Offset?, items: List<MenuItem>) {
+        _request.value = Request(at, items)
+    }
+
+    fun dismiss() {
+        _request.value = null
+    }
+}
+
+/** Placed once at the root of the app, beside [TrackActionsHost]. */
+@Composable
+fun AppMenuHost() {
+    val request by AppMenu.request.collectAsStateWithLifecycle()
+    var shown by remember { mutableStateOf<AppMenu.Request?>(null) }
+    LaunchedEffect(request) { if (request != null) shown = request }
+    val progress by animateFloatAsState(
+        targetValue = if (request != null) 1f else 0f,
+        animationSpec = tween(if (request != null) 170 else 120),
+        label = "appMenu",
+        finishedListener = { if (it == 0f) shown = null },
+    )
+    val backDispatcher = androidx.activity.compose.LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    val open = request != null
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(open, backDispatcher, lifecycleOwner) {
+        val callback = object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() = AppMenu.dismiss()
+        }
+        if (open) backDispatcher?.addCallback(lifecycleOwner, callback)
+        onDispose { callback.remove() }
+    }
+    shown?.let { r -> ContextMenuLayer(r.at, progress, r.items, onDismiss = { AppMenu.dismiss() }, isOpen = { AppMenu.request.value != null }) }
+}
 
 /** Where the menu's corner sits on screen, worked out when it's placed (read while drawing). */
 private class MenuOrigin {
@@ -310,6 +354,16 @@ private fun SongMenu(
         }
     }
 
+    ContextMenuLayer(target.at, progress, items, onDismiss, isOpen = { TrackActions.target.value != null })
+}
+
+/**
+ * The menu itself, drawn over the whole screen: a light shade (tap it to close) and the list of
+ * options, opening from [at] (window coordinates; the middle of the screen if null). Shared by
+ * the song menu and [AppMenu].
+ */
+@Composable
+private fun ContextMenuLayer(at: Offset?, progress: Float, items: List<MenuItem>, onDismiss: () -> Unit, isOpen: () -> Boolean) {
     val density = LocalDensity.current
     val bars = WindowInsets.systemBars
     val menuOrigin = remember { MenuOrigin() }
@@ -346,7 +400,7 @@ private fun SongMenu(
                         // Taps on the menu itself don't fall through and close it.
                         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
                 ) {
-                    MenuContent(items)
+                    MenuContent(items, isOpen)
                 }
             },
         ) { measurables, constraints ->
@@ -364,7 +418,7 @@ private fun SongMenu(
                 )
             )
             // The spot it was opened from, in this layer's coordinates.
-            val point = target.at?.let { p -> host?.takeIf { it.isAttached }?.windowToLocal(p) }
+            val point = at?.let { p -> host?.takeIf { it.isAttached }?.windowToLocal(p) }
                 ?: Offset(width / 2f, height / 2f)
             // Opens to the right of the finger and below it, flipping where there isn't room.
             val openLeft = point.x + menu.width > width - margin
@@ -382,24 +436,24 @@ private fun SongMenu(
 }
 
 @Composable
-private fun MenuContent(items: List<MenuItem>) {
-    // Just the actions: the song is the one that was held or tapped, right beside the menu.
+private fun MenuContent(items: List<MenuItem>, isOpen: () -> Boolean) {
+    // Just the actions: what they're for was held or tapped, right beside the menu.
     Column(
         Modifier
             .scrollWithBar()
             .padding(vertical = 6.dp),
     ) {
-        items.forEach { item -> MenuRow(item) }
+        items.forEach { item -> MenuRow(item, isOpen) }
     }
 }
 
 @Composable
-private fun MenuRow(item: MenuItem) {
+private fun MenuRow(item: MenuItem, isOpen: () -> Boolean) {
     Row(
         Modifier
             .fillMaxWidth()
             // Ignored while the menu is already closing (a second quick tap mustn't repeat it).
-            .clickable { if (TrackActions.target.value != null) item.onClick() }
+            .clickable { if (isOpen()) item.onClick() }
             .padding(horizontal = 16.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

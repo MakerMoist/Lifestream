@@ -37,6 +37,37 @@ class LibraryTest {
     }
 
     @Test
+    fun exportImportAndSort() {
+        val p = create("Road Trip")!!
+        Library.addToPlaylist(p.id, track(1).copy(title = "Beta", durationSec = 300))
+        Library.addToPlaylist(p.id, track(2).copy(title = "alpha", durationSec = 60))
+        Library.addToPlaylist(p.id, track(3).copy(title = "Gamma", durationSec = -1))
+        val list = Library.playlist(p.id)!!
+        fun order(sort: com.lifestream.player.data.PlaylistSort) = Library.sorted(list, sort).map { it.title }
+        assertEquals(listOf("alpha", "Beta", "Gamma"), order(com.lifestream.player.data.PlaylistSort.ALPHABETICAL))
+        assertEquals(listOf("Gamma", "alpha", "Beta"), order(com.lifestream.player.data.PlaylistSort.RECENTLY_ADDED))
+        assertEquals(listOf("Beta", "alpha", "Gamma"), order(com.lifestream.player.data.PlaylistSort.OLDEST_ADDED))
+        assertEquals(listOf("Beta", "alpha", "Gamma"), order(com.lifestream.player.data.PlaylistSort.LONGEST))
+        assertEquals(listOf("alpha", "Beta", "Gamma"), order(com.lifestream.player.data.PlaylistSort.SHORTEST))
+        Library.setSort(p.id, com.lifestream.player.data.PlaylistSort.ALPHABETICAL)
+        assertEquals(com.lifestream.player.data.PlaylistSort.ALPHABETICAL, Library.sortOf(p.id))
+
+        // An export comes back as a new playlist with the same songs (and a name of its own).
+        val text = Library.exportText(p.id)!!
+        val result = Library.importText(text)
+        assertTrue(result is Library.ImportResult.Imported)
+        val copy = (result as Library.ImportResult.Imported).playlist.also { created += it.id }
+        assertEquals("Road Trip (2)", copy.name)
+        assertEquals(list.tracks.map { it.id }, copy.tracks.map { it.id })
+        // Anything else is refused: a changed export, another kind of file, nonsense.
+        assertTrue(Library.importText(text.replace("Beta", "Bets")) is Library.ImportResult.NotAPlaylist)
+        assertTrue(Library.importText("[1, 2, 3]") is Library.ImportResult.NotAPlaylist)
+        assertTrue(Library.importText("{\"format\":\"something-else\"}") is Library.ImportResult.NotAPlaylist)
+        assertTrue(Library.importText("not json at all") is Library.ImportResult.NotAPlaylist)
+        Log.i("LSTEST", "Playlists: sort orders, export and import (own files only) work")
+    }
+
+    @Test
     fun playlistBasics() {
         val p = create("   My   mix  ")!!
         assertEquals("My mix", p.name) // tidied

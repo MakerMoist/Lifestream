@@ -311,12 +311,27 @@ fun NowPlayingScreen(onClose: () -> Unit) {
     if (savingInstant) SaveInstantPlaylistDialog(onDismiss = { savingInstant = false })
 
     if (showQueue) {
+        // Only a downward drag on the handle bar (or Back, or a tap outside) closes Up Next:
+        // scrolling the list, however hard, never moves the sheet.
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val closeQueue: () -> Unit = {
+            scope.launch { sheetState.hide() }.invokeOnCompletion { showQueue = false }
+        }
         ModalBottomSheet(
             onDismissRequest = { showQueue = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            sheetState = sheetState,
+            dragHandle = { QueueHandle(onClose = closeQueue) },
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ) {
-            QueueList(state)
+            // Drags anywhere on the sheet that the list doesn't use (its title, the space around
+            // it) are kept here, so they can't pull the sheet down either.
+            Column(
+                Modifier.pointerInput(Unit) {
+                    detectVerticalDragGestures { change, _ -> change.consume() }
+                },
+            ) {
+                QueueList(state)
+            }
         }
     }
 }
@@ -409,6 +424,32 @@ private fun Controls(state: PlayerUiState) {
                 else Color.White.copy(alpha = 0.8f),
             )
         }
+    }
+}
+
+/** Up Next's handle bar: pulling it down closes the sheet. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun QueueHandle(onClose: () -> Unit) {
+    val closeAfter = with(androidx.compose.ui.platform.LocalDensity.current) { 48.dp.toPx() }
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(36.dp)
+            .pointerInput(Unit) {
+                var pulled = 0f
+                detectVerticalDragGestures(
+                    onDragStart = { pulled = 0f },
+                    onVerticalDrag = { change, dy ->
+                        change.consume()
+                        pulled += dy
+                    },
+                    onDragEnd = { if (pulled > closeAfter) onClose() },
+                )
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        androidx.compose.material3.BottomSheetDefaults.DragHandle()
     }
 }
 
