@@ -73,6 +73,24 @@ jobs:
           "$zipHash  LifeStream-Windows-Portable.zip" | Out-File -Encoding ascii out/LifeStream-Windows-Portable.zip.sha256
           @{ versionName = $version; msiSha256 = $msiHash; zipSha256 = $zipHash } | ConvertTo-Json -Compress | Out-File -Encoding ascii out/version-windows.json
           Get-ChildItem out
+      - name: Check an update keeps the saved songs
+        shell: pwsh
+        run: |
+          # Install the version on the releases page now, give it some saved songs, then install
+          # this build over it the way an update does, and see that they're still there.
+          $old = Join-Path $env:RUNNER_TEMP "previous.msi"
+          try { Invoke-WebRequest -Uri "https://github.com/${{ github.repository }}/releases/download/windows-latest/LifeStream-Windows-Setup.msi" -OutFile $old -UseBasicParsing }
+          catch { Write-Output "::notice::No earlier release to update from"; exit 0 }
+          Start-Process msiexec.exe -ArgumentList "/i `"$old`" /qn" -Wait
+          $cache = Join-Path $env:LOCALAPPDATA "LifeStream Cache/songs"
+          New-Item -ItemType Directory -Force $cache | Out-Null
+          Set-Content -Path (Join-Path $cache "AbCdEfGhIjK.140") -Value "saved song"
+          $new = (Resolve-Path out/LifeStream-Windows-Setup.msi).Path
+          Start-Process msiexec.exe -ArgumentList "/i `"$new`" /qn" -Wait
+          if (Test-Path (Join-Path $cache "AbCdEfGhIjK.140")) { Write-Output "::notice::Updating kept the saved songs" }
+          else { Write-Output "::error::Updating removed the saved songs"; exit 1 }
+          $installed = Get-ChildItem (Join-Path $env:LOCALAPPDATA "LifeStream") -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
+          Write-Output "::notice::Installed in LocalAppData\LifeStream: $($installed -join ', ')"
       - name: Start the app and check it keeps running
         shell: pwsh
         run: |
