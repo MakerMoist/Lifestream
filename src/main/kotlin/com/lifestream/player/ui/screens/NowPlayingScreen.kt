@@ -159,8 +159,8 @@ fun NowPlayingScreen(onClose: () -> Unit, openQueue: Boolean = false) {
 
         Column(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onClose) { Icon(Icons.Rounded.KeyboardArrowDown, "Close player") }
-                Spacer(Modifier.width(48.dp))
+                // As wide as the buttons on the right, so "Now Playing" stays centred.
+                Spacer(Modifier.width(96.dp))
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("NOW PLAYING", style = MaterialTheme.typography.labelSmall, color = LsColors.Gold)
                     if (state.queue.size > 1 && state.playPosition >= 0) {
@@ -268,6 +268,11 @@ fun NowPlayingScreen(onClose: () -> Unit, openQueue: Boolean = false) {
             }
             Spacer(Modifier.height(16.dp))
         }
+        // Close, in the bottom-left corner.
+        IconButton(
+            onClick = onClose,
+            modifier = Modifier.align(Alignment.BottomStart).padding(start = 16.dp, bottom = 16.dp),
+        ) { Icon(Icons.Rounded.KeyboardArrowDown, "Close player") }
     }
 
     if (savingInstant) SaveInstantPlaylistDialog(onDismiss = { savingInstant = false })

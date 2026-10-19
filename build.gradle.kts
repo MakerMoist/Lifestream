@@ -7,7 +7,7 @@ plugins {
 }
 
 /** LifeStream for Windows. Its own version, separate from the Android app's. */
-val appVersion = "0.5.6"
+val appVersion = "1.0.0"
 
 /**
  * Windows installers only take plain numbers (major.minor.build), so a letter is folded into the
@@ -131,4 +131,46 @@ compose.desktop {
             }
         }
     }
+}
+
+/**
+ * The installer (LifeStream-Windows-Setup.msi), made by jpackage from the finished app. Compose's
+ * own MSI step can't offer the two choices this one has: a page to pick the desktop (and Start
+ * menu) shortcut, and a ticked "Launch LifeStream" box on the last page (packaging/wix/main.wxs).
+ * Everything else matches the MSI before it, including the upgrade id, so it installs over it.
+ */
+val packageInstaller by tasks.registering(Exec::class) {
+    group = "compose desktop"
+    description = "Builds the Windows installer from the finished app."
+    dependsOn("createDistributable")
+    // Compose's own copy of the WiX toolset, which jpackage needs to build an MSI.
+    dependsOn(tasks.matching { it.name == "unzipWix" })
+    val appImage = layout.buildDirectory.dir("compose/binaries/main/app/LifeStream")
+    val out = layout.buildDirectory.dir("installer")
+    val wix = layout.buildDirectory.dir("wix311")
+    val jdk = javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) }
+    inputs.dir(appImage)
+    inputs.dir("packaging")
+    outputs.dir(out)
+    doFirst {
+        out.get().asFile.deleteRecursively() // jpackage won't write over an earlier installer
+        executable = jdk.get().metadata.installationPath.file("bin/jpackage.exe").asFile.path
+        environment("PATH", wix.get().asFile.path + File.pathSeparator + System.getenv("PATH"))
+    }
+    args(
+        "--type", "msi",
+        "--app-image", appImage.get().asFile.path,
+        "--dest", out.get().asFile.path,
+        "--name", "LifeStream",
+        "--app-version", installerVersion,
+        "--vendor", "MakerMoist",
+        "--description", "LifeStream",
+        "--icon", file("packaging/icon.ico").path,
+        "--resource-dir", file("packaging/wix").path,
+        "--win-per-user-install",
+        "--win-dir-chooser",
+        "--win-menu", "--win-menu-group", "LifeStream",
+        "--win-shortcut", "--win-shortcut-prompt",
+        "--win-upgrade-uuid", "3f4b8a2e-6c1d-4e7a-9b25-0d8e5a7c1f63",
+    )
 }

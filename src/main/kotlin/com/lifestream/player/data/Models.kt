@@ -18,6 +18,7 @@ private val gameTag = Regex(
 )
 
 private val repeatedSpaces = Regex("\\s{2,}")
+private val closingDash = Regex("\\s-[^\\s-][^-]*-$")
 
 /**
  * Text from outside the app (song and artist names from YouTube, an imported playlist's
@@ -46,7 +47,11 @@ private fun isHiddenChar(c: Char): Boolean =
 
 fun tidySongTitle(raw: String): String {
     val title = plainText(raw)
-    val cleaned = title.replace(uploadTag, "").replace(gameTag, "").replace(repeatedSpaces, " ").trim().trimEnd('-', '–', '|', ' ')
+    val cleaned = title.replace(uploadTag, "").replace(gameTag, "").replace(repeatedSpaces, " ").trim().let { t ->
+        // A dash left dangling at the end goes ("Prelude -"); one that closes a part of the name
+        // stays ("Last Battle -2-", "Eternal Wind -.333 mix-").
+        if (closingDash.containsMatchIn(t)) t else t.trimEnd('-', '–', '|', ' ')
+    }
     return cleaned.ifBlank { title }
 }
 
@@ -171,6 +176,31 @@ data class Game(
      * show it (e.g. a second album's copy, or a remix named only for its remixer).
      */
     val skipIds: Set<String> = emptySet(),
+    /** Its DS or PSP release's soundtrack, listed on the same page after the original's songs. */
+    val versions: List<VersionAlbum> = emptyList(),
+)
+
+/**
+ * The soundtrack of another release of the same game (its DS or PSP version). Its songs join the
+ * title's page after the original's; one named like an original song gets [tag] after its name
+ * ("Battle 1 (DS)"), and every one shows the original soundtrack's cover.
+ */
+data class VersionAlbum(
+    /** The release's album on YouTube Music. */
+    val url: String,
+    /** "DS" or "PSP". */
+    val tag: String,
+    /** Recordings left out by their YouTube id (e.g. one the original's album already has). */
+    val skipIds: Set<String> = emptySet(),
+    /**
+     * Remakes of the original's songs, by YouTube id → the original's name: listed under it (with
+     * [tag]) where the release names them a little differently ("Red Wings" for "The Red Wings").
+     */
+    val originalNames: Map<String, String> = emptyMap(),
+    /** Other songs that get [tag] (e.g. a remake split into parts), by YouTube id. */
+    val tagIds: Set<String> = emptySet(),
+    /** Every song gets [tag]: the release has the same songs as the original, in other recordings. */
+    val tagAll: Boolean = false,
 )
 
 /**

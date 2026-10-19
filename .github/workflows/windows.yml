@@ -60,10 +60,10 @@ jobs:
       - name: Build the installer and the portable app
         shell: pwsh
         run: |
-          ./gradlew.bat --no-daemon packageMsi createDistributable
+          ./gradlew.bat --no-daemon packageInstaller
           if ($LASTEXITCODE -ne 0) { exit 1 }
           New-Item -ItemType Directory -Force out | Out-Null
-          $msi = Get-ChildItem build/compose/binaries/main/msi/*.msi | Select-Object -First 1
+          $msi = Get-ChildItem build/installer/*.msi | Select-Object -First 1
           Copy-Item $msi.FullName out/LifeStream-Windows-Setup.msi
           Compress-Archive -Path build/compose/binaries/main/app/LifeStream -DestinationPath out/LifeStream-Windows-Portable.zip
           $version = (Select-String -Path build.gradle.kts -Pattern 'val appVersion = "([^"]+)"').Matches[0].Groups[1].Value
@@ -73,6 +73,35 @@ jobs:
           "$zipHash  LifeStream-Windows-Portable.zip" | Out-File -Encoding ascii out/LifeStream-Windows-Portable.zip.sha256
           @{ versionName = $version; msiSha256 = $msiHash; zipSha256 = $zipHash } | ConvertTo-Json -Compress | Out-File -Encoding ascii out/version-windows.json
           Get-ChildItem out
+      - name: Check the installer's pages
+        shell: pwsh
+        run: |
+          # Read the MSI's own tables: the shortcut page, and "Launch LifeStream" on the last page.
+          $path = (Resolve-Path out/LifeStream-Windows-Setup.msi).Path
+          $wi = New-Object -ComObject WindowsInstaller.Installer
+          $db = $wi.GetType().InvokeMember("OpenDatabase", "InvokeMethod", $null, $wi, @($path, 0))
+          function Rows($sql, $cols) {
+            $v = $db.GetType().InvokeMember("OpenView", "InvokeMethod", $null, $db, @($sql))
+            $v.GetType().InvokeMember("Execute", "InvokeMethod", $null, $v, $null) | Out-Null
+            $out = @()
+            while ($true) {
+              $r = $v.GetType().InvokeMember("Fetch", "InvokeMethod", $null, $v, $null)
+              if ($null -eq $r) { break }
+              $out += ((1..$cols) | ForEach-Object { $r.GetType().InvokeMember("StringData", "GetProperty", $null, $r, $_) }) -join " | "
+            }
+            $v.GetType().InvokeMember("Close", "InvokeMethod", $null, $v, $null) | Out-Null
+            return $out
+          }
+          $fail = $false
+          $boxes = Rows "SELECT Control, Text FROM Control WHERE Dialog_ = 'ShortcutPromptDlg' AND Type = 'CheckBox'" 2
+          if ($boxes.Count -ge 1) { Write-Output "::notice::Installer shortcut page: $($boxes -join '; ')" } else { Write-Output "::error::No shortcut page in the installer"; $fail = $true }
+          $text = Rows "SELECT Value FROM Property WHERE Property = 'WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT'" 1
+          $finish = Rows "SELECT Argument, Condition FROM ControlEvent WHERE Dialog_ = 'ExitDialog' AND Control_ = 'Finish' AND Event = 'DoAction'" 2
+          $target = Rows "SELECT Target FROM CustomAction WHERE Action = 'LsSetLaunchTarget'" 1
+          if ($text -and ($finish -join ' ') -match 'LsLaunch') { Write-Output "::notice::Installer last page: '$text' box; Finish runs $($finish -join '; '); starts $target" } else { Write-Output "::error::No 'Launch LifeStream' on the installer's last page"; $fail = $true }
+          $order = Rows "SELECT Dialog_, Control_, Event, Argument FROM ControlEvent WHERE Event = 'NewDialog'" 4
+          Write-Output "::notice::Installer pages: $(($order | Where-Object { $_ -match 'ShortcutPromptDlg|InstallDirDlg|WelcomeDlg|VerifyReadyDlg' }) -join '; ')"
+          if ($fail) { exit 1 }
       - name: Check an update keeps the saved songs
         shell: pwsh
         run: |
@@ -87,6 +116,9 @@ jobs:
           Set-Content -Path (Join-Path $cache "AbCdEfGhIjK.140") -Value "saved song"
           $new = (Resolve-Path out/LifeStream-Windows-Setup.msi).Path
           Start-Process msiexec.exe -ArgumentList "/i `"$new`" /qn" -Wait
+          $desktop = [Environment]::GetFolderPath("Desktop")
+          if (Test-Path (Join-Path $desktop "LifeStream.lnk")) { Write-Output "::notice::The install made a desktop shortcut (ticked by default)" }
+          else { Write-Output "::error::No desktop shortcut after installing: $((Get-ChildItem $desktop -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name) -join ', ')"; exit 1 }
           if (Test-Path (Join-Path $cache "AbCdEfGhIjK.140")) { Write-Output "::notice::Updating kept the saved songs" }
           else { Write-Output "::error::Updating removed the saved songs"; exit 1 }
           $installed = Get-ChildItem (Join-Path $env:LOCALAPPDATA "LifeStream") -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name

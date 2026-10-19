@@ -12,6 +12,10 @@ object Catalog {
 
     private const val X2_CREDIT = "Noriko Matsueda & Takahito Eguchi"
 
+    // DS releases' soundtracks on YouTube Music (Square Enix's own albums).
+    private const val FF3_DS = "https://music.youtube.com/playlist?list=OLAK5uy_nqFJ24qhMP8CLJvw2-vzAE3ehYnUE1wS4"
+    private const val FF4_DS = "https://music.youtube.com/playlist?list=OLAK5uy_koqCLTLrJo25JQWEJ_8krfeb-vK5_mFgA"
+
     /** Other entries in the franchise that must not leak into the original VII. */
     private val notOriginalVII = listOf(
         "REMAKE", "REBIRTH", "INTERGRADE", "INTERMISSION", "CRISIS CORE", "ADVENT CHILDREN",
@@ -33,12 +37,17 @@ object Catalog {
         Game("ff2", "II", "Final Fantasy II", 1988, "Nobuo Uematsu",
             "Final Fantasy II original soundtrack", c(0xFF7F1D1D), c(0xFFF87171), match = num("II"), art = "art/art_ff2.webp"),
         Game("ff3", "III", "Final Fantasy III", 1990, "Nobuo Uematsu",
-            "Final Fantasy III original soundtrack", c(0xFF14532D), c(0xFF4ADE80), match = num("III"), art = "art/art_ff3.webp",
-            // "Battle 1" again (it's already there as "Battle 1 ～Fanfare").
-            skipIds = setOf("VvFT8IMsOWY"),
+            "Final Fantasy III original soundtrack", c(0xFF14532D), c(0xFF4ADE80),
+            match = num("III", exclude = listOf("DS VERSION")), art = "art/art_ff3.webp",
+            // The DS remake's soundtrack, after the original's.
+            versions = listOf(VersionAlbum(FF3_DS, "DS", originalNames = VersionNames.FF3_DS_REMAKES, tagIds = VersionNames.FF3_DS_PARTS)),
         ),
         Game("ff4", "IV", "Final Fantasy IV", 1991, "Nobuo Uematsu",
-            "Final Fantasy IV original soundtrack", c(0xFF312E81), c(0xFFA5B4FC), match = num("IV"), art = "art/art_ff4.webp"),
+            "Final Fantasy IV original soundtrack", c(0xFF312E81), c(0xFFA5B4FC),
+            match = num("IV", exclude = listOf("DS VERSION")), art = "art/art_ff4.webp",
+            // The DS remake's soundtrack, after the original's.
+            versions = listOf(VersionAlbum(FF4_DS, "DS", originalNames = VersionNames.FF4_DS_REMAKES, tagIds = VersionNames.FF4_DS_PARTS)),
+        ),
         Game("ff5", "V", "Final Fantasy V", 1992, "Nobuo Uematsu",
             "Final Fantasy V original soundtrack", c(0xFF134E4A), c(0xFF5EEAD4), match = num("V"), art = "art/art_ff5.webp",
             // YouTube only has small (480x360) frames for this soundtrack's songs, which look
@@ -63,7 +72,7 @@ object Catalog {
         Game("ff10-2", "X-2", "Final Fantasy X-2", 2003, "Noriko Matsueda · Takahito Eguchi",
             "Final Fantasy X-2 original soundtrack", c(0xFF500724), c(0xFFF9A8D4), match = num("X2", notWith = setOf("X")), art = "art/art_ff10_2.webp",
             extras = listOf(
-                ExtraSong("real Emotion", "Kumi Koda", "ec6gB4QH5jU", 240),
+                ExtraSong("real Emotion", "Kumi Koda", "ec6gB4QH5jU", 240, albumArt = true),
                 // The English version sung by Jade (Sweetbox) for the Western release. Square Enix
                 // has no upload of it, so this one song comes from a fan upload of the full track.
                 ExtraSong("1000 Words (English Version)", "Jade Valerie", "r4voJjkJevs", 361, albumArt = true),
@@ -230,6 +239,10 @@ object Catalog {
             "Lost Odyssey original soundtrack", c(0xFF292524), c(0xFFE7B76B), Series.OTHER,
             match = MatchSpec(allOf = listOf("LOST ODYSSEY"), requireFinalFantasy = false), art = "art/art_lo.webp",
             aliases = listOf("LO"),
+            // The soundtrack isn't on YouTube Music, and the upload its songs come from shows the
+            // cover small (about 360 px) inside black bars, so it looked blurry. This upload has the
+            // same cover at 720 x 720 (its full-size frame, cropped square where it's shown).
+            coverArt = "https://i.ytimg.com/vi/6Jps-lgNX2Y/maxresdefault.jpg",
         ),
         Game("ct", "CT", "Chrono Trigger", 1995, "Yasunori Mitsuda · Nobuo Uematsu",
             "Chrono Trigger original soundtrack", c(0xFF1E3A5F), c(0xFFFFD166), Series.OTHER,
