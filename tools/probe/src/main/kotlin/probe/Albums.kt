@@ -20,8 +20,17 @@ fun runAlbums(only: Set<String>) {
             "${game.title} special edition soundtrack", "${game.title} ultimate edition soundtrack",
             "${game.title} international soundtrack", "${game.title} complete soundtrack",
             "${game.title} expanded soundtrack", "${game.title} deluxe soundtrack",
-            "${game.title} remaster soundtrack",
-        ) + game.albumQueries
+            "${game.title} remaster soundtrack", "${game.title} pixel remaster soundtrack",
+            "${game.title} HD remaster soundtrack", "${game.title} original sound version",
+            "${game.title} expansion soundtrack", "${game.title} remastered soundtrack",
+            "${game.query} plus", "${game.title} piano collections",
+            "Kingsglaive ${game.title} original soundtrack", "Brotherhood ${game.title} soundtrack",
+            "${game.title} episode gladiolus soundtrack", "${game.title} episode prompto soundtrack",
+            "${game.title} episode ignis soundtrack", "${game.title} episode ardyn soundtrack",
+            "${game.title} comrades soundtrack", "${game.title} royal edition soundtrack",
+            "Songs from ${game.title}", "${game.title} original soundtrack volume 2",
+            "${game.title} windows edition soundtrack", "${game.title} pocket edition soundtrack",
+        ) + game.albumQueries + game.albumQueries.map { "$it plus" }
         val seen = LinkedHashMap<String, com.lifestream.player.data.Album>()
         for (q in queries) {
             runCatching { search(q, F.MUSIC_ALBUMS, pages = 2) }.getOrDefault(emptyList())

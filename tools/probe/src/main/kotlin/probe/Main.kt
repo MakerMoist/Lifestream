@@ -46,12 +46,24 @@ fun main(args: Array<String>) {
         runChecklist(args.filter { it != "--extra" }.toSet(), "extra.tsv")
         return
     }
+    if ("--final" in args) {
+        runFinal(args.filter { it != "--final" }.toSet())
+        return
+    }
     if ("--albums" in args) {
         runAlbums(args.filter { it != "--albums" }.toSet())
         return
     }
     if ("--artists" in args) {
         runArtists(args.filter { it != "--artists" }.toSet())
+        return
+    }
+    if ("--names" in args) {
+        runNames(args.filter { it != "--names" }.toSet())
+        return
+    }
+    if ("--compare" in args) {
+        runCompare(args.filter { it != "--compare" }.toSet())
         return
     }
     if ("--thumbs" in args) {
@@ -62,7 +74,7 @@ fun main(args: Array<String>) {
         runChecklist(args.filter { it != "--tfbl" }.toSet())
         return
     }
-    val only = args.toSet()
+    val only = args.toSet() - "--list"
     val detail = StringBuilder()
     val summary = StringBuilder(
         "## Summary\n\n| game | source | albums used | songs (1 version each) | first songs |\n|---|---|---|---|---|\n"
@@ -99,6 +111,14 @@ fun main(args: Array<String>) {
                     .filterNot { Matching.isFillerTrack(it) }
             } else titles
             clean.forEach { songs.putIfAbsent(Matching.songKey(it, game.fullSongTitles), it) }
+            if (System.getenv("PROBE_LIST") != null || "--list" in args) {
+                detail.append("  - all ${clean.size} of ${album.title}:\n")
+                clean.forEach { t ->
+                    val k = Matching.songKey(t, game.fullSongTitles)
+                    val kept = songs[k]
+                    detail.append("    - $t" + (if (kept != t) "  ← same song as **$kept**" else "") + "\n")
+                }
+            }
             detail.append("- used: ${album.title} — *${album.artist}* — ${titles.size} tracks${if (album.fromPlaylist) " (playlist)" else ""}\n")
             if (album.fromPlaylist) {
                 // Full listing for playlist sources: these are the ones that can contain stray songs.
