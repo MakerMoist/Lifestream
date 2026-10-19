@@ -47,7 +47,9 @@ object ImageLoader {
         var bytes = 0L
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ImageBitmap>): Boolean {
             if (bytes <= MAX_MEMORY_BYTES) return false
-            bytes -= eldest.value.width.toLong() * eldest.value.height * 4
+            val size = eldest.value.width.toLong() * eldest.value.height * 4
+            bytes -= size
+            NativeMemory.released(size)
             return true
         }
     }
@@ -172,16 +174,36 @@ object ImageLoader {
 
     /** Lets go of decoded pictures (they're decoded again from disk when next shown). */
     fun clearMemory() = synchronized(memory) {
+        NativeMemory.released(memory.bytes)
         memory.clear()
         memory.bytes = 0
     }
 
     /** Empties the artwork stores (Settings → Clear Cache). */
     fun clear() {
-        synchronized(memory) {
-            memory.clear()
-            memory.bytes = 0
-        }
+        clearMemory()
         dir.listFiles()?.forEach { it.delete() }
+    }
+}
+
+/**
+ * Decoded pictures live outside Java's own memory and are only given back once Java notices
+ * they're no longer used, which, in an app that otherwise makes little garbage, can take a long
+ * while: dropped pictures pile up and the app looks far bigger than it is. Once a good amount
+ * has been let go, a tidy-up is asked for (in the background, at most every half minute).
+ */
+object NativeMemory {
+    private const val THRESHOLD = 48L * 1024 * 1024
+    private val pending = java.util.concurrent.atomic.AtomicLong(0)
+    @Volatile private var lastTidy = 0L
+
+    fun released(bytes: Long) {
+        if (bytes <= 0) return
+        if (pending.addAndGet(bytes) < THRESHOLD) return
+        val now = System.currentTimeMillis()
+        if (now - lastTidy < 30_000) return
+        lastTidy = now
+        pending.set(0)
+        Thread({ System.gc() }, "memory-tidy").apply { isDaemon = true; priority = Thread.MIN_PRIORITY }.start()
     }
 }

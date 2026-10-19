@@ -99,9 +99,11 @@ compose.desktop {
         // A small, single-threaded garbage collector that starts small and hands unused memory back
         // to Windows promptly (a music player shouldn't sit on hundreds of MB it isn't using).
         jvmArgs += listOf(
-            "-Xss2m", "-XX:+UseSerialGC", "-Xms48m", "-Xmx768m",
+            "-XX:+UseSerialGC", "-Xms32m", "-Xmx512m", "-XX:MaxNewSize=64m",
             "-XX:MinHeapFreeRatio=10", "-XX:MaxHeapFreeRatio=30",
-            "-XX:CICompilerCount=2",
+            // The quick code compiler only: a music player doesn't need the heavy optimizing one,
+            // whose working memory (and its store of compiled code) is one of the larger costs.
+            "-XX:TieredStopAtLevel=1", "-XX:CICompilerCount=1", "-XX:ReservedCodeCacheSize=48m",
             "-Dfile.encoding=UTF-8",
             // Hardening: other programs can't attach to LifeStream and load code into it, and Java's
             // built-in object deserialization (which LifeStream never uses, and a common way in for

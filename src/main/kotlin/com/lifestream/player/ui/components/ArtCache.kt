@@ -20,7 +20,10 @@ object ArtCache {
     fun cached(path: String): ImageBitmap? = bitmaps[path]
 
     /** Drops the decoded art (it's decoded again when it's next shown). */
-    fun clear() = bitmaps.clear()
+    fun clear() {
+        NativeMemory.released(bitmaps.values.sumOf { it.width.toLong() * it.height * 4 })
+        bitmaps.clear()
+    }
 
     private fun bytes(path: String): ByteArray? = runCatching {
         ArtCache::class.java.classLoader.getResourceAsStream(path)?.use { it.readBytes() }
