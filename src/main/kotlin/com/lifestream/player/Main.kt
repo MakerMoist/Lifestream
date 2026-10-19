@@ -480,11 +480,49 @@ private fun NowPlayingOverlay(open: Boolean, openQueue: Boolean, onClose: () -> 
     }
 }
 
+/**
+ * A title's page keeps its loaded song list (its view model) and scroll position while it's in a
+ * section's trail of pages, and lets go of them once you've gone back past it.
+ */
+private class PageStores {
+    private val owners = HashMap<String, ViewModelStoreOwner>()
+    private val seen = HashSet<String>()
+
+    fun owner(key: String): ViewModelStoreOwner = owners.getOrPut(key) {
+        object : ViewModelStoreOwner {
+            override val viewModelStore = ViewModelStore()
+        }
+    }
+
+    fun visited(key: String) {
+        seen += key
+    }
+
+    /** Forgets every page that's no longer in any trail; returns their keys. */
+    fun prune(live: Set<String>): List<String> {
+        val gone = seen.filter { it !in live }
+        gone.forEach { key ->
+            owners.remove(key)?.viewModelStore?.clear()
+            seen -= key
+        }
+        return gone
+    }
+}
+
 @Composable
 private fun Pages(navigator: Navigator) {
     val holder = rememberSaveableStateHolder()
+    val stores = remember { PageStores() }
     val page = navigator.current
-    holder.SaveableStateProvider(page.toString()) {
+    LaunchedEffect(navigator.trails) {
+        val live = navigator.trails.values.flatten().mapTo(HashSet()) { it.toString() }
+        stores.prune(live).forEach { holder.removeState(it) }
+    }
+    val key = page.toString()
+    stores.visited(key)
+    // A title's page gets its own view model store (the main pages share the app's).
+    val owner: ViewModelStoreOwner = if (page is Page.Game) stores.owner(key) else AppViewModels
+    holder.SaveableStateProvider(key) { CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
         // Settings-like pages read best at a comfortable width, centred on a wide window.
         val narrow = page == Page.Settings || page == Page.Themes || page == Page.Titles || page == Page.Credits
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -509,7 +547,7 @@ private fun Pages(navigator: Navigator) {
                 }
             }
         }
-    }
+    } }
 }
 
 /**
