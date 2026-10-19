@@ -141,7 +141,13 @@ object ImageLoader {
                     full,
                     org.jetbrains.skia.Rect.makeWH(full.width.toFloat(), full.height.toFloat()),
                     org.jetbrains.skia.Rect.makeWH(outW.toFloat(), outH.toFloat()),
-                    org.jetbrains.skia.SamplingMode.LINEAR,
+                    // Smooth edges at any size: a big reduction blends through smaller copies
+                    // (mipmaps) instead of skipping pixels, which is what made edges look jagged.
+                    if (scale < 0.5f) {
+                        org.jetbrains.skia.FilterMipmap(org.jetbrains.skia.FilterMode.LINEAR, org.jetbrains.skia.MipmapMode.LINEAR)
+                    } else {
+                        org.jetbrains.skia.SamplingMode.MITCHELL
+                    },
                     null,
                     true,
                 )

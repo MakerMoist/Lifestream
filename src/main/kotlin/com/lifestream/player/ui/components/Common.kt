@@ -9,9 +9,6 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.outlined.DownloadForOffline
 import com.lifestream.player.playback.SongStore
 import com.lifestream.player.data.AppSettings
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.isSecondaryPressed
-import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.platform.LocalDensity
 import com.lifestream.player.data.hiResArtwork
 import com.lifestream.player.playback.SafeInput
@@ -95,13 +92,20 @@ fun Artwork(
             val hiRes = remember(safeUrl, bucket) {
                 SafeInput.safeArtwork(hiResArtwork(safeUrl, bucket, videoThumbs = bucket >= 720))
             }
-            val image by androidx.compose.runtime.produceState(
-                ImageLoader.cached(hiRes ?: safeUrl, bucket), hiRes, safeUrl, bucket,
-            ) {
-                if (value == null) value = (hiRes?.let { ImageLoader.load(it, bucket) }) ?: ImageLoader.load(safeUrl, bucket)
-            }
-            image?.let { image ->
-                Image(image, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            // Keyed on the picture: when the same spot shows another song (the player bar, Now
+            // Playing), it starts again from that song's picture instead of keeping the old one.
+            androidx.compose.runtime.key(safeUrl, bucket) {
+                val image by androidx.compose.runtime.produceState(ImageLoader.cached(hiRes ?: safeUrl, bucket)) {
+                    if (value == null) value = (hiRes?.let { ImageLoader.load(it, bucket) }) ?: ImageLoader.load(safeUrl, bucket)
+                }
+                image?.let { image ->
+                    Image(
+                        image, null,
+                        contentScale = ContentScale.Crop,
+                        filterQuality = androidx.compose.ui.graphics.FilterQuality.High,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             }
         }
     }
@@ -137,9 +141,7 @@ fun TrackRow(
                 onLongClick = { TrackActions.show(track, playlistId, rowAnchor.at()) },
             )
             // Right-click opens the song's menu where the pointer is.
-            .onPointerEvent(PointerEventType.Press) { e ->
-                if (e.buttons.isSecondaryPressed) TrackActions.show(track, playlistId, rowAnchor.at())
-            }
+            .onRightClick { at -> TrackActions.show(track, playlistId, at ?: rowAnchor.at()) }
             .padding(start = 16.dp, end = 4.dp, top = if (compact) 4.dp else 8.dp, bottom = if (compact) 4.dp else 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

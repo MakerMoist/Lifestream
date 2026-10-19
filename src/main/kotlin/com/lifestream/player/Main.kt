@@ -22,10 +22,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuOpen
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.LibraryMusic
@@ -52,16 +52,14 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.pointer.PointerButton
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -99,6 +97,7 @@ import com.lifestream.player.ui.components.VillainQuotes
 import com.lifestream.player.ui.screens.CreditsScreen
 import com.lifestream.player.ui.screens.GameScreen
 import com.lifestream.player.ui.screens.HomeReselect
+import com.lifestream.player.ui.screens.HistoryScreen
 import com.lifestream.player.ui.screens.HomeScreen
 import com.lifestream.player.ui.screens.LibraryScreen
 import com.lifestream.player.ui.screens.NowPlayingRequest
@@ -225,6 +224,7 @@ sealed interface Page {
     data object Home : Page
     data object Search : Page
     data object Library : Page
+    data object History : Page
     data object Settings : Page
     data class Game(val id: String) : Page
     data class Playlist(val id: String) : Page
@@ -239,24 +239,67 @@ private val sections = listOf(
     Section(Page.Home, "Home", Icons.Rounded.Home),
     Section(Page.Search, "Search", Icons.Rounded.Search),
     Section(Page.Library, "Library", Icons.Rounded.LibraryMusic),
+    Section(Page.History, "History", Icons.Rounded.History),
     Section(Page.Settings, "Settings", Icons.Rounded.Settings),
 )
 
+/**
+ * Where you are: a sidebar section and the trail of pages opened within it. Every move is
+ * remembered, so Back and Forward (the mouse's side buttons, Alt+arrows) retrace them like a
+ * web browser, across sections too.
+ */
 private class Navigator {
     var section by mutableStateOf<Page>(Page.Home)
+        private set
     var trails by mutableStateOf(sections.associate { it.root to listOf(it.root) })
+        private set
+
+    private class Spot(val section: Page, val trail: List<Page>)
+    private val past = ArrayList<Spot>()
+    private val future = ArrayList<Spot>()
+
+    /** Pages Back or Forward can return to (kept as they were, scroll position and all). */
+    var remembered by mutableStateOf<Set<Page>>(emptySet())
+        private set
 
     val current: Page get() = trails.getValue(section).last()
 
-    fun open(page: Page) {
-        trails = trails + (section to (trails.getValue(section) + page))
+    private fun here() = Spot(section, trails.getValue(section))
+
+    private fun go(toSection: Page, trail: List<Page>, record: Boolean = true) {
+        if (record) {
+            val now = here()
+            if (now.section == toSection && now.trail == trail) return
+            past += now
+            if (past.size > MAX_HISTORY) past.removeAt(0)
+            future.clear()
+        }
+        section = toSection
+        trails = trails + (toSection to trail)
+        remembered = (past + future).flatMapTo(HashSet()) { it.trail }
     }
 
-    /** One page back within the section; false when already at its first page. */
-    fun back(): Boolean {
+    fun open(page: Page) = go(section, trails.getValue(section) + page)
+
+    /** A page's own back arrow: one page up within its section. */
+    fun up() {
         val trail = trails.getValue(section)
-        if (trail.size <= 1) return false
-        trails = trails + (section to trail.dropLast(1))
+        if (trail.size > 1) go(section, trail.dropLast(1))
+    }
+
+    /** Back to wherever you were before (false when there's nowhere earlier). */
+    fun back(): Boolean {
+        val spot = past.removeLastOrNull() ?: return false
+        future += here()
+        go(spot.section, spot.trail, record = false)
+        return true
+    }
+
+    /** Forward again after going back (false when there's nothing to go forward to). */
+    fun forward(): Boolean {
+        val spot = future.removeLastOrNull() ?: return false
+        past += here()
+        go(spot.section, spot.trail, record = false)
         return true
     }
 
@@ -268,18 +311,23 @@ private class Navigator {
         if (root == section) {
             val trail = trails.getValue(section)
             if (trail.size > 1) {
-                trails = trails + (section to listOf(root)) // back to the section's first page
+                go(section, listOf(root)) // back to the section's first page
             } else {
                 when (root) {
                     Page.Home -> HomeReselect.count++
                     Page.Settings -> TabReselect.settings++
                     Page.Library -> TabReselect.library++
+                    Page.History -> TabReselect.history++
                     else -> Unit
                 }
             }
         } else {
-            section = root
+            go(root, trails.getValue(root))
         }
+    }
+
+    private companion object {
+        const val MAX_HISTORY = 50
     }
 }
 
@@ -322,6 +370,7 @@ private fun startApp() {
     }
     if (System.getenv("LIFESTREAM_SELFTEST") == "1") SelfTest.start()
     val icon = appIcon(256)
+    val trayIcon = appIcon(32) ?: icon
 
     application {
         AppExit.exit = ::exitApplication
@@ -346,13 +395,39 @@ private fun startApp() {
             onKeyEvent = { e -> handleKey(e, navigator) },
         ) {
             window.minimumSize = java.awt.Dimension(720, 560)
+            // Every size Windows asks for (title bar, taskbar, Alt+Tab) drawn smoothly at that size.
+            LaunchedEffect(Unit) {
+                val images = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                    listOf(16, 20, 24, 32, 40, 48, 64, 128, 256).mapNotNull { appIconImage(it) }
+                }
+                if (images.isNotEmpty()) window.iconImages = images
+            }
+            // The title bar in the theme's colours (and again whenever the theme changes).
+            val palette = com.lifestream.player.ui.theme.ThemeState.current
+            LaunchedEffect(palette) {
+                androidx.compose.runtime.withFrameNanos { } // the window is on screen by now
+                com.lifestream.player.integrations.TitleBar.apply(window, palette.panel.toRgb(), palette.text.toRgb())
+            }
+            // The mouse's side buttons go back and forward on every page.
+            androidx.compose.runtime.DisposableEffect(Unit) {
+                val listener = java.awt.event.AWTEventListener { event ->
+                    val e = event as? java.awt.event.MouseEvent ?: return@AWTEventListener
+                    if (e.id != java.awt.event.MouseEvent.MOUSE_PRESSED) return@AWTEventListener
+                    when (e.button) {
+                        4 -> { e.consume(); goBack(navigator) }
+                        5 -> { e.consume(); navigator.forward() }
+                    }
+                }
+                java.awt.Toolkit.getDefaultToolkit().addAWTEventListener(listener, java.awt.AWTEvent.MOUSE_EVENT_MASK)
+                onDispose { java.awt.Toolkit.getDefaultToolkit().removeAWTEventListener(listener) }
+            }
             CompositionLocalProvider(LocalViewModelStoreOwner provides AppViewModels) {
                 LifestreamTheme { AppRoot(navigator) }
             }
         }
-        if (icon != null) {
+        if (trayIcon != null) {
             Tray(
-                icon = icon,
+                icon = trayIcon,
                 tooltip = playerState.current?.let { "LifeStream: ${it.title}" } ?: "LifeStream",
                 onAction = { windowState.isMinimized = false },
                 menu = {
@@ -382,23 +457,49 @@ private fun startingSize(): DpSize {
     return DpSize(minOf(1240, (screen.width * 0.92).toInt()).dp, minOf(820, (screen.height * 0.92).toInt()).dp)
 }
 
-/** LifeStream's crystal icon, for the window, the tray and the sidebar. */
+private val iconBytes: ByteArray? by lazy {
+    runCatching { SelfTest::class.java.classLoader.getResourceAsStream("icon.png")!!.use { it.readBytes() } }.getOrNull()
+}
+
+/** LifeStream's crystal icon at exactly [px] pixels, smoothly scaled (for the tray and the sidebar). */
 private fun appIcon(px: Int): BitmapPainter? = runCatching {
-    val bytes = SelfTest::class.java.classLoader.getResourceAsStream("icon.png")!!.use { it.readBytes() }
-    BitmapPainter(com.lifestream.player.ui.components.ImageLoader.decode(bytes, px)!!)
+    BitmapPainter(
+        com.lifestream.player.ui.components.ImageLoader.decode(iconBytes!!, px)!!,
+        filterQuality = androidx.compose.ui.graphics.FilterQuality.High,
+    )
 }.getOrNull()
 
-/** Esc goes back; Space plays or pauses; Ctrl+←/→ change song; Ctrl+F searches. */
+/** The same, as a picture Windows can use for the window's icons. */
+private fun appIconImage(px: Int): java.awt.image.BufferedImage? = runCatching {
+    com.lifestream.player.ui.components.ImageLoader.decode(iconBytes!!, px)!!.toAwtImage()
+}.getOrNull()
+
+private fun androidx.compose.ui.graphics.Color.toRgb(): Int =
+    ((red * 255).toInt() shl 16) or ((green * 255).toInt() shl 8) or (blue * 255).toInt()
+
+/** Back: closes a menu or Now Playing first, otherwise goes to the previous page. */
+private fun goBack(navigator: Navigator) {
+    when {
+        TrackActions.target.value != null -> TrackActions.dismiss()
+        AppMenu.request.value != null -> AppMenu.dismiss()
+        BackDispatcher.back() -> Unit
+        else -> navigator.back()
+    }
+}
+
+/**
+ * Esc or Alt+← goes back, Alt+→ forward; Space plays or pauses; Ctrl+←/→ change song; Ctrl+F
+ * searches.
+ */
 private fun handleKey(e: androidx.compose.ui.input.key.KeyEvent, navigator: Navigator): Boolean {
     if (e.type != KeyEventType.KeyDown) return false
     return when {
-        e.key == Key.Escape -> {
-            when {
-                TrackActions.target.value != null -> TrackActions.dismiss()
-                AppMenu.request.value != null -> AppMenu.dismiss()
-                BackDispatcher.back() -> Unit
-                else -> navigator.back()
-            }
+        e.key == Key.Escape || (e.isAltPressed && e.key == Key.DirectionLeft) -> {
+            goBack(navigator)
+            true
+        }
+        e.isAltPressed && e.key == Key.DirectionRight -> {
+            navigator.forward()
             true
         }
         // In a text box, Space types a space (and nothing else).
@@ -455,11 +556,7 @@ private fun AppRoot(navigator: Navigator) {
     Row(
         Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            // The mouse's back button goes back, like Esc.
-            .onPointerEvent(PointerEventType.Press, PointerEventPass.Initial) { e ->
-                if (e.button == PointerButton.Back && !BackDispatcher.back()) navigator.back()
-            },
+            .background(MaterialTheme.colorScheme.background),
     ) {
         Sidebar(navigator, compact, onSelect = {
             showPlayer = false
@@ -536,8 +633,8 @@ private fun Pages(navigator: Navigator) {
     val holder = rememberSaveableStateHolder()
     val stores = remember { PageStores() }
     val page = navigator.current
-    LaunchedEffect(navigator.trails) {
-        val live = navigator.trails.values.flatten().mapTo(HashSet()) { it.toString() }
+    LaunchedEffect(navigator.trails, navigator.remembered) {
+        val live = (navigator.trails.values.flatten() + navigator.remembered).mapTo(HashSet()) { it.toString() }
         stores.prune(live).forEach { holder.removeState(it) }
     }
     val key = page.toString()
@@ -545,10 +642,9 @@ private fun Pages(navigator: Navigator) {
     // A title's page gets its own view model store (the main pages share the app's).
     val owner: ViewModelStoreOwner = if (page is Page.Game) stores.owner(key) else AppViewModels
     holder.SaveableStateProvider(key) { CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
-        // Settings-like pages read best at a comfortable width, centred on a wide window.
-        val narrow = page == Page.Settings || page == Page.Themes || page == Page.Titles || page == Page.Credits
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-            Box(if (narrow) Modifier.widthIn(max = 860.dp).fillMaxSize() else Modifier.fillMaxSize()) {
+        // Every page uses the whole width of the window.
+        Box(Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxSize()) {
                 when (page) {
                     Page.Home -> HomeScreen(
                         onOpenGame = { navigator.open(Page.Game(it.id)) },
@@ -556,16 +652,17 @@ private fun Pages(navigator: Navigator) {
                     )
                     Page.Search -> SearchScreen(onOpenGame = { navigator.open(Page.Game(it.id)) })
                     Page.Library -> LibraryScreen(onOpenPlaylist = { navigator.open(Page.Playlist(it.id)) })
+                    Page.History -> HistoryScreen()
                     Page.Settings -> SettingsScreen(
                         onOpenThemes = { navigator.open(Page.Themes) },
                         onOpenTitles = { navigator.open(Page.Titles) },
                         onOpenCredits = { navigator.open(Page.Credits) },
                     )
-                    Page.Themes -> ThemesScreen(onBack = { navigator.back() })
-                    Page.Titles -> TitlesScreen(onBack = { navigator.back() })
-                    Page.Credits -> CreditsScreen(onBack = { navigator.back() })
-                    is Page.Game -> Catalog.game(page.id)?.let { GameScreen(game = it, onBack = { navigator.back() }) }
-                    is Page.Playlist -> PlaylistScreen(playlistId = page.id, onBack = { navigator.back() })
+                    Page.Themes -> ThemesScreen(onBack = { navigator.up() })
+                    Page.Titles -> TitlesScreen(onBack = { navigator.up() })
+                    Page.Credits -> CreditsScreen(onBack = { navigator.up() })
+                    is Page.Game -> Catalog.game(page.id)?.let { GameScreen(game = it, onBack = { navigator.up() }) }
+                    is Page.Playlist -> PlaylistScreen(playlistId = page.id, onBack = { navigator.up() })
                 }
             }
         }
@@ -573,42 +670,58 @@ private fun Pages(navigator: Navigator) {
 }
 
 /**
- * The navigation down the left side of the window: icons with their names, or (Compact View)
- * icons only in a narrow strip.
+ * The navigation down the left side of the window. At the top, LifeStream's icon is Home (with
+ * "Home" under it) and beside it the Compact View switch; then Search, Library and History;
+ * Settings always sits at the bottom. Compact View narrows it to icons with small labels.
  */
 @Composable
 private fun Sidebar(navigator: Navigator, compact: Boolean, onSelect: (Page) -> Unit) {
-    Surface(color = LsColors.Panel, modifier = Modifier.fillMaxHeight().width(if (compact) 76.dp else 240.dp)) {
+    Surface(color = LsColors.Panel, modifier = Modifier.fillMaxHeight().width(if (compact) 84.dp else 240.dp)) {
         Column(
-            Modifier.padding(horizontal = if (compact) 10.dp else 14.dp, vertical = 16.dp),
+            Modifier.fillMaxHeight().padding(horizontal = if (compact) 8.dp else 14.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
             horizontalAlignment = if (compact) Alignment.CenterHorizontally else Alignment.Start,
         ) {
-            val logo = remember { appIcon(96) }
-            // The button beside the name switches Compact View on (and, in the narrow strip, back off).
+            val onHome = navigator.section == Page.Home
+            // The icon is drawn at exactly the size it's shown, so its edges stay smooth.
+            val iconPx = with(androidx.compose.ui.platform.LocalDensity.current) { 40.dp.roundToPx() }
+            val logo = remember(iconPx) { appIcon(iconPx) }
+            val home: @Composable () -> Unit = {
+                Column(
+                    Modifier
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(if (onHome) LsColors.Crystal.copy(alpha = 0.22f) else androidx.compose.ui.graphics.Color.Transparent)
+                        .clickable { onSelect(Page.Home) }
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    logo?.let { Image(it, "Home", Modifier.size(40.dp)) }
+                    Spacer(Modifier.height(3.dp))
+                    Text(
+                        "Home",
+                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = androidx.compose.ui.unit.TextUnit.Unspecified),
+                        color = if (onHome) LsColors.Crystal else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            // Switches Compact View on (and, in the narrow strip, back off).
             val toggle: @Composable () -> Unit = {
-                IconButton(onClick = { AppSettings.setCompactView(!compact) }, modifier = Modifier.size(36.dp)) {
+                IconButton(onClick = { AppSettings.setCompactView(!compact) }, modifier = Modifier.size(32.dp)) {
                     Icon(
                         if (compact) Icons.Rounded.Menu else Icons.AutoMirrored.Rounded.MenuOpen,
                         if (compact) "Turn off Compact View" else "Turn on Compact View",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(22.dp),
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }
-            if (compact) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(bottom = 12.dp)) {
-                    logo?.let { Image(it, null, Modifier.size(34.dp).clip(RoundedCornerShape(8.dp))) }
-                    Spacer(Modifier.height(8.dp))
-                    toggle()
-                }
-            } else {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 18.dp, start = 6.dp),
-                ) {
-                    logo?.let { Image(it, null, Modifier.size(34.dp).clip(RoundedCornerShape(8.dp))) }
-                    Spacer(Modifier.width(10.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 10.dp).then(if (compact) Modifier else Modifier.fillMaxWidth()),
+            ) {
+                home()
+                if (!compact) {
+                    Spacer(Modifier.width(6.dp))
                     Text(
                         "LifeStream",
                         style = MaterialTheme.typography.titleLarge,
@@ -618,46 +731,54 @@ private fun Sidebar(navigator: Navigator, compact: Boolean, onSelect: (Page) -> 
                         softWrap = false,
                         modifier = Modifier.weight(1f),
                     )
-                    toggle()
                 }
+                toggle()
             }
-            sections.forEach { s ->
-                val selected = navigator.section == s.root
-                val shape = RoundedCornerShape(if (compact) 16.dp else 12.dp)
-                val background = if (selected) LsColors.Crystal else androidx.compose.ui.graphics.Color.Transparent
-                val content = if (selected) LsColors.Night else MaterialTheme.colorScheme.onSurfaceVariant
-                if (compact) {
-                    Column(
-                        Modifier.clip(shape).clickable { onSelect(s.root) }.padding(vertical = 6.dp, horizontal = 2.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Box(
-                            Modifier.clip(shape).background(background).padding(horizontal = 14.dp, vertical = 6.dp),
-                            contentAlignment = Alignment.Center,
-                        ) { Icon(s.icon, s.label, tint = content) }
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            s.label,
-                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = androidx.compose.ui.unit.TextUnit.Unspecified),
-                            color = if (selected) LsColors.Crystal else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                } else {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .clip(shape)
-                            .background(background)
-                            .clickable { onSelect(s.root) }
-                            .padding(horizontal = 14.dp, vertical = 11.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(s.icon, null, tint = content)
-                        Spacer(Modifier.width(14.dp))
-                        Text(s.label, style = MaterialTheme.typography.titleSmall, color = content)
-                    }
-                }
+            sections.filter { it.root != Page.Home && it.root != Page.Settings }.forEach { s ->
+                SidebarItem(s, navigator.section == s.root, compact) { onSelect(s.root) }
             }
+            Spacer(Modifier.weight(1f))
+            sections.first { it.root == Page.Settings }.let { s ->
+                SidebarItem(s, navigator.section == s.root, compact) { onSelect(s.root) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SidebarItem(s: Section, selected: Boolean, compact: Boolean, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(if (compact) 16.dp else 12.dp)
+    val background = if (selected) LsColors.Crystal else androidx.compose.ui.graphics.Color.Transparent
+    val content = if (selected) LsColors.Night else MaterialTheme.colorScheme.onSurfaceVariant
+    if (compact) {
+        Column(
+            Modifier.clip(shape).clickable(onClick = onClick).padding(vertical = 6.dp, horizontal = 2.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                Modifier.clip(shape).background(background).padding(horizontal = 14.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center,
+            ) { Icon(s.icon, s.label, tint = content) }
+            Spacer(Modifier.height(2.dp))
+            Text(
+                s.label,
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = androidx.compose.ui.unit.TextUnit.Unspecified),
+                color = if (selected) LsColors.Crystal else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    } else {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .background(background)
+                .clickable(onClick = onClick)
+                .padding(horizontal = 14.dp, vertical = 11.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(s.icon, null, tint = content)
+            Spacer(Modifier.width(14.dp))
+            Text(s.label, style = MaterialTheme.typography.titleSmall, color = content)
         }
     }
 }

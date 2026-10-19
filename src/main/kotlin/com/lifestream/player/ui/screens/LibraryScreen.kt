@@ -17,12 +17,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -45,8 +41,7 @@ import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.SortByAlpha
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.ui.input.pointer.isSecondaryPressed
-import androidx.compose.ui.input.pointer.onPointerEvent
+import com.lifestream.player.ui.components.onRightClick
 import com.lifestream.player.ui.components.menuAnchor
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -55,8 +50,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -79,16 +72,12 @@ import com.lifestream.player.ui.components.PlaylistNameDialog
 import com.lifestream.player.ui.components.TrackRow
 import com.lifestream.player.ui.theme.LsColors
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+/** Your playlists (History has its own page). */
 @Composable
 fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
     val playlists by Library.playlists.collectAsStateWithLifecycle()
-    val recents by Library.recents.collectAsStateWithLifecycle()
-    // Swipe left and right between Playlists and History (or tap their tabs).
-    val pager = rememberPagerState { 2 }
     val scope = rememberCoroutineScope()
     var creating by remember { mutableStateOf(false) }
-    var confirmClear by remember { mutableStateOf(false) }
     // Hold a playlist for its menu: Export Playlist, Rename, Delete.
     var renamingList by remember { mutableStateOf<Playlist?>(null) }
     var deletingList by remember { mutableStateOf<Playlist?>(null) }
@@ -96,162 +85,77 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
     // (or wherever you choose to keep it); nothing is uploaded or downloaded. The file is the same
     // as the Android app's, so playlists move between the two.
     val playlistList = rememberLazyListState()
-    val historyList = rememberLazyListState()
 
-    // Pull down on either page to refresh it, like Home.
-    var refreshing by remember { mutableStateOf(false) }
-    fun refresh() {
-        if (refreshing) return
-        refreshing = true
-        scope.launch {
-            try {
-                Library.refresh()
-                delay(700) // long enough to see the spinner settle
-            } finally {
-                refreshing = false
-            }
-        }
-    }
-
-    // Tapping the Library tab while here returns to Playlists (and its top) and refreshes, like
-    // Home (without the update check, which only Home and Settings do).
+    // Clicking Library while here goes back to the top and brings stored songs up to date.
     val reselectAtStart = remember { TabReselect.library }
     LaunchedEffect(TabReselect.library) {
         if (TabReselect.library == reselectAtStart) return@LaunchedEffect
-        refresh()
-        if (pager.currentPage != 0) pager.animateScrollToPage(0) else playlistList.animateScrollToItem(0)
+        scope.launch { Library.refresh() }
+        playlistList.animateScrollToItem(0)
     }
 
-    Column(
-        Modifier
-            .fillMaxSize()
-    ) {
+    Column(Modifier.fillMaxSize()) {
         Text(
             "Library",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp),
         )
-        TabRow(selectedTabIndex = pager.currentPage, containerColor = LsColors.Night) {
-            Tab(selected = pager.currentPage == 0, onClick = { scope.launch { pager.animateScrollToPage(0) } }, text = { Text("Playlists") })
-            Tab(selected = pager.currentPage == 1, onClick = { scope.launch { pager.animateScrollToPage(1) } }, text = { Text("History") })
-        }
-
-        HorizontalPager(
-            state = pager,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-        ) { page ->
-            if (page == 0) {
-                Column(Modifier.fillMaxSize()) {
-                    PullToRefreshBox(
-                        isRefreshing = refreshing,
-                        onRefresh = { refresh() },
-                        modifier = Modifier.weight(1f).fillMaxWidth(),
-                    ) {
-                        LazyColumn(Modifier.fillMaxSize().thinScrollbar(playlistList), state = playlistList) {
-                            if (playlists.isEmpty()) {
-                                item(key = "empty") {
-                                    EmptyState("No playlists yet")
-                                }
-                            }
-                            items(playlists, key = { it.id }) { p ->
-                                PlaylistRow(
-                                    p,
-                                    onClick = { onOpenPlaylist(p) },
-                                    onLongClick = { at ->
-                                        com.lifestream.player.ui.components.AppMenu.show(at, listOf(
-                                            com.lifestream.player.ui.components.MenuItem(Icons.Rounded.FileUpload, "Export Playlist") {
-                                                com.lifestream.player.ui.components.AppMenu.dismiss()
-                                                com.lifestream.player.ui.FilePickers.save("Export Playlist", exportFileName(p.name), Library.EXPORT_EXTENSION)
-                                                    ?.let { file -> scope.launch { exportPlaylist(p, file) } }
-                                            },
-                                            com.lifestream.player.ui.components.MenuItem(Icons.Rounded.Edit, "Rename") {
-                                                com.lifestream.player.ui.components.AppMenu.dismiss()
-                                                renamingList = p
-                                            },
-                                            com.lifestream.player.ui.components.MenuItem(Icons.Rounded.Delete, "Delete", danger = true) {
-                                                com.lifestream.player.ui.components.AppMenu.dismiss()
-                                                deletingList = p
-                                            },
-                                        ))
-                                    },
-                                )
-                            }
-                        }
-                    }
-                    // Across the bottom of the screen, just above the player bar and tabs: Import
-                    // Playlist (a file exported from LifeStream), then New Playlist.
-                    OutlinedButton(
-                        onClick = {
-                            com.lifestream.player.ui.FilePickers.open("Import Playlist", Library.EXPORT_EXTENSION)
-                                ?.let { file -> scope.launch { importPlaylist(file) } }
-                        },
-                        enabled = Library.canCreatePlaylist(),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, end = 16.dp, top = 10.dp),
-                    ) {
-                        Icon(Icons.Rounded.FileDownload, null, Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Import Playlist")
-                    }
-                    FilledTonalButton(
-                        onClick = { creating = true },
-                        enabled = Library.canCreatePlaylist(),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 10.dp),
-                    ) {
-                        Icon(Icons.Rounded.Add, null, Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("New Playlist")
-                    }
-                }
-            } else {
-                PullToRefreshBox(
-                    isRefreshing = refreshing,
-                    onRefresh = { refresh() },
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    LazyColumn(Modifier.fillMaxSize().thinScrollbar(historyList), state = historyList) {
-                        if (recents.isEmpty()) {
-                            item(key = "empty") { EmptyState("Nothing played yet", "Songs you play will show up here.") }
-                        } else {
-                            item(key = "actions") {
-                                PlayShuffleRow(recents, onClear = { confirmClear = true })
-                            }
-                            itemsIndexed(recents, key = { _, t: Track -> t.id }) { _, track ->
-                                // This song, then the rest of History in its order, topped up with
-                                // random songs from every enabled title to 50 (not offered to save
-                                // as a playlist: it's your History).
-                                TrackRow(track, onClick = {
-                                    PlayerConnection.playTracks(
-                                        com.lifestream.player.data.Mixes.startingWith(track, recents, keepOrder = true),
-                                        0, shuffle = false, instant = false,
-                                    )
-                                })
-                            }
-                        }
-                    }
+        LazyColumn(Modifier.weight(1f).fillMaxWidth().thinScrollbar(playlistList), state = playlistList) {
+            if (playlists.isEmpty()) {
+                item(key = "empty") {
+                    EmptyState("No playlists yet")
                 }
             }
+            items(playlists, key = { it.id }) { p ->
+                PlaylistRow(
+                    p,
+                    onClick = { onOpenPlaylist(p) },
+                    onLongClick = { at ->
+                        com.lifestream.player.ui.components.AppMenu.show(at, listOf(
+                            com.lifestream.player.ui.components.MenuItem(Icons.Rounded.FileUpload, "Export Playlist") {
+                                com.lifestream.player.ui.components.AppMenu.dismiss()
+                                com.lifestream.player.ui.FilePickers.save("Export Playlist", exportFileName(p.name), Library.EXPORT_EXTENSION)
+                                    ?.let { file -> scope.launch { exportPlaylist(p, file) } }
+                            },
+                            com.lifestream.player.ui.components.MenuItem(Icons.Rounded.Edit, "Rename") {
+                                com.lifestream.player.ui.components.AppMenu.dismiss()
+                                renamingList = p
+                            },
+                            com.lifestream.player.ui.components.MenuItem(Icons.Rounded.Delete, "Delete", danger = true) {
+                                com.lifestream.player.ui.components.AppMenu.dismiss()
+                                deletingList = p
+                            },
+                        ))
+                    },
+                )
+            }
         }
-    }
-
-    if (confirmClear) {
-        AlertDialog(
-            onDismissRequest = { confirmClear = false },
-            title = { Text("Clear History?") },
-            text = { Text("This removes all ${recents.size} songs from your history. Your playlists and saved songs aren't affected.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    Library.clearRecents()
-                    confirmClear = false
-                }) { Text("Clear") }
+        // Across the bottom: Import Playlist (a file exported from LifeStream), then New Playlist.
+        OutlinedButton(
+            onClick = {
+                com.lifestream.player.ui.FilePickers.open("Import Playlist", Library.EXPORT_EXTENSION)
+                    ?.let { file -> scope.launch { importPlaylist(file) } }
             },
-            dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("Cancel") } },
-        )
+            enabled = Library.canCreatePlaylist(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 10.dp),
+        ) {
+            Icon(Icons.Rounded.FileDownload, null, Modifier.size(18.dp))
+            Spacer(Modifier.width(6.dp))
+            Text("Import Playlist")
+        }
+        FilledTonalButton(
+            onClick = { creating = true },
+            enabled = Library.canCreatePlaylist(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 10.dp),
+        ) {
+            Icon(Icons.Rounded.Add, null, Modifier.size(18.dp))
+            Spacer(Modifier.width(6.dp))
+            Text("New Playlist")
+        }
     }
 
     renamingList?.let { p ->
@@ -283,6 +187,66 @@ fun LibraryScreen(onOpenPlaylist: (Playlist) -> Unit) {
             Library.createPlaylist(name)
             creating = false
         }
+    }
+}
+
+/** Songs you've played, newest first (the sidebar's History, under Library). */
+@Composable
+fun HistoryScreen() {
+    val recents by Library.recents.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    var confirmClear by remember { mutableStateOf(false) }
+    val historyList = rememberLazyListState()
+
+    // Clicking History while here goes back to the top and brings stored songs up to date.
+    val reselectAtStart = remember { TabReselect.history }
+    LaunchedEffect(TabReselect.history) {
+        if (TabReselect.history == reselectAtStart) return@LaunchedEffect
+        scope.launch { Library.refresh() }
+        historyList.animateScrollToItem(0)
+    }
+
+    Column(Modifier.fillMaxSize()) {
+        Text(
+            "History",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp),
+        )
+        LazyColumn(Modifier.weight(1f).fillMaxWidth().thinScrollbar(historyList), state = historyList) {
+            if (recents.isEmpty()) {
+                item(key = "empty") { EmptyState("Nothing played yet", "Songs you play will show up here.") }
+            } else {
+                item(key = "actions") {
+                    PlayShuffleRow(recents, onClear = { confirmClear = true })
+                }
+                itemsIndexed(recents, key = { _, t: Track -> t.id }) { _, track ->
+                    // This song, then the rest of History in its order, topped up with random
+                    // songs from every enabled title to 50 (not offered to save as a playlist:
+                    // it's your History).
+                    TrackRow(track, onClick = {
+                        PlayerConnection.playTracks(
+                            com.lifestream.player.data.Mixes.startingWith(track, recents, keepOrder = true),
+                            0, shuffle = false, instant = false,
+                        )
+                    })
+                }
+            }
+        }
+    }
+
+    if (confirmClear) {
+        AlertDialog(
+            onDismissRequest = { confirmClear = false },
+            title = { Text("Clear History?") },
+            text = { Text("This removes all ${recents.size} songs from your history. Your playlists and saved songs aren't affected.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    Library.clearRecents()
+                    confirmClear = false
+                }) { Text("Clear") }
+            },
+            dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("Cancel") } },
+        )
     }
 }
 
@@ -352,9 +316,7 @@ private fun PlaylistRow(p: Playlist, onClick: () -> Unit, onLongClick: (androidx
             .menuAnchor(anchor)
             .combinedClickable(onClick = onClick, onLongClick = { onLongClick(anchor.at()) })
             // Right-click opens the same menu.
-            .onPointerEvent(androidx.compose.ui.input.pointer.PointerEventType.Press) { e ->
-                if (e.buttons.isSecondaryPressed) onLongClick(anchor.at())
-            }
+            .onRightClick { at -> onLongClick(at ?: anchor.at()) }
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

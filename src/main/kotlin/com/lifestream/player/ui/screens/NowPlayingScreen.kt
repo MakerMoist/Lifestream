@@ -80,6 +80,10 @@ import com.lifestream.player.ui.components.ImageLoader
 import com.lifestream.player.ui.components.SaveInstantPlaylistDialog
 import com.lifestream.player.ui.components.TrackActions
 import com.lifestream.player.ui.components.menuAnchor
+import com.lifestream.player.ui.components.onRightClick
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.launch
 import com.lifestream.player.ui.components.rememberMenuAnchor
 import com.lifestream.player.ui.components.thinScrollbar
 import com.lifestream.player.ui.theme.LsColors
@@ -99,12 +103,32 @@ fun NowPlayingScreen(onClose: () -> Unit, openQueue: Boolean = false) {
 
     BackHandler { onClose() }
 
+    // Drag it down (anywhere that isn't a list or a slider) to close it, like pulling a sheet away.
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val dragScope = androidx.compose.runtime.rememberCoroutineScope()
+    val dragOffset = remember { androidx.compose.animation.core.Animatable(0f) }
+    val closeDistance = with(density) { 140.dp.toPx() }
+
     Box(
         Modifier
             .fillMaxSize()
+            .graphicsLayer { translationY = dragOffset.value }
             .background(LsColors.Night)
             // Clicks don't fall through to the page underneath.
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
+            .draggable(
+                orientation = androidx.compose.foundation.gestures.Orientation.Vertical,
+                state = androidx.compose.foundation.gestures.rememberDraggableState { delta ->
+                    dragScope.launch { dragOffset.snapTo((dragOffset.value + delta).coerceAtLeast(0f)) }
+                },
+                onDragStopped = { velocity ->
+                    if (dragOffset.value > closeDistance || velocity > 1800f) {
+                        onClose()
+                    } else {
+                        dragOffset.animateTo(0f, androidx.compose.animation.core.spring(stiffness = 600f))
+                    }
+                },
+            ),
     ) {
         // Blurred artwork wash behind everything: a small copy, blurred once and stretched.
         val wash = remember(track?.thumbnail) { SafeInput.safeArtwork(track?.thumbnail) }
@@ -169,7 +193,9 @@ fun NowPlayingScreen(onClose: () -> Unit, openQueue: Boolean = false) {
                                 modifier = Modifier
                                     .weight(1f, fill = false)
                                     .aspectRatio(1f)
-                                    .shadow(24.dp, RoundedCornerShape(16.dp)),
+                                    .shadow(24.dp, RoundedCornerShape(16.dp))
+                                    // Right-click the artwork for the song's menu (the same as ⋮).
+                                    .onRightClick { at -> track?.let { TrackActions.show(it, at = at) } },
                             )
                             Spacer(Modifier.height(24.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -205,6 +231,8 @@ fun NowPlayingScreen(onClose: () -> Unit, openQueue: Boolean = false) {
                             SeekBar(state)
                             Spacer(Modifier.height(8.dp))
                             Controls(state)
+                            Spacer(Modifier.height(10.dp))
+                            com.lifestream.player.ui.VolumeControl(Modifier.widthIn(max = 360.dp).fillMaxWidth(), large = true)
                         }
                     }
                     if (showQueue && wide) {
@@ -377,6 +405,7 @@ private fun QueueList(state: PlayerUiState) {
                 Modifier
                     .fillMaxWidth()
                     .clickable { PlayerConnection.skipToQueueItem(index) }
+                    .onRightClick { at -> TrackActions.show(track, at = at) }
                     .padding(start = 20.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

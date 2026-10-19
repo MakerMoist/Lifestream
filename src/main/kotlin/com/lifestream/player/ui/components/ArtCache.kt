@@ -46,8 +46,11 @@ object ArtCache {
 /** The card art at [path]: immediately when already decoded, otherwise once it's ready. */
 @Composable
 fun rememberArt(path: String): ImageBitmap? {
-    val art by produceState(ArtCache.cached(path), path) {
-        if (value == null) value = withContext(Dispatchers.IO) { ArtCache.load(path) }
+    // Keyed on the picture, so a spot that changes title never keeps the previous one's art.
+    return androidx.compose.runtime.key(path) {
+        val art by produceState(ArtCache.cached(path)) {
+            if (value == null) value = withContext(Dispatchers.IO) { ArtCache.load(path) }
+        }
+        art
     }
-    return art
 }

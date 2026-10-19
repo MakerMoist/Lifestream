@@ -189,18 +189,21 @@ object SongStore {
     /** Ids of songs saved in full on this PC (song rows show a mark for these). */
     val cachedIds: StateFlow<Set<String>> = _cachedIds.asStateFlow()
 
+    /** Songs downloaded in full that are still open (filed as saved songs once they're let go). */
+    private val finishedOpen = java.util.Collections.newSetFromMap(java.util.concurrent.ConcurrentHashMap<String, Boolean>())
+
     /** Songs being fetched right now, so a second request for one shares it. */
     private val active = HashMap<String, SongSource>()
 
     /**
      * Every hop of an audio request (redirects included) must stay on YouTube's media servers over
-     * HTTPS. A stalled download gives up quickly so it's retried instead of waiting.
+     * HTTPS. A slow first connection gets time to answer; a stalled one is retried.
      */
     private val client by lazy {
         Http.client.newBuilder()
             .cache(null)
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(15, TimeUnit.SECONDS)
+            .connectTimeout(20, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
             .addNetworkInterceptor { chain ->
                 val url = chain.request().url
                 if (!url.isHttps || !SafeInput.isGoogleVideoHost(url.host)) throw IOException("Refusing audio from an unexpected host")
@@ -261,7 +264,9 @@ object SongStore {
                 target.delete()
             } else if (source.complete && source.error == null) {
                 // A finished song becomes a saved one (now that nothing has the file open).
-                if (target.renameTo(File(dir, target.name.removeSuffix(".part")))) refreshIds()
+                target.renameTo(File(dir, target.name.removeSuffix(".part")))
+                finishedOpen -= videoId
+                refreshIds()
             }
         }
         source.downloading = true
@@ -310,7 +315,12 @@ object SongStore {
             }
             if (source.closed && (source.total < 0 || source.written < source.total)) return // stopped part-way: keep the part
             source.finish()
-            if (source.file.name.endsWith(".part")) trim(0)
+            if (source.file.name.endsWith(".part")) {
+                // Shown as saved straight away, even while it's still playing.
+                finishedOpen += source.videoId
+                trim(0)
+                refreshIds()
+            }
         } catch (e: IOException) {
             source.finish(e)
         } catch (e: InterruptedException) {
@@ -380,7 +390,7 @@ object SongStore {
     private fun savedFiles(): List<File> = dir.listFiles()?.filter { it.isFile && fileName.matches(it.name) }.orEmpty()
 
     private fun refreshIds() {
-        _cachedIds.value = savedFiles().mapNotNull { fileName.matchEntire(it.name)?.groupValues?.get(1) }.toSet()
+        _cachedIds.value = savedFiles().mapNotNull { fileName.matchEntire(it.name)?.groupValues?.get(1) }.toSet() + finishedOpen
     }
 
     /** Space used by saved songs (and partly saved ones), in bytes. */

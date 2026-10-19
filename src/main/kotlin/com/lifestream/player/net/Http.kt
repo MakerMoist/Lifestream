@@ -39,7 +39,7 @@ object Http {
     /** Where YouTube's metadata (search, albums, the player script) comes from. */
     private val extractorDomains = listOf(
         "youtube.com", "youtu.be", "googleapis.com", "google.com", "ytimg.com", "ggpht.com",
-        "googleusercontent.com", "googlevideo.com", "gstatic.com",
+        "googleusercontent.com", "googlevideo.com", "gstatic.com", "youtube-nocookie.com",
     )
 
     fun isExtractorHost(host: String?): Boolean {

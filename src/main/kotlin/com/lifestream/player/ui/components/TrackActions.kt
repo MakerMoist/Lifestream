@@ -48,7 +48,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.composed
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.isSecondaryPressed
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -121,6 +124,25 @@ fun Modifier.menuAnchor(anchor: MenuAnchor): Modifier = this
             anchor.touch = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial).position
         }
     }
+
+/**
+ * Right-click: runs [action] with where the pointer was, in window coordinates, so a menu opens
+ * right there.
+ */
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+fun Modifier.onRightClick(action: (Offset?) -> Unit): Modifier = composed {
+    val holder = remember { arrayOfNulls<LayoutCoordinates>(1) }
+    this
+        .onGloballyPositioned { holder[0] = it }
+        .onPointerEvent(androidx.compose.ui.input.pointer.PointerEventType.Press) { e ->
+            if (e.buttons.isSecondaryPressed) {
+                val local = e.changes.firstOrNull()?.position
+                val at = holder[0]?.takeIf { it.isAttached }?.let { c -> local?.let(c::localToWindow) }
+                e.changes.forEach { it.consume() }
+                action(at)
+            }
+        }
+}
 
 /** Placed once at the root of the app; renders the menu and its dialogs. */
 @Composable

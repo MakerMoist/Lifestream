@@ -9,7 +9,6 @@ import androidx.compose.foundation.text.BasicText
 import com.lifestream.player.ui.components.CenteredButtonLabel
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.delay
@@ -97,6 +96,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.lifestream.player.ui.components.onRightClick
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.draggable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -160,7 +164,8 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
     fun refresh() {
         if (refreshing) return
         refreshing = true
-        // With "Check automatically" on, a refresh also looks for a new version.
+        // Clicking Home while on it refreshes; with "Check automatically" on, it also looks for
+        // a new version.
         if (AppSettings.autoUpdate.value) updates.recheck()
         quoteIndex = VillainQuotes.next()
         seed = System.nanoTime()
@@ -201,11 +206,7 @@ fun HomeScreen(onOpenGame: (Game) -> Unit, onOpenPlaylist: (String) -> Unit) {
     // Back leaves selection mode instead of the app.
     BackHandler(enabled = selecting) { vm.clear() }
 
-    PullToRefreshBox(
-        isRefreshing = refreshing,
-        onRefresh = { refresh() },
-        modifier = Modifier.fillMaxSize(),
-    ) {
+    Box(Modifier.fillMaxSize()) {
         LazyVerticalGrid(
             // As many cards across as fit the window (two in a narrow one).
             columns = GridCells.Adaptive(minSize = if (compact) 170.dp else 210.dp),
@@ -401,57 +402,101 @@ private fun SelectionBar(vm: HomeViewModel) {
     }
 }
 
-/** Songs picked from your history's soundtracks; tapping one plays the whole mix from there. */
+/**
+ * Songs picked from your history's soundtracks; clicking one plays the whole mix from there. The
+ * row scrolls by dragging it with the mouse, with the arrows at its ends, or with Shift + the
+ * mouse wheel.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RecommendedRow(songs: List<Track>) {
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(horizontal = 0.dp),
-    ) {
-        itemsIndexed(songs, key = { _, t -> t.id }) { _, track ->
-            val anchor = com.lifestream.player.ui.components.rememberMenuAnchor()
-            Column(
-                Modifier
-                    .menuAnchor(anchor)
-                    .width(120.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .combinedClickable(
-                        onClick = {
-                            // The song that's already playing opens Now Playing instead of restarting.
-                            // Either way, Now Playing opens.
-                            // A 50-song playlist like New Game's: this song, then the other picks
-                            // shuffled (topped up from every enabled title); it can be saved.
-                            if (PlayerConnection.currentId.value != track.id) {
-                                PlayerConnection.playTracks(
-                                    com.lifestream.player.data.Mixes.startingWith(track, songs),
-                                    0, shuffle = false, instant = true,
-                                )
-                            }
-                            NowPlayingRequest.open()
-                        },
-                        onLongClick = { TrackActions.show(track, at = anchor.at()) },
-                    ),
-            ) {
-                Artwork(track.thumbnail, Modifier.size(120.dp), size = 120.dp)
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    track.title,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                track.gameId?.let { Catalog.game(it) }?.let { game ->
+    val rowState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val fling = androidx.compose.foundation.gestures.ScrollableDefaults.flingBehavior()
+    Box {
+        LazyRow(
+            state = rowState,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(horizontal = 0.dp),
+            modifier = Modifier
+                // Click and drag to scroll (a mouse doesn't scroll a row by dragging on its own).
+                .draggable(
+                    orientation = androidx.compose.foundation.gestures.Orientation.Horizontal,
+                    state = androidx.compose.foundation.gestures.rememberDraggableState { delta -> rowState.dispatchRawDelta(-delta) },
+                    onDragStopped = { velocity -> rowState.scroll { with(fling) { performFling(-velocity) } } },
+                ),
+        ) {
+            itemsIndexed(songs, key = { _, t -> t.id }) { _, track ->
+                val anchor = com.lifestream.player.ui.components.rememberMenuAnchor()
+                Column(
+                    Modifier
+                        .menuAnchor(anchor)
+                        .width(120.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .combinedClickable(
+                            onClick = {
+                                // The song that's already playing opens Now Playing instead of restarting.
+                                // Either way, Now Playing opens.
+                                // A 50-song playlist like New Game's: this song, then the other picks
+                                // shuffled (topped up from every enabled title); it can be saved.
+                                if (PlayerConnection.currentId.value != track.id) {
+                                    PlayerConnection.playTracks(
+                                        com.lifestream.player.data.Mixes.startingWith(track, songs),
+                                        0, shuffle = false, instant = true,
+                                    )
+                                }
+                                NowPlayingRequest.open()
+                            },
+                            onLongClick = { TrackActions.show(track, at = anchor.at()) },
+                        )
+                        .onRightClick { at -> TrackActions.show(track, at = at ?: anchor.at()) },
+                ) {
+                    Artwork(track.thumbnail, Modifier.size(120.dp), size = 120.dp)
+                    Spacer(Modifier.height(6.dp))
                     Text(
-                        game.title,
-                        maxLines = 1,
+                        track.title,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
                     )
+                    track.gameId?.let { Catalog.game(it) }?.let { game ->
+                        Text(
+                            game.title,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }
+        // Arrows at each end while there's more that way: each click moves a few songs along.
+        @Composable
+        fun arrow(back: Boolean, modifier: Modifier) {
+            val canGo = if (back) rowState.canScrollBackward else rowState.canScrollForward
+            if (!canGo) return
+            androidx.compose.material3.FilledIconButton(
+                onClick = {
+                    scope.launch {
+                        val step = rowState.layoutInfo.viewportSize.width * 0.8f
+                        rowState.animateScrollBy(if (back) -step else step)
+                    }
+                },
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = LsColors.Panel.copy(alpha = 0.92f),
+                    contentColor = Color.White,
+                ),
+                modifier = modifier.padding(horizontal = 4.dp).size(36.dp),
+            ) {
+                Icon(
+                    if (back) Icons.AutoMirrored.Rounded.KeyboardArrowLeft else Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                    if (back) "Scroll back" else "Scroll on",
+                )
+            }
+        }
+        arrow(back = true, modifier = Modifier.align(Alignment.TopStart).padding(top = 42.dp))
+        arrow(back = false, modifier = Modifier.align(Alignment.TopEnd).padding(top = 42.dp))
     }
 }
 

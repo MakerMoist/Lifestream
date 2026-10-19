@@ -2,7 +2,9 @@ package com.lifestream.player.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,7 +19,6 @@ import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.automirrored.rounded.VolumeDown
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,6 +34,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -90,59 +93,105 @@ fun PlayerBar(onOpen: (queue: Boolean) -> Unit, covered: Boolean) {
                 Controls(state, small = true)
                 SeekBar(state, compact = true)
             }
-            // Up Next, Cast, volume, and open the full player.
-            Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                Spacer(Modifier.weight(1f))
+            // Up Next, Cast, volume, and open the full player. The volume slider takes the room
+            // that's left, so it stays usable as the window narrows.
+            Row(
+                Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End,
+            ) {
                 IconButton(onClick = { onOpen(true) }) { Icon(Icons.AutoMirrored.Rounded.QueueMusic, "Up Next") }
                 CastButton()
-                VolumeControl()
-                IconButton(onClick = { onOpen(false) }) { Icon(Icons.Rounded.KeyboardArrowUp, "Open Now Playing") }
+                VolumeControl(Modifier.weight(1f, fill = false).widthIn(max = 220.dp))
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * The volume: a mute button, a slider and the level in per cent. The mouse wheel over any of it
+ * moves the volume 2% a notch. While casting, the Cast device follows it.
+ */
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
-private fun VolumeControl() {
+fun VolumeControl(modifier: Modifier = Modifier, large: Boolean = false) {
     val volume by AppSettings.volume.collectAsStateWithLifecycle()
     var beforeMute by remember { mutableFloatStateOf(1f) }
     fun set(v: Float) {
-        AppSettings.setVolume(v)
-        Casting.current.value?.setVolume(v) // a Cast device follows the slider
-    }
-    IconButton(onClick = {
-        if (volume > 0f) {
-            beforeMute = volume
-            set(0f)
-        } else {
-            set(beforeMute.coerceAtLeast(0.1f))
-        }
-    }) {
-        Icon(
-            when {
-                volume <= 0f -> Icons.AutoMirrored.Rounded.VolumeOff
-                volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
-                else -> Icons.AutoMirrored.Rounded.VolumeUp
-            },
-            if (volume <= 0f) "Unmute" else "Mute",
-        )
+        val level = v.coerceIn(0f, 1f)
+        AppSettings.setVolume(level)
+        Casting.current.value?.setVolume(level) // a Cast device follows the slider
     }
     val colors = SliderDefaults.colors(
-        thumbColor = LsColors.Crystal,
+        thumbColor = Color.White,
         activeTrackColor = LsColors.Crystal,
-        inactiveTrackColor = Color.White.copy(alpha = 0.15f),
+        inactiveTrackColor = Color.White.copy(alpha = 0.22f),
     )
     val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-    Box(Modifier.width(110.dp)) {
-        Slider(
-            value = volume,
-            onValueChange = { set(it) },
-            colors = colors,
-            interactionSource = interaction,
-            thumb = { SliderDefaults.Thumb(interactionSource = interaction, colors = colors, thumbSize = DpSize(4.dp, 18.dp)) },
-            track = { s -> SliderDefaults.Track(sliderState = s, colors = colors, drawStopIndicator = null, modifier = Modifier.height(6.dp)) },
-            modifier = Modifier.height(24.dp),
-        )
+    BoxWithConstraints(
+        modifier.onPointerEvent(PointerEventType.Scroll) { e ->
+            val dy = e.changes.firstOrNull()?.scrollDelta?.y ?: 0f
+            if (dy != 0f) {
+                // Up is louder; each notch is 2%, landing on even steps.
+                val steps = Math.round(volume * 50f) - kotlin.math.sign(dy).toInt()
+                set(steps / 50f)
+                e.changes.forEach { it.consume() }
+            }
+        },
+    ) {
+        val showPercent = maxWidth >= 150.dp
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = {
+                if (volume > 0f) {
+                    beforeMute = volume
+                    set(0f)
+                } else {
+                    set(beforeMute.coerceAtLeast(0.1f))
+                }
+            }) {
+                Icon(
+                    when {
+                        volume <= 0f -> Icons.AutoMirrored.Rounded.VolumeOff
+                        volume < 0.5f -> Icons.AutoMirrored.Rounded.VolumeDown
+                        else -> Icons.AutoMirrored.Rounded.VolumeUp
+                    },
+                    if (volume <= 0f) "Unmute" else "Mute",
+                    modifier = Modifier.size(if (large) 26.dp else 22.dp),
+                )
+            }
+            Slider(
+                value = volume,
+                onValueChange = { set(it) },
+                colors = colors,
+                interactionSource = interaction,
+                thumb = {
+                    SliderDefaults.Thumb(
+                        interactionSource = interaction,
+                        colors = colors,
+                        thumbSize = if (large) DpSize(18.dp, 18.dp) else DpSize(14.dp, 14.dp),
+                    )
+                },
+                track = { s ->
+                    SliderDefaults.Track(
+                        sliderState = s,
+                        colors = colors,
+                        drawStopIndicator = null,
+                        thumbTrackGapSize = 0.dp,
+                        modifier = Modifier.height(if (large) 8.dp else 6.dp),
+                    )
+                },
+                modifier = Modifier.weight(1f).widthIn(min = 56.dp).height(32.dp),
+            )
+            if (showPercent) {
+                Text(
+                    "${Math.round(volume * 100)}%",
+                    style = if (large) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.85f),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                    maxLines = 1,
+                    modifier = Modifier.width(if (large) 48.dp else 40.dp),
+                )
+            }
+        }
     }
 }

@@ -7,7 +7,7 @@ plugins {
 }
 
 /** LifeStream for Windows. Its own version, separate from the Android app's. */
-val appVersion = "0.1.0b"
+val appVersion = "0.1.1"
 
 /**
  * Windows installers only take plain numbers (major.minor.build), so a letter is folded into the
@@ -108,7 +108,7 @@ compose.desktop {
             targetFormats(TargetFormat.Msi)
             packageName = "LifeStream"
             packageVersion = installerVersion
-            description = "Final Fantasy soundtracks, streamed"
+            description = "LifeStream"
             vendor = "MakerMoist"
             // The whole Java runtime: the extractor and FFmpeg's loader use parts a trimmed one leaves out.
             includeAllModules = true

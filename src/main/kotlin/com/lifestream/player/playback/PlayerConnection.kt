@@ -461,6 +461,7 @@ object PlayerConnection {
     private fun onReady(s: Any, duration: Long) {
         if (s !== session) return
         buffering = false
+        retries = 0
         if (duration > 0) durationMs = duration
         if (playWhenReady) recordPlayed()
         publish()
@@ -498,8 +499,39 @@ object PlayerConnection {
         onLoadFailed(track, e)
     }
 
-    /** A song that YouTube won't give is skipped; a connection problem pauses with a message. */
+    /** How many times the current song has been tried again after a connection problem. */
+    private var retries = 0
+    private var retryFor: String? = null
+
+    /**
+     * A song that YouTube won't give is skipped. A connection problem is tried again a few times
+     * first, waiting a little longer each time (the first song after starting up also has to
+     * fetch YouTube's player, which can take a while on a slow connection); only then does it
+     * pause with a message.
+     */
     private fun onLoadFailed(track: Track, e: Throwable) {
+        if (retryFor != track.id) {
+            retryFor = track.id
+            retries = 0
+        }
+        val worthRetrying = e !is StreamUnavailableException && e !is javax.sound.sampled.LineUnavailableException &&
+            generateSequence(e) { it.cause }.none { it is StreamHttpException || it is javax.sound.sampled.LineUnavailableException }
+        if (worthRetrying && retries < 3 && queue.getOrNull(currentIndex())?.id == track.id) {
+            retries++
+            val at = if (loadedIndex == currentIndex()) output.positionMs() else pendingStartMs
+            loadedIndex = -1
+            session = null
+            buffering = true // still shows as loading, not as an error
+            publish()
+            loadJob = scope.launch {
+                delay(1_500L * retries)
+                if (queue.getOrNull(currentIndex())?.id == track.id && loadedIndex == -1) {
+                    pendingStartMs = at
+                    loadCurrent(force = true)
+                }
+            }
+            return
+        }
         buffering = false
         loadedIndex = -1
         session = null

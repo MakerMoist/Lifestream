@@ -315,7 +315,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
     val cacheLimitMb by AppSettings.cacheLimitMb.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { vm.refreshCacheUsage() }
 
-    // Pull down to refresh, like Home: saved-song space is measured again and, with "Check
+    // Clicking Settings while on it: saved-song space is measured again and, with "Check
     // Automatically" on, it looks for an update.
     val scope = rememberCoroutineScope()
     var refreshing by remember { mutableStateOf(false) }
@@ -339,11 +339,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
         scroll.animateScrollTo(0)
     }
 
-    androidx.compose.material3.pulltorefresh.PullToRefreshBox(
-        isRefreshing = refreshing,
-        onRefresh = { refresh() },
-        modifier = Modifier.fillMaxSize(),
-    ) {
+    Box(Modifier.fillMaxSize()) {
     Column(
         Modifier
             .fillMaxSize()
