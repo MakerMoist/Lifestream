@@ -307,6 +307,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
     val castSupport by AppSettings.castSupport.collectAsStateWithLifecycle()
     val compactView by AppSettings.compactView.collectAsStateWithLifecycle()
     val discordIntegration by AppSettings.discordIntegration.collectAsStateWithLifecycle()
+    val minimizeOnClose by AppSettings.minimizeOnClose.collectAsStateWithLifecycle()
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
     val continueMode by AppSettings.continueMode.collectAsStateWithLifecycle()
     val keepQueue by AppSettings.keepQueue.collectAsStateWithLifecycle()
@@ -518,6 +519,19 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 }
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = discordIntegration, onCheckedChange = { AppSettings.setDiscordIntegration(it) })
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Minimize on Close", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "LifeStream keeps playing if you press the exit button. Close it in your icon menu to fully close.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = minimizeOnClose, onCheckedChange = { AppSettings.setMinimizeOnClose(it) })
             }
             Spacer(Modifier.height(16.dp))
             Text("Saved Songs", style = MaterialTheme.typography.bodyLarge)

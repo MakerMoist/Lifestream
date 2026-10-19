@@ -19,6 +19,7 @@ object AppSettings {
     private const val KEY_CAST_SUPPORT = "cast_support"
     private const val KEY_COMPACT_VIEW = "compact_view"
     private const val KEY_DISCORD = "discord_integration"
+    private const val KEY_MINIMIZE_ON_CLOSE = "minimize_on_close"
     private const val KEY_VOLUME = "volume"
     private const val KEY_HIDDEN_TITLES = "hidden_titles"
     private const val KEY_CONTINUE_MODE = "continue_mode"
@@ -139,6 +140,19 @@ object AppSettings {
         prefs.edit().putBoolean(KEY_DISCORD, on).apply()
     }
 
+    private val _minimizeOnClose = MutableStateFlow(false)
+
+    /**
+     * Settings → System → "Minimize on Close": the close button hides the window to the icon
+     * menu by the clock and the music keeps playing; Quit there closes it. Off by default.
+     */
+    val minimizeOnClose: StateFlow<Boolean> = _minimizeOnClose.asStateFlow()
+
+    fun setMinimizeOnClose(on: Boolean) {
+        _minimizeOnClose.value = on
+        prefs.edit().putBoolean(KEY_MINIMIZE_ON_CLOSE, on).apply()
+    }
+
     private val _volume = MutableStateFlow(1f)
 
     /** The player's own volume, 0..1 (the window's volume slider). */
@@ -171,6 +185,7 @@ object AppSettings {
         _castSupport.value = prefs.getBoolean(KEY_CAST_SUPPORT, true)
         _compactView.value = prefs.getBoolean(KEY_COMPACT_VIEW, false)
         _discordIntegration.value = prefs.getBoolean(KEY_DISCORD, false)
+        _minimizeOnClose.value = prefs.getBoolean(KEY_MINIMIZE_ON_CLOSE, false)
         _volume.value = prefs.getFloat(KEY_VOLUME, 1f).coerceIn(0f, 1f)
         // Only ids of titles that still exist.
         _hiddenTitles.value = prefs.getString(KEY_HIDDEN_TITLES, "").orEmpty().split(',')

@@ -102,6 +102,8 @@ fun NowPlayingScreen(onClose: () -> Unit, openQueue: Boolean = false) {
     val instantQueue by PlayerConnection.instantQueue.collectAsStateWithLifecycle()
 
     BackHandler { onClose() }
+    // Registered after the one above, so Back closes Up Next first (then Now Playing).
+    BackHandler(enabled = showQueue) { showQueue = false }
 
     // Drag it down (anywhere that isn't a list or a slider) to close it, like pulling a sheet away.
     val density = androidx.compose.ui.platform.LocalDensity.current

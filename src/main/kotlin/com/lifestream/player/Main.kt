@@ -136,6 +136,53 @@ private object SingleInstance {
             true
         }
     }.getOrDefault(true) // if the check itself can't be made, start anyway
+
+    /**
+     * Opening LifeStream again while it's already running (say, hidden in the icon menu) brings the
+     * running one's window back instead of starting a second copy. The second copy leaves a small
+     * note in a folder the first one watches (Windows tells it straight away, no checking in a
+     * loop), then quits.
+     */
+    private val signals get() = java.io.File(AppDirs.data, "signals")
+
+    /** In the second copy: asks the running one to show itself; false if it didn't respond. */
+    fun askRunningToShow(): Boolean = runCatching {
+        val note = java.io.File(signals.apply { mkdirs() }, "show")
+        note.writeText("show")
+        // The running copy deletes the note when it has seen it.
+        repeat(30) {
+            if (!note.exists()) return@runCatching true
+            Thread.sleep(100)
+        }
+        note.delete()
+        false
+    }.getOrDefault(false)
+
+    /** In the running copy: calls [onShow] (on the window's thread) whenever asked to. */
+    fun listen(onShow: () -> Unit) {
+        Thread({
+            runCatching {
+                val dir = signals.apply { mkdirs() }
+                java.io.File(dir, "show").delete()
+                val watcher = dir.toPath().fileSystem.newWatchService()
+                dir.toPath().register(
+                    watcher,
+                    java.nio.file.StandardWatchEventKinds.ENTRY_CREATE,
+                    java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY,
+                )
+                while (true) {
+                    val key = watcher.take()
+                    key.pollEvents()
+                    val note = java.io.File(dir, "show")
+                    if (note.exists()) {
+                        note.delete()
+                        javax.swing.SwingUtilities.invokeLater(onShow)
+                    }
+                    if (!key.reset()) break
+                }
+            }
+        }, "show-requests").apply { isDaemon = true }.start()
+    }
 }
 
 /**
@@ -163,6 +210,7 @@ private fun useOwnNativesFolder() {
 fun startUp() {
     AppDirs.init()
     if (!SingleInstance.acquire()) {
+        if (SingleInstance.askRunningToShow()) kotlin.system.exitProcess(0)
         runCatching {
             javax.swing.JOptionPane.showMessageDialog(
                 null, "LifeStream is already open.", "LifeStream", javax.swing.JOptionPane.INFORMATION_MESSAGE,
@@ -378,22 +426,40 @@ private fun startApp() {
         MediaKeys.wanted = playerState.queue.isNotEmpty()
         val navigator = remember { Navigator() }
         // Minimized for a minute: free what's quick to rebuild.
-        LaunchedEffect(windowState.isMinimized) {
-            if (!windowState.isMinimized) return@LaunchedEffect
+        // Hidden to the icon menu by the close button ("Minimize on Close"), or shown.
+        var windowVisible by remember { mutableStateOf(true) }
+        val awtWindow = remember { arrayOfNulls<java.awt.Window>(1) }
+        fun showWindow() {
+            windowVisible = true
+            windowState.isMinimized = false
+            // In front of whatever else is open, once it's showing again.
+            javax.swing.SwingUtilities.invokeLater { awtWindow[0]?.let { it.toFront(); it.requestFocus() } }
+        }
+        LaunchedEffect(Unit) { SingleInstance.listen { showWindow() } }
+        LaunchedEffect(windowState.isMinimized, windowVisible) {
+            if (!windowState.isMinimized && windowVisible) return@LaunchedEffect
             kotlinx.coroutines.delay(60_000)
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { trimMemory() }
         }
         Window(
             onCloseRequest = {
-                shutDown()
-                exitApplication()
+                if (AppSettings.minimizeOnClose.value) {
+                    // Keeps playing from the icon menu; Quit there closes it for good.
+                    windowVisible = false
+                    PlayerConnection.saveQueue(now = true)
+                } else {
+                    shutDown()
+                    exitApplication()
+                }
             },
+            visible = windowVisible,
             title = "LifeStream",
             icon = icon,
             state = windowState,
             onKeyEvent = { e -> handleKey(e, navigator) },
         ) {
             window.minimumSize = java.awt.Dimension(720, 560)
+            awtWindow[0] = window
             // Every size Windows asks for (title bar, taskbar, Alt+Tab) drawn smoothly at that size.
             LaunchedEffect(Unit) {
                 val images = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
@@ -428,13 +494,13 @@ private fun startApp() {
             Tray(
                 icon = trayIcon,
                 tooltip = playerState.current?.let { "LifeStream: ${it.title}" } ?: "LifeStream",
-                onAction = { windowState.isMinimized = false },
+                onAction = { showWindow() },
                 menu = {
                     Item(if (playerState.isPlaying) "Pause" else "Play", onClick = { PlayerConnection.togglePlay() })
                     Item("Next", onClick = { PlayerConnection.next() })
                     Item("Previous", onClick = { PlayerConnection.previous() })
                     Separator()
-                    Item("Show LifeStream", onClick = { windowState.isMinimized = false })
+                    Item("Show LifeStream", onClick = { showWindow() })
                     Item("Quit", onClick = {
                         shutDown()
                         exitApplication()
@@ -670,7 +736,7 @@ private fun Pages(navigator: Navigator) {
 
 /**
  * The navigation down the left side of the window. At the top, LifeStream's icon is Home (with
- * "Home" under it) and right beside it the Compact View switch; then Search, Library and History;
+ * "Home" under it) and right beside it (under it in Compact View) the Compact View switch; then Search, Library and History;
  * Settings always sits at the bottom. Compact View narrows it to icons with small labels.
  */
 @Composable
@@ -714,13 +780,19 @@ private fun Sidebar(navigator: Navigator, compact: Boolean, onSelect: (Page) -> 
                     )
                 }
             }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 10.dp).then(if (compact) Modifier else Modifier.fillMaxWidth()),
-            ) {
-                home()
-                Spacer(Modifier.width(4.dp))
-                toggle()
+            if (compact) {
+                // The narrow strip has no room beside the icon: the switch sits under it.
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(bottom = 6.dp)) {
+                    home()
+                    Spacer(Modifier.height(4.dp))
+                    toggle()
+                }
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 10.dp).fillMaxWidth()) {
+                    home()
+                    Spacer(Modifier.width(4.dp))
+                    toggle()
+                }
             }
             sections.filter { it.root != Page.Home && it.root != Page.Settings }.forEach { s ->
                 SidebarItem(s, navigator.section == s.root, compact) { onSelect(s.root) }
