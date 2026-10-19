@@ -98,7 +98,7 @@ private fun TitleRow(game: Game, shown: Boolean, onChange: (Boolean) -> Unit) {
                 .clip(RoundedCornerShape(8.dp))
                 .background(game.colorA),
         ) {
-            if (game.art != 0) {
+            if (game.art.isNotEmpty()) {
                 rememberArt(game.art)?.let { art ->
                     Image(art, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 }

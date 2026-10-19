@@ -88,7 +88,6 @@ import com.lifestream.player.ui.BackDispatcher
 import com.lifestream.player.ui.PlayerBar
 import com.lifestream.player.ui.components.AppMenu
 import com.lifestream.player.ui.components.AppMenuHost
-import com.lifestream.player.ui.components.ArtCache
 import com.lifestream.player.ui.components.Toasts
 import com.lifestream.player.ui.components.TrackActions
 import com.lifestream.player.ui.components.TrackActionsHost
@@ -320,7 +319,6 @@ private fun AppRoot(navigator: Navigator) {
     var openQueue by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
 
-    LaunchedEffect(Unit) { ArtCache.warm(Catalog.games.map { it.art }) }
     LaunchedEffect(Unit) { Toasts.messages.collect { snackbar.showSnackbar(it) } }
     LaunchedEffect(playerState.error) {
         val error = playerState.error ?: return@LaunchedEffect
@@ -364,13 +362,7 @@ private fun AppRoot(navigator: Navigator) {
                     covered = playerOpen,
                 )
             }
-            AnimatedVisibility(
-                visible = playerOpen,
-                enter = slideInVertically(tween(260, easing = FastOutSlowInEasing)) { it } + fadeIn(tween(180)),
-                exit = slideOutVertically(tween(220, easing = FastOutSlowInEasing)) { it } + fadeOut(tween(180)),
-            ) {
-                NowPlayingScreen(onClose = { showPlayer = false }, openQueue = openQueue)
-            }
+            NowPlayingOverlay(playerOpen, openQueue, onClose = { showPlayer = false })
             SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = 96.dp))
         }
     }
@@ -380,6 +372,18 @@ private fun AppRoot(navigator: Navigator) {
         navigator.open(Page.Game(game.id))
     })
     AppMenuHost()
+}
+
+/** Now Playing slides up over the pages (the sidebar stays put). */
+@Composable
+private fun NowPlayingOverlay(open: Boolean, openQueue: Boolean, onClose: () -> Unit) {
+    AnimatedVisibility(
+        visible = open,
+        enter = slideInVertically(tween(260, easing = FastOutSlowInEasing)) { it } + fadeIn(tween(180)),
+        exit = slideOutVertically(tween(220, easing = FastOutSlowInEasing)) { it } + fadeOut(tween(180)),
+    ) {
+        NowPlayingScreen(onClose = onClose, openQueue = openQueue)
+    }
 }
 
 @Composable
