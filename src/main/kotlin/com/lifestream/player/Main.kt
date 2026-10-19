@@ -60,10 +60,8 @@ import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Tray
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
@@ -672,12 +670,12 @@ private fun Pages(navigator: Navigator) {
 
 /**
  * The navigation down the left side of the window. At the top, LifeStream's icon is Home (with
- * "Home" under it) and beside it the Compact View switch; then Search, Library and History;
+ * "Home" under it) and right beside it the Compact View switch; then Search, Library and History;
  * Settings always sits at the bottom. Compact View narrows it to icons with small labels.
  */
 @Composable
 private fun Sidebar(navigator: Navigator, compact: Boolean, onSelect: (Page) -> Unit) {
-    Surface(color = LsColors.Panel, modifier = Modifier.fillMaxHeight().width(if (compact) 84.dp else 248.dp)) {
+    Surface(color = LsColors.Panel, modifier = Modifier.fillMaxHeight().width(if (compact) 84.dp else 240.dp)) {
         Column(
             Modifier.fillMaxHeight().padding(horizontal = if (compact) 8.dp else 14.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -721,23 +719,7 @@ private fun Sidebar(navigator: Navigator, compact: Boolean, onSelect: (Page) -> 
                 modifier = Modifier.padding(bottom = 10.dp).then(if (compact) Modifier else Modifier.fillMaxWidth()),
             ) {
                 home()
-                if (!compact) {
-                    Spacer(Modifier.width(6.dp))
-                    // Shrinks a little rather than being cut off.
-                    androidx.compose.foundation.text.BasicText(
-                        "LifeStream",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        ),
-                        maxLines = 1,
-                        softWrap = false,
-                        autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(
-                            minFontSize = 14.sp, maxFontSize = MaterialTheme.typography.titleLarge.fontSize, stepSize = 0.5.sp,
-                        ),
-                        modifier = Modifier.weight(1f),
-                    )
-                }
+                Spacer(Modifier.width(4.dp))
                 toggle()
             }
             sections.filter { it.root != Page.Home && it.root != Page.Settings }.forEach { s ->
