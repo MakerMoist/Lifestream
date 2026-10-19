@@ -61,7 +61,29 @@ object SelfTest {
         }
         Thread.sleep(8_000) // the window and its icons are up by now
         line("Tray icon: $trayStatus")
+        line("Memory after start: ${memory()}")
+        System.gc()
+        Thread.sleep(2_000)
+        line("Memory after tidying: ${memory()}")
         line("Done")
+    }
+
+    /** What LifeStream is using: its Java memory, and what Windows counts for the whole program. */
+    private fun memory(): String {
+        val mb = 1024 * 1024
+        val rt = Runtime.getRuntime()
+        val heapUsed = (rt.totalMemory() - rt.freeMemory()) / mb
+        val heapCommitted = rt.totalMemory() / mb
+        val nonHeap = java.lang.management.ManagementFactory.getMemoryPoolMXBeans()
+            .filter { it.type == java.lang.management.MemoryType.NON_HEAP }
+            .sumOf { it.usage.committed } / mb
+        val process = runCatching {
+            val counters = com.sun.jna.platform.win32.Psapi.PROCESS_MEMORY_COUNTERS()
+            val handle = com.sun.jna.platform.win32.Kernel32.INSTANCE.GetCurrentProcess()
+            com.sun.jna.platform.win32.Psapi.INSTANCE.GetProcessMemoryInfo(handle, counters, counters.size())
+            "Windows counts ${counters.PagefileUsage.toLong() / mb} MB private, ${counters.WorkingSetSize.toLong() / mb} MB in use"
+        }.getOrDefault("Windows' figure unavailable")
+        return "Java objects $heapUsed MB of $heapCommitted MB held, code and classes $nonHeap MB; $process"
     }
 
     private fun step(name: String, block: () -> String) {

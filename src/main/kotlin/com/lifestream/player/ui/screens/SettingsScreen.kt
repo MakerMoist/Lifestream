@@ -308,6 +308,7 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
     val compactView by AppSettings.compactView.collectAsStateWithLifecycle()
     val discordIntegration by AppSettings.discordIntegration.collectAsStateWithLifecycle()
     val minimizeOnClose by AppSettings.minimizeOnClose.collectAsStateWithLifecycle()
+    val noHardwareAcceleration by AppSettings.noHardwareAcceleration.collectAsStateWithLifecycle()
     val continueFromSearch by AppSettings.continueFromSearch.collectAsStateWithLifecycle()
     val continueMode by AppSettings.continueMode.collectAsStateWithLifecycle()
     val keepQueue by AppSettings.keepQueue.collectAsStateWithLifecycle()
@@ -562,6 +563,20 @@ fun SettingsScreen(onOpenThemes: () -> Unit, onOpenTitles: () -> Unit, onOpenCre
                 }
                 Spacer(Modifier.width(12.dp))
                 Switch(checked = minimizeOnClose, onCheckedChange = { AppSettings.setMinimizeOnClose(it) })
+            }
+            Spacer(Modifier.height(12.dp))
+            // Applies from the next start (the window's drawing is chosen as it opens).
+            val changeHardwareAcceleration: (Boolean) -> Unit = { on ->
+                AppSettings.setNoHardwareAcceleration(on)
+                com.lifestream.player.ui.components.toast("Restart LifeStream to apply this")
+            }
+            Row(
+                Modifier.settingToggle(noHardwareAcceleration, changeHardwareAcceleration),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Disable Hardware Acceleration", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = noHardwareAcceleration, onCheckedChange = changeHardwareAcceleration)
             }
             Spacer(Modifier.height(16.dp))
             Text("Saved Songs", style = MaterialTheme.typography.bodyLarge)

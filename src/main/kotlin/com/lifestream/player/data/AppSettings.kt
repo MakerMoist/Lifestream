@@ -20,6 +20,7 @@ object AppSettings {
     private const val KEY_COMPACT_VIEW = "compact_view"
     private const val KEY_DISCORD = "discord_integration"
     private const val KEY_MINIMIZE_ON_CLOSE = "minimize_on_close"
+    private const val KEY_NO_HARDWARE_ACCELERATION = "no_hardware_acceleration"
     private const val KEY_VOLUME = "volume"
     private const val KEY_HIDDEN_TITLES = "hidden_titles"
     private const val KEY_CONTINUE_MODE = "continue_mode"
@@ -153,6 +154,20 @@ object AppSettings {
         prefs.edit().putBoolean(KEY_MINIMIZE_ON_CLOSE, on).apply()
     }
 
+    private val _noHardwareAcceleration = MutableStateFlow(false)
+
+    /**
+     * Settings → System → "Disable Hardware Acceleration": draws the window with the processor
+     * instead of the graphics card (for graphics drivers that misbehave). Read once at start-up,
+     * so a change applies the next time LifeStream opens. Off by default.
+     */
+    val noHardwareAcceleration: StateFlow<Boolean> = _noHardwareAcceleration.asStateFlow()
+
+    fun setNoHardwareAcceleration(on: Boolean) {
+        _noHardwareAcceleration.value = on
+        prefs.edit().putBoolean(KEY_NO_HARDWARE_ACCELERATION, on).commit()
+    }
+
     private val _volume = MutableStateFlow(1f)
 
     /** The player's own volume, 0..1 (the window's volume slider). */
@@ -186,6 +201,7 @@ object AppSettings {
         _compactView.value = prefs.getBoolean(KEY_COMPACT_VIEW, false)
         _discordIntegration.value = prefs.getBoolean(KEY_DISCORD, false)
         _minimizeOnClose.value = prefs.getBoolean(KEY_MINIMIZE_ON_CLOSE, false)
+        _noHardwareAcceleration.value = prefs.getBoolean(KEY_NO_HARDWARE_ACCELERATION, false)
         _volume.value = prefs.getFloat(KEY_VOLUME, 1f).coerceIn(0f, 1f)
         // Only ids of titles that still exist.
         _hiddenTitles.value = prefs.getString(KEY_HIDDEN_TITLES, "").orEmpty().split(',')

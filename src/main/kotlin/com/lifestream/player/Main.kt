@@ -230,6 +230,9 @@ fun startUp() {
     // The extractor talks to YouTube's servers through our own client (HTTPS to YouTube only).
     NewPipe.init(OkHttpDownloader(Http.extractorClient), Localization("en", "US"), ContentCountry("US"))
     AppSettings.init()
+    // "Disable Hardware Acceleration": the window is drawn by the processor instead of the
+    // graphics card. Has to be chosen before the window is made.
+    if (AppSettings.noHardwareAcceleration.value) System.setProperty("skiko.renderApi", "SOFTWARE")
     Library.init()
     SearchHistory.init()
     VillainQuotes.init()
@@ -424,7 +427,7 @@ private fun startApp() {
             }
         }
     }
-    if (System.getenv("LIFESTREAM_SELFTEST") == "1") SelfTest.start()
+    if (System.getenv("LIFESTREAM_SELFTEST") in setOf("1", "settings")) SelfTest.start()
 
     application {
         AppExit.exit = ::exitApplication
@@ -829,8 +832,8 @@ private fun Pages(navigator: Navigator) {
 }
 
 /**
- * The navigation down the left side of the window. At the top, LifeStream's icon is Home (with
- * "Home" under it) and right beside it (under it in Compact View) the Compact View switch; then Search, Library and History;
+ * The navigation down the left side of the window: the Compact View switch at the top; Home
+ * (with LifeStream's icon), then Search, Library and History;
  * Settings always sits at the bottom. Compact View narrows it to icons with small labels.
  */
 @Composable
@@ -848,53 +851,20 @@ private fun Sidebar(navigator: Navigator, compact: Boolean, playerBarHeight: and
             verticalArrangement = Arrangement.spacedBy(6.dp),
             horizontalAlignment = if (compact) Alignment.CenterHorizontally else Alignment.Start,
         ) {
-            val onHome = navigator.section == Page.Home
-            // Drawn from the icon's shapes, so it's sharp at any size and display scale.
-            val logo = rememberVectorPainter(AppIcon.vector)
-            val home: @Composable () -> Unit = {
-                Column(
-                    Modifier
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(if (onHome) LsColors.Crystal.copy(alpha = 0.22f) else androidx.compose.ui.graphics.Color.Transparent)
-                        .clickable { onSelect(Page.Home) }
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Image(logo, "Home", Modifier.size(40.dp))
-                    Spacer(Modifier.height(3.dp))
-                    Text(
-                        "Home",
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = androidx.compose.ui.unit.TextUnit.Unspecified),
-                        color = if (onHome) LsColors.Crystal else MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
             // Switches Compact View on (and, in the narrow strip, back off).
-            val toggle: @Composable () -> Unit = {
-                IconButton(onClick = { AppSettings.setCompactView(!compact) }, modifier = Modifier.size(32.dp)) {
-                    Icon(
-                        if (compact) Icons.Rounded.Menu else Icons.AutoMirrored.Rounded.MenuOpen,
-                        if (compact) "Turn off Compact View" else "Turn on Compact View",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
+            IconButton(
+                onClick = { AppSettings.setCompactView(!compact) },
+                modifier = Modifier.padding(start = if (compact) 0.dp else 6.dp, bottom = 4.dp).size(32.dp),
+            ) {
+                Icon(
+                    if (compact) Icons.Rounded.Menu else Icons.AutoMirrored.Rounded.MenuOpen,
+                    if (compact) "Turn off Compact View" else "Turn on Compact View",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
+                )
             }
-            if (compact) {
-                // The narrow strip has no room beside the icon: the switch sits under it.
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(bottom = 6.dp)) {
-                    home()
-                    Spacer(Modifier.height(4.dp))
-                    toggle()
-                }
-            } else {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 10.dp).fillMaxWidth()) {
-                    home()
-                    Spacer(Modifier.width(4.dp))
-                    toggle()
-                }
-            }
-            sections.filter { it.root != Page.Home && it.root != Page.Settings }.forEach { s ->
+            // Home (with LifeStream's icon), Search, Library and History, all alike.
+            sections.filter { it.root != Page.Settings }.forEach { s ->
                 SidebarItem(s, navigator.section == s.root, compact) { onSelect(s.root) }
             }
             Spacer(Modifier.weight(1f))
@@ -926,7 +896,7 @@ private fun SidebarItem(s: Section, selected: Boolean, compact: Boolean, onClick
             Box(
                 Modifier.clip(shape).background(background).padding(horizontal = 14.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center,
-            ) { Icon(s.icon, s.label, tint = content) }
+            ) { SectionIcon(s, content) }
             Spacer(Modifier.height(2.dp))
             Text(
                 s.label,
@@ -944,9 +914,19 @@ private fun SidebarItem(s: Section, selected: Boolean, compact: Boolean, onClick
                 .padding(horizontal = 14.dp, vertical = 11.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(s.icon, null, tint = content)
+            SectionIcon(s, content)
             Spacer(Modifier.width(14.dp))
             Text(s.label, style = MaterialTheme.typography.titleSmall, color = content)
         }
+    }
+}
+
+/** A sidebar item's icon: LifeStream's own (in its colours) for Home, the usual icons otherwise. */
+@Composable
+private fun SectionIcon(s: Section, tint: androidx.compose.ui.graphics.Color) {
+    if (s.root == Page.Home) {
+        Image(rememberVectorPainter(AppIcon.vector), s.label, Modifier.size(24.dp).clip(RoundedCornerShape(5.dp)))
+    } else {
+        Icon(s.icon, s.label, tint = tint)
     }
 }
