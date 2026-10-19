@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit
  */
 object ImageLoader {
     private const val MAX_DISK_BYTES = 64L * 1024 * 1024
-    private const val MAX_MEMORY_BYTES = 96L * 1024 * 1024
+    private const val MAX_MEMORY_BYTES = 64L * 1024 * 1024
     private const val MAX_IMAGE_BYTES = 8L * 1024 * 1024
 
     private val dir: File by lazy { File(AppDirs.cache, "artwork").apply { mkdirs() } }

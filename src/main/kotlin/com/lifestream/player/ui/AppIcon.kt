@@ -48,14 +48,34 @@ object AppIcon {
             .build()
     }
 
-    /** The icon as a picture of exactly [px] × [px] pixels (for Windows' icons). */
-    fun image(px: Int, painter: Painter): java.awt.Image =
-        painter.toAwtImage(Density(1f), LayoutDirection.Ltr, Size(px.toFloat(), px.toFloat()))
+    /**
+     * The icon as a finished picture of exactly [px] × [px] pixels (for Windows' icons), copied
+     * into a plain image Windows can use straight away.
+     */
+    fun image(px: Int, painter: Painter): java.awt.image.BufferedImage {
+        val drawn = painter.toAwtImage(Density(1f), LayoutDirection.Ltr, Size(px.toFloat(), px.toFloat()))
+        val out = java.awt.image.BufferedImage(px, px, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+        val g = out.createGraphics()
+        try {
+            g.drawImage(drawn, 0, 0, px, px, null)
+        } finally {
+            g.dispose()
+        }
+        return out
+    }
 
     /** Every size Windows may ask for, so it never has to stretch or shrink one itself. */
     val windowsSizes = listOf(16, 20, 24, 32, 40, 48, 64, 96, 128, 256)
 
-    /** All of [windowsSizes] in one picture: Windows picks the one that fits its display scale. */
-    fun multiSize(painter: Painter): java.awt.Image =
-        java.awt.image.BaseMultiResolutionImage(*windowsSizes.map { image(it, painter) }.toTypedArray())
+    /**
+     * The icon for the icon menu by the clock, drawn at exactly the size that menu uses at this
+     * display's scale (a picture of any other size would be stretched, or not shown at all).
+     */
+    fun trayImage(painter: Painter): java.awt.image.BufferedImage {
+        val logical = runCatching { java.awt.SystemTray.getSystemTray().trayIconSize.width }.getOrDefault(16).coerceIn(16, 64)
+        val scale = runCatching {
+            java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration.defaultTransform.scaleX
+        }.getOrDefault(1.0).coerceIn(1.0, 4.0)
+        return image(Math.round(logical * scale).toInt(), painter)
+    }
 }

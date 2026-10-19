@@ -103,6 +103,11 @@ compose.desktop {
             "-XX:MinHeapFreeRatio=10", "-XX:MaxHeapFreeRatio=30",
             "-XX:CICompilerCount=2",
             "-Dfile.encoding=UTF-8",
+            // Hardening: other programs can't attach to LifeStream and load code into it, and Java's
+            // built-in object deserialization (which LifeStream never uses, and a common way in for
+            // attacks) refuses everything.
+            "-XX:+DisableAttachMechanism",
+            "-Djdk.serialFilter=!*",
         )
         nativeDistributions {
             targetFormats(TargetFormat.Msi)

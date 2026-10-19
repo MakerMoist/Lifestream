@@ -59,6 +59,8 @@ object SelfTest {
                 source.close()
             }
         }
+        Thread.sleep(8_000) // the window and its icons are up by now
+        line("Tray icon: $trayStatus")
         line("Done")
     }
 

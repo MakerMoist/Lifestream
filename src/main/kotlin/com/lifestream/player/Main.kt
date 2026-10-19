@@ -499,9 +499,13 @@ private fun startApp() {
             }
         }
         // The icon in the icon menu by the clock: play/pause, next, previous, show and quit.
-        val tray = remember {
-            AppTray(
-                image = runCatching { AppIcon.multiSize(icon) }.getOrNull(),
+        // Made once the window is up (its picture is drawn from the icon's shapes, which are ready
+        // by then).
+        var tray by remember { mutableStateOf<AppTray?>(null) }
+        LaunchedEffect(Unit) {
+            androidx.compose.runtime.withFrameNanos { }
+            tray = AppTray(
+                image = runCatching { AppIcon.trayImage(icon) }.getOrNull(),
                 onShow = { showWindow() },
                 onQuit = {
                     shutDown()
@@ -509,10 +513,10 @@ private fun startApp() {
                 },
             )
         }
-        LaunchedEffect(playerState.isPlaying, playerState.current?.title) {
-            tray.update(playing = playerState.isPlaying, title = playerState.current?.title)
+        LaunchedEffect(tray, playerState.isPlaying, playerState.current?.title) {
+            tray?.update(playing = playerState.isPlaying, title = playerState.current?.title)
         }
-        androidx.compose.runtime.DisposableEffect(tray) { onDispose { tray.remove() } }
+        androidx.compose.runtime.DisposableEffect(Unit) { onDispose { tray?.remove() } }
     }
     // Everything is saved by now. Ends the process at once, so no background thread (a network
     // pool, a Cast search) can keep LifeStream running unseen after its window has closed.
@@ -589,7 +593,9 @@ private object WindowPlacement {
  * LifeStream's icon in the icon menu by the clock (Windows' own tray icon, given the icon at every
  * size so it's sharp at any display scale). Double-click it to show the window.
  */
-private class AppTray(image: java.awt.Image?, onShow: () -> Unit, onQuit: () -> Unit) {
+@Volatile var trayStatus = "not made yet"
+
+private class AppTray(private val image: java.awt.image.BufferedImage?, onShow: () -> Unit, onQuit: () -> Unit) {
     private val playPause = java.awt.MenuItem("Play")
     private val icon: java.awt.TrayIcon? = runCatching {
         if (image == null || !java.awt.SystemTray.isSupported()) return@runCatching null
@@ -602,11 +608,18 @@ private class AppTray(image: java.awt.Image?, onShow: () -> Unit, onQuit: () -> 
             add(java.awt.MenuItem("Quit").apply { addActionListener { onQuit() } })
         }
         java.awt.TrayIcon(image, "LifeStream", menu).apply {
-            isImageAutoSize = false
+            // Fitted to the icon menu's own size (the picture is already made at that size).
+            isImageAutoSize = true
             addActionListener { onShow() }
             java.awt.SystemTray.getSystemTray().add(this)
         }
-    }.getOrNull()
+    }.onFailure { logCrash("tray icon", it) }.getOrNull()
+
+    init {
+        // For the release build's launch check: whether the icon is there and has a picture.
+        val visible = image?.let { img -> (0 until img.width * img.height).count { (img.getRGB(it % img.width, it / img.width) ushr 24) > 0 } } ?: 0
+        trayStatus = if (icon != null) "shown, ${image?.width}px, $visible visible pixels" else "not shown"
+    }
 
     fun update(playing: Boolean, title: String?) {
         playPause.label = if (playing) "Pause" else "Play"
@@ -703,7 +716,7 @@ private fun AppRoot(navigator: Navigator) {
             .background(MaterialTheme.colorScheme.background),
     ) {
         // The player bar's height (none while nothing is queued), for lining Settings up with it.
-        val barHeight = if (playerState.current == null) 0.dp else if (compact) 72.dp else 88.dp
+        val barHeight = if (playerState.current == null) 0.dp else com.lifestream.player.ui.playerBarHeight(compact)
         Sidebar(navigator, compact, barHeight, onSelect = {
             showPlayer = false
             navigator.select(it)
@@ -722,7 +735,7 @@ private fun AppRoot(navigator: Navigator) {
                 )
             }
             NowPlayingOverlay(playerOpen, openQueue, onClose = { showPlayer = false })
-            SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = 96.dp))
+            SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = 108.dp))
         }
     }
     UpdatePrompt()

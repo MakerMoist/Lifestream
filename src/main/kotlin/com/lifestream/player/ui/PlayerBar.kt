@@ -49,8 +49,11 @@ import com.lifestream.player.ui.screens.Controls
 import com.lifestream.player.ui.screens.SeekBar
 import com.lifestream.player.ui.theme.LsColors
 
+/** The player bar's height (the sidebar lines Settings up with it). */
+fun playerBarHeight(compact: Boolean) = if (compact) 86.dp else 96.dp
+
 /**
- * The player across the bottom of the window (the Android app's mini player): the song, its
+ * The player across the bottom of the window: the song, its
  * controls and progress, Up Next, Cast and the volume. Click the song to open Now Playing.
  */
 @Composable
@@ -60,7 +63,7 @@ fun PlayerBar(onOpen: (queue: Boolean) -> Unit, covered: Boolean) {
     val track = state.current ?: return
     Column(Modifier.fillMaxWidth().background(LsColors.Panel)) {
         Row(
-            Modifier.fillMaxWidth().height(if (compact) 72.dp else 88.dp).padding(horizontal = 12.dp),
+            Modifier.fillMaxWidth().height(playerBarHeight(compact)).padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // The song: click it for Now Playing.
@@ -88,8 +91,11 @@ fun PlayerBar(onOpen: (queue: Boolean) -> Unit, covered: Boolean) {
                 }
             }
             // The controls and progress, in the middle.
+            // The buttons sit a little higher, with a gap above the progress bar, so the loading
+            // ring around Play (while a new song starts) has room and doesn't run into it.
             Column(Modifier.weight(1.4f).widthIn(max = 640.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Controls(state, small = true)
+                Spacer(Modifier.height(7.dp))
                 SeekBar(state, compact = true)
             }
             // Up Next, Cast, volume, and open the full player. The volume slider takes the room
