@@ -52,6 +52,8 @@ object Matching {
         "NORIKO MATSUEDA", "TAKAHITO EGUCHI", "YOSHITAKA SUZUKI", "TSUYOSHI SEKITO",
         // Clair Obscur: Expedition 33
         "LORIEN TESTARD", "ALICE DUPORT", "SANDFALL",
+        // The Legend of Dragoon (Sony's own label, and its composers)
+        "SIE SOUND TEAM", "DENNIS MARTIN", "TAKEO MIRATSU",
     )
 
     // Compiled once: these run for every song on every search keystroke.

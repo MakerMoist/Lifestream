@@ -40,6 +40,7 @@ object ArtistCredits {
         "ct" to listOf("Yasunori Mitsuda"),
         "cx" to listOf("Yasunori Mitsuda"),
         "lo" to listOf("Nobuo Uematsu"),
+        "lod" to listOf("Dennis Martin", "Takeo Miratsu"),
         "ac" to listOf("Nobuo Uematsu", "Keiji Kawamori", "Kenichiro Fukui"),
         "sop" to listOf("Naoshi Mizuta", "Ryo Yamazaki", "Hidenori Iwasaki"),
     )
@@ -47,6 +48,7 @@ object ArtistCredits {
     /** Credits that aren't a person: labels, placeholders and fan channels that uploaded songs. */
     private val notPeople = setOf(
         "square enix music", "square enix", "squareenixmusic", "release", "various artists", "unknown",
+        "sie sound team",
         // uploaders of the fan playlists used where there's no official album
         "doomed account", "manwe sulimo", "synapsidae", "tukepuikko",
     )

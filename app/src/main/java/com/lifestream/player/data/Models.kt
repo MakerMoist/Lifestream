@@ -19,6 +19,7 @@ private val gameTag = Regex(
 )
 
 private val repeatedSpaces = Regex("\\s{2,}")
+private val closingDash = Regex("\\s-[^\\s-][^-]*-$")
 
 /**
  * Text from outside the app (song and artist names from YouTube, an imported playlist's
@@ -47,7 +48,11 @@ private fun isHiddenChar(c: Char): Boolean =
 
 fun tidySongTitle(raw: String): String {
     val title = plainText(raw)
-    val cleaned = title.replace(uploadTag, "").replace(gameTag, "").replace(repeatedSpaces, " ").trim().trimEnd('-', '–', '|', ' ')
+    val cleaned = title.replace(uploadTag, "").replace(gameTag, "").replace(repeatedSpaces, " ").trim().let { t ->
+        // A dash left dangling at the end goes ("Prelude -"); one that closes a part of the name
+        // stays ("Last Battle -2-", "Eternal Wind -.333 mix-").
+        if (closingDash.containsMatchIn(t)) t else t.trimEnd('-', '–', '|', ' ')
+    }
     return cleaned.ifBlank { title }
 }
 

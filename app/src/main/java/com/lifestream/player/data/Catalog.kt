@@ -13,10 +13,9 @@ object Catalog {
 
     private const val X2_CREDIT = "Noriko Matsueda & Takahito Eguchi"
 
-    // DS and PSP releases' soundtracks on YouTube Music (Square Enix's own albums).
+    // DS releases' soundtracks on YouTube Music (Square Enix's own albums).
     private const val FF3_DS = "https://music.youtube.com/playlist?list=OLAK5uy_nqFJ24qhMP8CLJvw2-vzAE3ehYnUE1wS4"
     private const val FF4_DS = "https://music.youtube.com/playlist?list=OLAK5uy_koqCLTLrJo25JQWEJ_8krfeb-vK5_mFgA"
-    private const val CRISIS_CORE_PSP = "https://music.youtube.com/playlist?list=OLAK5uy_nBodb5UFKDlDxOZoQBbQQ0_CDoGI0MnZQ"
 
     /** Other entries in the franchise that must not leak into the original VII. */
     private val notOriginalVII = listOf(
@@ -186,10 +185,7 @@ object Catalog {
             aliases = listOf("CCR", "CCFF7", "CCFFVII", "CCFF7R"),
             // Reunion's soundtrack isn't on YouTube Music; its songs show Square Enix's official
             // Crisis Core soundtrack cover (the game's logo) instead of the uploader's thumbnails.
-            coverArt = "https://yt3.googleusercontent.com/NUroKdpFTlpUapk0E2XKyYWogJie3XlaXlalTiEBLmhLdZUEWu1ZWz2bebbfIeX1_AKjq3BR3rcasEoW=w544-h544-s-l90-rj",
-            // The original PSP game's soundtrack: the same songs as Reunion's, in their first
-            // recordings, so each is marked "(PSP)".
-            versions = listOf(VersionAlbum(CRISIS_CORE_PSP, "PSP", tagAll = true))),
+            coverArt = "https://yt3.googleusercontent.com/NUroKdpFTlpUapk0E2XKyYWogJie3XlaXlalTiEBLmhLdZUEWu1ZWz2bebbfIeX1_AKjq3BR3rcasEoW=w544-h544-s-l90-rj"),
         // The film's soundtrack.
         Game("ac", "VII·AC", "Final Fantasy VII: Advent Children", 2005, "Nobuo Uematsu · Kawamori · Fukui",
             "Final Fantasy VII Advent Children original soundtrack", c(0xFF0B0F14), c(0xFF9CA3AF), Series.VII,
@@ -248,6 +244,16 @@ object Catalog {
             // cover small (about 360 px) inside black bars, so it looked blurry. This upload has the
             // same cover at 720 x 720 (its full-size frame, cropped square where it's shown).
             coverArt = "https://i.ytimg.com/vi/6Jps-lgNX2Y/maxresdefault.jpg",
+        ),
+        // Sony's own soundtrack album (SIE Sound Team); not the fan remakes, covers or tributes.
+        Game("lod", "LoD", "The Legend of Dragoon", 1999, "Dennis Martin · Takeo Miratsu",
+            "The Legend of Dragoon original soundtrack", c(0xFF2A0A10), c(0xFFE8A04A), Series.OTHER,
+            match = MatchSpec(
+                allOf = listOf("LEGEND OF DRAGOON"),
+                exclude = listOf("METAL", "REMAKE", "TRIBUTE", "GREATEST", "LOFI", "LLOYD", "COVER"),
+                requireFinalFantasy = false,
+            ), art = R.drawable.art_lod,
+            aliases = listOf("LOD", "TLOD"),
         ),
         Game("ct", "CT", "Chrono Trigger", 1995, "Yasunori Mitsuda · Nobuo Uematsu",
             "Chrono Trigger original soundtrack", c(0xFF1E3A5F), c(0xFFFFD166), Series.OTHER,
