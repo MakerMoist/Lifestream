@@ -108,7 +108,7 @@ class PlaybackService : MediaLibraryService() {
             // Audio is small, so buffer well ahead (see below): the phone's radio downloads in a few
             // bursts and can sleep in between, instead of waking every few seconds.
             .setLoadControl(
-                PausedLoadLimit.wrap(DefaultLoadControl.Builder()
+                DefaultLoadControl.Builder()
                     // Reads well ahead of the playing song: always at least 5 minutes (most of a
                     // song) and up to 15, so a slow or patchy connection doesn't pause it. After
                     // running dry, wait for 8 s of audio before carrying on so it doesn't stutter
@@ -117,7 +117,7 @@ class PlaybackService : MediaLibraryService() {
                     .setBufferDurationsMs(300_000, 900_000, 1_500, 8_000)
                     .setTargetBufferBytes(20 * 1024 * 1024)
                     .setPrioritizeTimeOverSizeThresholds(true)
-                    .build())
+                    .build()
             )
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -596,23 +596,6 @@ class PlaybackService : MediaLibraryService() {
             val to = minOf(all.size.toLong(), from + pageSize).toInt()
             return ImmutableList.copyOf(all.subList(from.toInt(), to))
         }
-    }
-
-    /**
-     * While paused, reads ahead only about half a minute instead of up to 15 minutes, so a pause
-     * that turns into the end of listening doesn't keep downloading songs that may never play
-     * (and keep the radio awake doing it). Playing again goes back to reading well ahead.
-     */
-    private object PausedLoadLimit {
-        private const val PAUSED_AHEAD_US = 30_000_000L
-
-        fun wrap(base: androidx.media3.exoplayer.LoadControl): androidx.media3.exoplayer.LoadControl =
-            object : androidx.media3.exoplayer.LoadControl by base {
-                override fun shouldContinueLoading(parameters: androidx.media3.exoplayer.LoadControl.Parameters): Boolean {
-                    if (!parameters.playWhenReady && parameters.bufferedDurationUs >= PAUSED_AHEAD_US) return false
-                    return base.shouldContinueLoading(parameters)
-                }
-            }
     }
 
     /**
