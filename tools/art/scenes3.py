@@ -744,6 +744,74 @@ def lo(c):
     finish(c, "#0c0e12", "#fff0d0", amount=0.1, vignette=0.48)
 
 
+# The Legend of Dragoon: crimson and gold. A pale moon that never sets hangs over a dusk sea; an
+# ancient tree stands on the cliff, and seven lights of the elements drift up from it.
+def lod(c):
+    c.vgrad([(0, "#16040a"), (0.32, "#4e0c18"), (0.55, "#a8382a"), (0.66, "#f0ae66"), (1, "#12050a")])
+    c.stars(260, 0, 0.42, "#ffe0d0", fade=1 - smoothstep(0.08, 0.42, c.Y))
+    # The moon: pale, softly cratered, warmed by the dusk at its lower edge.
+    mx, my, mr = 0.71, 0.24, 0.085
+    moon = c.circle(mx, my, mr, soft=1.5)
+    c.glow(moon, "#ffd8c4", 90, 0.75)
+    tex = 0.78 + 0.3 * c.fbm(7, 5, seed=7)
+    warm = smoothstep(my - mr, my + mr, c.Y)[..., None]
+    col = hexc("#f6e8de")[None, None, :] * (1 - warm * 0.25) + hexc("#ffb08a")[None, None, :] * warm * 0.25
+    c.paint(moon, col * tex[..., None])
+    c.clouds(0.3, 0.6, "#360914", lit="#ff9466", cover=0.4, scale=2.8, seed=33, alpha=0.8, stretch=4, light_dir=(0.4, 1))
+    c.radial(0.62, 0.65, 0.42, "#ffc07a", 0.65, 2.0, squash=1.6)
+    c.land(0.645, 0.018, "#3a1420", seed=34, haze="#f0ae66", haze_amt=0.5)
+    c.water(0.655, "#26080f", dim=0.72, tint_amt=0.4, ripple=0.014, sparkle="#ffd8b0", sparkle_amt=0.6)
+    # A path of moonlight on the water, and the far water darkening towards the viewer.
+    c.particles(420, 0.665, 0.755, 0.665, 0.98, "#ffe2c8", 0.4, 1.6, 3, 0.75, seed=38)
+    c.haze_below(0.8, "#12050a", 0.55)
+    # The cliff, left: an uneven top edge, lit faintly by the dusk.
+    edge = c.ridge(0.6, 0.012, seed=39, x0=0.0, x1=0.38)
+    edge = [(x, y + (0.0 if x < 0.24 else (x - 0.24) ** 1.6 * 3.2)) for x, y in edge] + [(0.37, 1.0)]
+    cliff = c.below(edge, soft=1) * (c.X < 0.385)
+    c.paint(cliff, hexc("#100509")[None, None, :] * (0.7 + c.fbm(14, 5, seed=35)[..., None] * 0.6))
+    rim = np.clip(cliff * (1 - c.blur(cliff, 4)) * 4, 0, 1) * (1 - smoothstep(0.62, 0.7, c.Y)) * smoothstep(0.15, 0.3, c.X)
+    c.add(rim, "#ff8a5a", 0.12)
+    # The ancient tree: a thick, twisting trunk with roots over the edge and a broad crown.
+    dark = "#0e0408"
+    trunk = c.poly([(0.08, 0.62), (0.115, 0.6), (0.13, 0.52), (0.122, 0.44), (0.14, 0.36), (0.175, 0.36),
+                    (0.17, 0.45), (0.185, 0.53), (0.215, 0.6), (0.26, 0.625)], soft=1)
+    c.paint(trunk, dark)
+    for (x0, x1, dy) in [(0.12, 0.05, 0.05), (0.2, 0.3, 0.06), (0.16, 0.22, 0.03)]:
+        root = c.line([(x0 + (x1 - x0) * t, 0.6 + dy * t * t) for t in np.linspace(0, 1, 20)], 5 - 3 * 0.5)
+        c.paint(root, dark)
+    rng = c.rng
+    def branch(x, y, ang, length, width, depth):
+        if depth == 0:
+            return
+        x2, y2 = x + math.cos(ang) * length, y - math.sin(ang) * length * 1.35
+        mx_, my_ = (x + x2) / 2 + 0.008 * rng.gauss(0, 1), (y + y2) / 2 + 0.006 * rng.gauss(0, 1)
+        c.paint(c.line([(x, y), (mx_, my_), (x2, y2)], width), dark)
+        for d in (-0.5, 0.42):
+            branch(x2, y2, ang + d + 0.18 * rng.gauss(0, 1), length * 0.7, max(width * 0.62, 1.0), depth - 1)
+    for ang, ln in ((2.5, 0.09), (1.95, 0.08), (1.45, 0.085), (0.95, 0.09), (0.55, 0.075)):
+        branch(0.158, 0.37, ang, ln, 9, 4)
+    # Leaf masses: many ragged clumps around the branch ends.
+    crown = np.zeros((c.h, c.w), np.float32)
+    for k in range(46):
+        ang = rng.uniform(math.radians(15), math.radians(165))
+        rad = rng.uniform(0.03, 0.15)
+        x, y = 0.158 + math.cos(ang) * rad * 1.25, 0.31 - math.sin(ang) * rad * 0.75
+        r = rng.uniform(0.022, 0.045)
+        crown = np.maximum(crown, c.ellipse(x, y, r, r * 0.8, soft=3))
+    ragged = c.fbm(40, 5, seed=37)
+    crown = np.where(crown * (0.5 + ragged) > 0.62, 1.0, 0.0).astype(np.float32)
+    crown = c.blur(crown, 1)
+    c.paint(crown, dark)
+    # Seven lights of the elements, drifting up from the crown towards the moon.
+    lights = ["#ff5a32", "#62e696", "#fff6e8", "#8a4ab8", "#c890ff", "#58b0ff", "#f6cc60"]
+    pts = [(0.3, 0.3), (0.36, 0.2), (0.43, 0.25), (0.48, 0.14), (0.54, 0.21), (0.58, 0.1), (0.42, 0.08)]
+    for (x, y), col in zip(pts, lights):
+        c.glow(c.circle(x, y, 0.012, soft=2), col, 44, 1.2)
+        c.glow(c.circle(x, y, 0.004), "#ffffff", 8, 0.9)
+        c.ribbon(lambda t, x=x, y=y: (x - 0.05 * t, y + 0.09 * t ** 1.3), col, 1.0, 10, 0.22, core=0.2)
+    c.particles(170, 0.05, 0.95, 0.05, 0.7, "#ffc890", 0.4, 1.4, 4, 0.55, seed=36)
+    finish(c, "#10040a", "#ffe8d0", amount=0.1, vignette=0.5)
+
 # Lightning Returns: rose and plum twilight; a vast clock face over a gothic city, chaos rising.
 def lr(c):
     c.vgrad([(0, "#12061a"), (0.38, "#3d1442"), (0.6, "#a8467a"), (0.68, "#f3a6c8"), (1, "#0e0814")])
@@ -897,7 +965,7 @@ SCENES = {
     "ff1": ff1, "ff2": ff2, "ff3": ff3, "ff4": ff4, "ff5": ff5, "ff6": ff6, "ff7": ff7, "ff8": ff8,
     "ff9": ff9, "ff10": ff10, "ff10_2": ff10_2, "ff11": ff11, "ff12": ff12, "ff13": ff13,
     "ff13_2": ff13_2, "ff14": ff14, "ff15": ff15, "ff16": ff16, "ff7r": ff7r, "ff7rb": ff7rb,
-    "ccr": ccr, "fft": fft, "ct": ct, "cx": cx, "lo": lo, "lr": lr, "coe33": coe33, "ac": ac, "sop": sop,
+    "ccr": ccr, "fft": fft, "ct": ct, "cx": cx, "lo": lo, "lod": lod, "lr": lr, "coe33": coe33, "ac": ac, "sop": sop,
 }
 
 if __name__ == "__main__":

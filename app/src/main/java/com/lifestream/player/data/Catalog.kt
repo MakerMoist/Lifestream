@@ -245,6 +245,16 @@ object Catalog {
             // same cover at 720 x 720 (its full-size frame, cropped square where it's shown).
             coverArt = "https://i.ytimg.com/vi/6Jps-lgNX2Y/maxresdefault.jpg",
         ),
+        // Sony's own soundtrack album (SIE Sound Team); not the fan remakes, covers or tributes.
+        Game("lod", "LoD", "The Legend of Dragoon", 1999, "Dennis Martin · Takeo Miratsu",
+            "The Legend of Dragoon original soundtrack", c(0xFF2A0A10), c(0xFFE8A04A), Series.OTHER,
+            match = MatchSpec(
+                allOf = listOf("LEGEND OF DRAGOON"),
+                exclude = listOf("METAL", "REMAKE", "TRIBUTE", "GREATEST", "LOFI", "LLOYD", "COVER"),
+                requireFinalFantasy = false,
+            ), art = R.drawable.art_lod,
+            aliases = listOf("LOD", "TLOD"),
+        ),
         Game("ct", "CT", "Chrono Trigger", 1995, "Yasunori Mitsuda · Nobuo Uematsu",
             "Chrono Trigger original soundtrack", c(0xFF1E3A5F), c(0xFFFFD166), Series.OTHER,
             match = MatchSpec(allOf = listOf("CHRONO", "TRIGGER"), requireFinalFantasy = false), art = R.drawable.art_ct,
