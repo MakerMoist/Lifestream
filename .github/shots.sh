@@ -104,4 +104,11 @@ adb shell input keyevent KEYCODE_BACK; sleep 2
 for k in $(seq 1 10); do tap "Lost Odyssey" && break; adb shell input swipe $(( W / 2 )) $(( H * 62 / 100 )) $(( W / 2 )) $(( H * 22 / 100 )) 300; sleep 1; done
 sleep 8; shot lost-odyssey
 adb shell input keyevent KEYCODE_BACK; sleep 1
+
+# The Legend of Dragoon: its card on Home, then its page.
+shot home-other-games
+for k in $(seq 1 10); do tap "The Legend of Dragoon" && break; adb shell input swipe $(( W / 2 )) $(( H * 62 / 100 )) $(( W / 2 )) $(( H * 22 / 100 )) 300; sleep 1; done
+sleep 8; shot legend-of-dragoon
+echo "::notice::The Legend of Dragoon: $(texts | head -24 | tr '\n' '|')"
+adb shell input keyevent KEYCODE_BACK; sleep 1
 exit 0
