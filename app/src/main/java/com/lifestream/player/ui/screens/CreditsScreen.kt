@@ -113,6 +113,7 @@ object Credits {
         put("ct", "CHRONO TRIGGER is a registered trademark of $SQUARE_ENIX")
         put("cx", "CHRONO CROSS is a registered trademark of $SQUARE_ENIX")
         put("lo", "Lost Odyssey is a trademark of Microsoft Corporation (developed by Mistwalker and feelplus)")
+        put("lod", "The Legend of Dragoon is a trademark of Sony Interactive Entertainment LLC")
         put("coe33", "Clair Obscur: Expedition 33 is a trademark of Sandfall Interactive (published by Kepler Interactive)")
     }
 

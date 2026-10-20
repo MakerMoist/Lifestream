@@ -99,6 +99,8 @@ class SearchAndNamesTest {
         assertEquals("ccr", first("ccr"))
         assertEquals("lr", first("lr"))
         assertEquals("lo", first("lo"))
+        assertEquals("lod", first("lod"))
+        assertEquals("lod", first("dragoon"))
         assertEquals("coe33", first("e33"))
         assertEquals("ff7r", first("ff7r"))
         assertEquals("ff7rb", first("ff7rb"))
