@@ -54,11 +54,32 @@ object SoundtrackIndex {
     private val builtAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val emptyAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
+    /**
+     * Reads the saved index (from the phone only). Nothing is downloaded here: Android also starts
+     * the app's process without it being opened (the media controls' resume card after a reboot,
+     * a headset or car button), and refreshing 30 soundtracks from YouTube then would use battery
+     * and data in the background. [ensureBuilt] refreshes it when the app is actually used.
+     */
     fun init(context: Context) {
         file = File(context.filesDir, FILE_NAME)
-        scope.launch {
+        load()
+    }
+
+    private val loaded = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val loadLock = Mutex()
+
+    /** Reads the saved index into memory (once; later calls do nothing). No network. */
+    fun load() {
+        if (loaded.get()) return
+        scope.launch { loadOnce() }
+    }
+
+    private suspend fun loadOnce() {
+        if (loaded.get()) return
+        loadLock.withLock {
+            if (loaded.get()) return
             readFromDisk()
-            ensureBuilt()
+            loaded.set(true)
         }
     }
 
@@ -123,6 +144,7 @@ object SoundtrackIndex {
     /** Loads any game that is missing or stale. Safe to call often. */
     fun ensureBuilt() {
         scope.launch {
+            loadOnce()
             buildLock.withLock {
                 val now = System.currentTimeMillis()
                 val todo = Catalog.games.filter { g ->
