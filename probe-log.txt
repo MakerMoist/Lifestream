@@ -1,0 +1,24 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :copyAppSources
+> Task :generateR
+> Task :processResources NO-SOURCE
+
+> Task :compileKotlin
+w: file:///home/runner/work/Lifestream/Lifestream/tools/probe/build/appsrc/data/Models.kt:150:5 This annotation is currently applied to the value parameter only, but in the future it will also be applied to property.
+- To opt in to applying to both value parameter and property, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+
+> Task :compileJava NO-SOURCE
+> Task :classes UP-TO-DATE
+
+> Task :run
+titles lod
+named 0
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1792492470163.json
+
+BUILD SUCCESSFUL in 59s
+4 actionable tasks: 4 executed
