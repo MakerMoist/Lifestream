@@ -97,6 +97,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        // The app is on screen: load the song index, and refresh any title that's a week old.
+        com.lifestream.player.data.SoundtrackIndex.ensureBuilt()
+    }
+
     override fun onStop() {
         super.onStop()
         // "Playlist Stays Open": keep where the queue is (song and spot) as the app is left.

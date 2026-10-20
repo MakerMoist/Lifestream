@@ -72,6 +72,7 @@ class PlaybackService : MediaLibraryService() {
     private val serviceScope = MainScope()
     private var otherAudio: OtherAudioListener? = null
     private var idleReleaser: IdleReleaser? = null
+    private var wifiLock: DownloadWifiLock? = null
     private var recovery: RecoveryListener? = null
 
     /**
@@ -104,7 +105,7 @@ class PlaybackService : MediaLibraryService() {
                     // A weak connection gets time to recover before a song counts as failed.
                     .setLoadErrorHandlingPolicy(PatientLoadErrors())
             )
-            // Audio is small, so buffer up to 3 minutes ahead: the phone's radio downloads in a few
+            // Audio is small, so buffer well ahead (see below): the phone's radio downloads in a few
             // bursts and can sleep in between, instead of waking every few seconds.
             .setLoadControl(
                 DefaultLoadControl.Builder()
@@ -128,7 +129,10 @@ class PlaybackService : MediaLibraryService() {
             .setHandleAudioBecomingNoisy(true)
             // Lets the player follow the phone's media volume (see VolumeListener).
             .setDeviceVolumeControlEnabled(true)
-            .setWakeMode(C.WAKE_MODE_NETWORK)
+            // Keeps the phone awake while playing (not the screen). Wi-Fi is kept at full power
+            // only while a song is downloading (see DownloadWifiLock), not for the whole song:
+            // the player buffers minutes ahead, so it downloads in short bursts.
+            .setWakeMode(C.WAKE_MODE_LOCAL)
             // Rewind / fast-forward (shown by Android Auto and media controls) move 10 seconds,
             // matching their "10" icons.
             .setSeekBackIncrementMs(SEEK_STEP_MS)
@@ -136,6 +140,7 @@ class PlaybackService : MediaLibraryService() {
             .build()
 
         player.addListener(RecoveryListener(player).also { recovery = it })
+        player.addListener(DownloadWifiLock(this).also { wifiLock = it })
         player.addListener(VolumeListener(player))
         player.addListener(OtherAudioListener(this, player).also { otherAudio = it })
         player.addListener(object : Player.Listener {
@@ -243,6 +248,8 @@ class PlaybackService : MediaLibraryService() {
         otherAudio = null
         idleReleaser?.cancel()
         idleReleaser = null
+        wifiLock?.release()
+        wifiLock = null
         recovery?.cancel()
         recovery = null
         session?.run {
@@ -588,6 +595,27 @@ class PlaybackService : MediaLibraryService() {
             // In Longs, so a huge page size from a controller can't overflow into a crash.
             val to = minOf(all.size.toLong(), from + pageSize).toInt()
             return ImmutableList.copyOf(all.subList(from.toInt(), to))
+        }
+    }
+
+    /**
+     * Holds Wi-Fi at full power while the player is downloading, and lets it save power the rest
+     * of the time. (The player's own "network" wake mode held it for as long as music played,
+     * though downloads only happen in short bursts minutes apart.) On mobile data it does nothing.
+     */
+    private class DownloadWifiLock(context: Context) : Player.Listener {
+        private val lock = runCatching {
+            context.applicationContext.getSystemService(android.net.wifi.WifiManager::class.java)
+                ?.createWifiLock(android.net.wifi.WifiManager.WIFI_MODE_FULL_HIGH_PERF, "LifeStream:download")
+                ?.apply { setReferenceCounted(false) }
+        }.getOrNull()
+
+        override fun onIsLoadingChanged(isLoading: Boolean) {
+            runCatching { if (isLoading) lock?.acquire() else release() }
+        }
+
+        fun release() {
+            runCatching { if (lock?.isHeld == true) lock.release() }
         }
     }
 
