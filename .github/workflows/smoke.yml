@@ -48,6 +48,19 @@ jobs:
 
       # What the finished app contains (components and permissions from every library), so
       # anything unexpected, like a telemetry service, is visible in the run summary.
+      - name: Lint (Android's own checks for likely bugs)
+        continue-on-error: true
+        run: |
+          ./gradlew --no-daemon lintRelease > "$RUNNER_TEMP/lint.log" 2>&1 || true
+          R=$(find app/build/reports -name "lint-results-release.txt" | head -1)
+          if [ -n "$R" ]; then
+            grep -E ": (Error|Warning):" "$R" | sed -E 's/^.*app\/src\/main\///' | head -150 > lint-summary.txt
+            echo "::notice::Lint: $(grep -c ': Error:' "$R") errors, $(grep -c ': Warning:' "$R") warnings"
+            mkdir -p shots && cp "$R" shots/lint.txt
+          else
+            tail -30 "$RUNNER_TEMP/lint.log" | sed 's/^/::warning::lint: /'
+          fi
+
       - name: Report app components
         run: |
           M=$(find app/build/intermediates -name AndroidManifest.xml -path "*merged_manifest*" -path "*release*" | head -1)
