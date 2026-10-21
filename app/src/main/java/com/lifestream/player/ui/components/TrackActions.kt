@@ -303,7 +303,9 @@ private fun SongMenu(
     val game = remember(track) { SoundtrackIndex.gameOf(track) }
     val instantQueue by PlayerConnection.instantQueue.collectAsStateWithLifecycle()
     val playlists by Library.playlists.collectAsStateWithLifecycle()
-    val isPlaying = PlayerConnection.state.value.current?.id == track.id
+    // Watched, so the menu follows a song change while it's open.
+    val currentId by PlayerConnection.currentId.collectAsStateWithLifecycle()
+    val isPlaying = currentId == track.id
 
     fun close() = TrackActions.dismiss()
 

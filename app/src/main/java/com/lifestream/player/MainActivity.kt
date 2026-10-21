@@ -58,6 +58,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.lifestream.player.data.Catalog
+import android.content.Intent
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.flow.first
 import com.lifestream.player.playback.PlayerConnection
 import com.lifestream.player.ui.components.MiniPlayer
 import com.lifestream.player.ui.screens.GameScreen
@@ -90,10 +97,43 @@ class MainActivity : ComponentActivity() {
         )
         super.onCreate(savedInstanceState)
         PlayerConnection.connect(this)
+        // Only a fresh start: a rotation or restore mustn't repeat a request.
+        if (savedInstanceState == null) handleAssistant(intent)
         setContent {
             LifestreamTheme {
                 LifestreamRoot()
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleAssistant(intent)
+    }
+
+    /**
+     * "Play … on LifeStream" from Google Assistant: plays the songs (or title) it names and opens
+     * Now Playing. Waits briefly for the song index if the app has only just started.
+     */
+    private fun handleAssistant(intent: Intent?) {
+        if (intent?.action != android.provider.MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH) return
+        val query = runCatching { intent.getStringExtra(android.app.SearchManager.QUERY) }.getOrNull()
+        setIntent(Intent(this, MainActivity::class.java)) // handled once
+        lifecycleScope.launch {
+            val request = withContext(Dispatchers.Default) {
+                com.lifestream.player.data.SoundtrackIndex.load()
+                withTimeoutOrNull(8_000) { com.lifestream.player.data.SoundtrackIndex.tracks.first { it.isNotEmpty() } }
+                com.lifestream.player.playback.AutoLibrary.forAssistant(query)
+            }
+            if (request == null) {
+                android.widget.Toast.makeText(this@MainActivity, "Couldn't find that in LifeStream.", android.widget.Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            PlayerConnection.playTracks(
+                request.tracks, request.startIndex, shuffle = request.shuffle,
+                instant = query.isNullOrBlank(),
+            )
+            NowPlayingRequest.open()
         }
     }
 

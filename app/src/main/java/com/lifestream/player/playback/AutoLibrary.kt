@@ -179,6 +179,17 @@ object AutoLibrary {
         }
     }
 
+    /**
+     * "Play … on LifeStream" said to Google Assistant on the phone: the same search as a voice
+     * request in the car (it doesn't depend on the Android Auto setting). A blank request plays a
+     * fresh Instant Playlist. Call off the main thread, once the song index is loaded.
+     */
+    fun forAssistant(rawQuery: String?): Request? {
+        val query = rawQuery?.trim()?.take(MAX_QUERY).orEmpty()
+        if (query.isEmpty()) return Mixes.instant().takeIf { it.isNotEmpty() }?.let { Request(it, 0, shuffle = true) }
+        return voiceRequest(query)
+    }
+
     private fun voiceRequest(query: String): Request? {
         val songs = searchTracks(query)
         if (songs.isNotEmpty()) return Request(songs, 0, shuffle = false)
