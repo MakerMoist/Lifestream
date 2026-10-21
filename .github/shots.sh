@@ -111,4 +111,14 @@ for k in $(seq 1 10); do tap "The Legend of Dragoon" && break; adb shell input s
 sleep 8; shot legend-of-dragoon
 echo "::notice::The Legend of Dragoon: $(texts | head -24 | tr '\n' '|')"
 adb shell input keyevent KEYCODE_BACK; sleep 1
+# "Play prelude on LifeStream" from Google Assistant: the songs it names start, Now Playing opens.
+adb shell am start -a android.media.action.MEDIA_PLAY_FROM_SEARCH -e query "prelude" -n "$PKG/.MainActivity" >/dev/null
+sleep 8; shot assistant-prelude
+on=$(texts | head -30 | tr '\n' '|')
+if echo "$on" | grep -qi "now playing" && echo "$on" | grep -qi "prelude"; then
+  echo "::notice::Assistant request 'prelude' opened Now Playing: $on"
+else
+  echo "::warning::Assistant request 'prelude' didn't open Now Playing with a Prelude: $on"
+fi
+adb shell input keyevent KEYCODE_BACK; sleep 1
 exit 0
